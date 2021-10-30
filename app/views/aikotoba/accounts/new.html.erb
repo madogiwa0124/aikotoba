@@ -1,0 +1,6 @@
+<div class="aikotoba-accounts-new">
+  <h1><%= I18n.t(".aikotoba.accounts.new") %></h1>
+  <%= form_with scope: :account, method: :post, url: sign_up_path do |f| %>
+    <%= f.submit I18n.t(".aikotoba.accounts.new") %>
+  <% end %>
+</div>

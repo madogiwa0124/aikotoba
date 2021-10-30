@@ -1,0 +1,16 @@
+en:
+  aikotoba:
+    attributes:
+      secret: Secret
+    sessions:
+      new: 'Sign In' 
+    accounts:
+      new: 'Sign up'
+    messages:
+      authentication:
+        success: Signed in successfully.
+        failed: Oops. Signed in failed.
+        required: Oops. You need to Signed in or Signed in.
+      registration: 
+        success: Signed up Successfly. Your Secret is %{secret}.
+        failed: Oops. Signed up failed.
