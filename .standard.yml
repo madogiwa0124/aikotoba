@@ -1,0 +1,5 @@
+parallel: true
+format: progress
+ignore:   
+  - 'vendor/**/*'
+  - 'test/dummy/**/*'

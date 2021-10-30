@@ -1,8 +1,11 @@
+# frozen_string_literal: true
+
 module Aikotoba
   class SessionsController < ApplicationController
     include ControllerHelper
 
-    def new; end
+    def new
+    end
 
     def create
       @account = account_class.find_by_secret(session_params[:secret])

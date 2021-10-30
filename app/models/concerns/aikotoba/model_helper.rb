@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module Aikotoba
   module ModelHelper
     extend ActiveSupport::Concern
@@ -7,11 +9,11 @@ module Aikotoba
     end
 
     module ClassMethods
-      # NOTE: 　By default, salt is fixed for simplicity of use in development environments. 
+      # NOTE: 　By default, salt is fixed for simplicity of use in development environments.
       # If you need more security, consider overriding it with a different value for each record.
       def build_with_secret(attributes = nil, secret_salt: default_secret_salt)
         new(attributes).tap do |resource|
-          secret_digest = build_digest(secret: resource.secret, salt: default_secret_salt)
+          secret_digest = build_digest(secret: resource.secret, salt: secret_salt)
           resource.assign_attributes(secret_digest: secret_digest)
         end
       end
@@ -26,11 +28,11 @@ module Aikotoba
         (1..stretch).inject("#{secret}-#{salt}-#{papper}") { |result, _| hash_generator.call(result) }
       end
 
-      # NOTE: 　The default salt is a predictable value. 
+      # NOTE: 　The default salt is a predictable value.
       # If you need more security, consider overriding it and setting an unpredictable safe value.
       def default_secret_salt
-        'aikotoba-default-salt'
-      end 
+        "aikotoba-default-salt"
+      end
     end
 
     def secret

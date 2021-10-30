@@ -9,17 +9,17 @@ module Aikotoba
 
     module ClassMethods
       def account_class_prefix
-        Aikotoba.authenticate_class.constantize.to_s.gsub('::', '').underscore
+        Aikotoba.authenticate_class.constantize.to_s.gsub("::", "").underscore
       end
     end
 
     def current_account
-      @current_user ||= authenticate_by_session
+      @current_account ||= authenticate_by_session
     end
 
     def authenticate_account!
       return if current_account
-      redirect_to sign_in_path, flash: { alert: required_sign_in_message }
+      redirect_to sign_in_path, flash: {alert: required_sign_in_message}
     end
 
     def sign_in(account)
