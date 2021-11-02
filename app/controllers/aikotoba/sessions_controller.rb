@@ -17,7 +17,7 @@ module Aikotoba
       end
     end
 
-    def destory
+    def destroy
       aikotoba_sign_out
       redirect_to after_sign_out_path
     end

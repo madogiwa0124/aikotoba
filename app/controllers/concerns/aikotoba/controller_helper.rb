@@ -42,7 +42,7 @@ module Aikotoba
     private
 
     def aikotoba_required_sign_in_message
-      I18n.t(".aikotoba.authentication.required")
+      I18n.t(".aikotoba.messages.authentication.required")
     end
 
     def aikotoba_session_key

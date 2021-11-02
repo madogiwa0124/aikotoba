@@ -14,7 +14,7 @@ module Aikotoba
   mattr_accessor(:sign_up_path) { "/sign_up" }
   mattr_accessor(:sign_out_path) { "/sign_out" }
   mattr_accessor(:after_sign_in_path) { "/" }
-  mattr_accessor(:failured_sign_in_path) { "/sign_in" }
+  mattr_accessor(:failed_sign_in_path) { "/sign_in" }
   mattr_accessor(:after_sign_up_path) { "/sign_in" }
   mattr_accessor(:after_sign_out_path) { "/sign_in" }
 end
