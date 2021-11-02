@@ -5,4 +5,7 @@
     <%= f.password_field :secret, required: true %>
     <%= f.submit I18n.t(".aikotoba.sessions.new") %>
   <% end %>
+  <p>
+    <%= link_to I18n.t(".aikotoba.accounts.new"), sign_up_path %>
+  </p>
 </div>
