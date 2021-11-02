@@ -8,7 +8,7 @@ module Aikotoba
     end
 
     def create
-      @account = account_class.build_with_secret(accounts_params)
+      @account = aikotoba_account_class.build_with_secret(accounts_params)
       if @account.save
         redirect_to after_sign_up_path, flash: {notice: successed_message}
       else

@@ -3,47 +3,50 @@ module Aikotoba
     extend ActiveSupport::Concern
 
     included do
-      alias_method "current_#{account_class_prefix}", :current_account
-      alias_method "authenticate_#{account_class_prefix}!", :authenticate_account!
+      alias_method "current_#{aikotoba_account_class_prefix}", :aikotoba_current_account
+      alias_method "authenticate_#{aikotoba_account_class_prefix}!", :aikotoba_authenticate_account!
+      private_class_method :aikotoba_account_class_prefix
     end
 
     module ClassMethods
-      def account_class_prefix
+      def aikotoba_account_class_prefix
         Aikotoba.authenticate_class.constantize.to_s.gsub("::", "").underscore
       end
     end
 
-    def current_account
-      @current_account ||= authenticate_by_session
+    def aikotoba_current_account
+      @aikotoba_current_account ||= aikotoba_authenticate_by_session
     end
 
-    def authenticate_account!
-      return if current_account
-      redirect_to sign_in_path, flash: {alert: required_sign_in_message}
+    def aikotoba_authenticate_account!
+      return if aikotoba_current_account
+      redirect_to aikotoba.sign_in_path, flash: {alert: aikotoba_required_sign_in_message}
     end
 
-    def sign_in(account)
-      session[session_key] = account.id
+    def aikotoba_sign_in(account)
+      session[aikotoba_session_key] = account.id
     end
 
-    def sign_out
-      session[session_key] = nil
+    def aikotoba_sign_out
+      session[aikotoba_session_key] = nil
     end
 
-    def authenticate_by_session
-      account_class.find_by(id: session[session_key])
+    def aikotoba_authenticate_by_session
+      aikotoba_account_class.find_by(id: session[aikotoba_session_key])
     end
 
-    def required_sign_in_message
+    def aikotoba_account_class
+      Aikotoba.authenticate_class.constantize
+    end
+
+    private
+
+    def aikotoba_required_sign_in_message
       I18n.t(".aikotoba.authentication.required")
     end
 
-    def session_key
+    def aikotoba_session_key
       Aikotoba.session_key
-    end
-
-    def account_class
-      Aikotoba.authenticate_class.constantize
     end
   end
 end

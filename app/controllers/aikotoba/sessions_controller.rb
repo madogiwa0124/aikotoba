@@ -8,9 +8,9 @@ module Aikotoba
     end
 
     def create
-      @account = account_class.find_by_secret(session_params[:secret])
+      @account = aikotoba_account_class.find_by_secret(session_params[:secret])
       if @account
-        sign_in(@account)
+        aikotoba_sign_in(@account)
         redirect_to after_sign_in_path, notice: successed_message
       else
         redirect_to failed_sign_in_path, alert: failed_message
@@ -18,7 +18,7 @@ module Aikotoba
     end
 
     def destory
-      sign_out
+      aikotoba_sign_out
       redirect_to after_sign_out_path
     end
 
