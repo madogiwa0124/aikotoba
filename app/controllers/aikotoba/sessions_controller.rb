@@ -19,7 +19,7 @@ module Aikotoba
 
     def destroy
       aikotoba_sign_out
-      redirect_to after_sign_out_path
+      redirect_to after_sign_out_path, notice: signed_out_message
     end
 
     private
@@ -46,6 +46,10 @@ module Aikotoba
 
     def failed_message
       I18n.t(".aikotoba.messages.authentication.failed")
+    end
+
+    def signed_out_message
+      I18n.t(".aikotoba.messages.authentication.sign_out")
     end
   end
 end
