@@ -1,16 +1,22 @@
 module Aikotoba
   module ControllerHelper
     extend ActiveSupport::Concern
+    include Aikotoba::Authenticatable
+    include Aikotoba::Authorizable
 
     included do
-      alias_method "current_#{aikotoba_account_class_prefix}", :aikotoba_current_account
-      alias_method "authenticate_#{aikotoba_account_class_prefix}!", :aikotoba_authenticate_account!
-      private_class_method :aikotoba_account_class_prefix
+      alias_method aikotoba_authenticate_account_method_name, :aikotoba_current_account
+      alias_method aikotoba_authorize_account_method_name, :aikotoba_authorize
+      private_class_method :aikotoba_authenticate_account_method_name, :aikotoba_authorize_account_method_name
     end
 
     module ClassMethods
-      def aikotoba_account_class_prefix
-        Aikotoba.authenticate_class.constantize.to_s.gsub("::", "").underscore
+      def aikotoba_authenticate_account_method_name
+        Aikotoba.authenticate_account_method
+      end
+
+      def aikotoba_authorize_account_method_name
+        Aikotoba.authorize_account_method
       end
     end
 
@@ -18,31 +24,17 @@ module Aikotoba
       @aikotoba_current_account ||= aikotoba_authenticate_by_session
     end
 
-    def aikotoba_authenticate_account!
-      return if aikotoba_current_account
-      redirect_to aikotoba.sign_in_path, flash: {alert: aikotoba_required_sign_in_message}
-    end
-
-    def aikotoba_sign_in(account)
-      session[aikotoba_session_key] = account.id
+    def aikotoba_authorize
+      super(aikotoba_current_account)
     end
 
     def aikotoba_sign_out
-      session[aikotoba_session_key] = nil
-    end
-
-    def aikotoba_authenticate_by_session
-      aikotoba_account_class.find_by(id: session[aikotoba_session_key])
+      @aikotoba_current_account = nil
+      super
     end
 
     def aikotoba_account_class
       Aikotoba.authenticate_class.constantize
-    end
-
-    private
-
-    def aikotoba_required_sign_in_message
-      I18n.t(".aikotoba.messages.authentication.required")
     end
 
     def aikotoba_session_key
