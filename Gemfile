@@ -5,9 +5,14 @@ git_source(:github) { |repo| "https://github.com/#{repo}.git" }
 gemspec
 
 group :development do
-  gem "sqlite3"
-  gem "webrick"
   gem "standard"
+end
+
+group :development, :test do
+  gem "sqlite3"
+  gem "capybara"
+  gem "webrick"
+  gem "webdrivers"
 end
 
 # To use a debugger
