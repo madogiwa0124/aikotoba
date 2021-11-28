@@ -3,13 +3,15 @@ en:
     attributes:
       secret: Secret
     sessions:
-      new: 'Sign In' 
+      new: Sign in
     accounts:
-      new: 'Sign up'
+      new: Sign up
     messages:
       authentication:
         success: Signed in successfully.
         failed: Oops. Signed in failed.
+        required: Oops. You need to Signed up or Signed in.
         sign_out: Signed out.
-        success: Signed up Successfly. Your Secret is %{secret}.
+      registration:
+        success: Signed up successfully. Your Secret is %{secret} .
         failed: Oops. Signed up failed.
