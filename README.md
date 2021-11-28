@@ -4,7 +4,15 @@ Aikotoba meaning password in Japanese.
 
 Aikotoba is a Rails engine that makes it easy to implement very simple password-only authentication.
 
-[Caution](#caution)
+**[Caution](#caution)**
+
+## Demo
+
+Sign up
+![sign_up](demo/sign_up.png "sign_up")
+
+Sign in
+![sign_in](demo/sign_in.png "sign_up")
 
 ## Installation
 
@@ -20,15 +28,15 @@ gem 'aikotoba'
 
 Aikotoba use `secret_digest` for authentication. Add it to the model(ex. `User`) used for authentication.
 
-``` sh
+```sh
 $ bin/rails g User secret_digest:string
-# or 
+# or
 $ bin/rails g migration AddSecretDigestToUsers secret_digest:string
 ```
 
 include `Aikotoba::ModelHelper` to the model(ex. `User`) used for authentication.
 
-``` ruby
+```ruby
 class User < ApplicationRecord
   include Aikotoba::ModelHelper
 end
@@ -36,7 +44,7 @@ end
 
 Mount `Aikotoba::Engine` your application.
 
-``` ruby
+```ruby
 Rails.application.routes.draw do
   mount Aikotoba::Engine => "/"
 end
@@ -54,7 +62,7 @@ Aikotoba enabled routes for authentication.
 
 include `Aikotoba::ControllerHelper` to the controller(ex. `ApplicationController`) use authentication.
 
-``` ruby
+```ruby
 class ApplicationController < ActionController::Base
   include Aikotoba::ControllerHelper
 end
@@ -62,7 +70,7 @@ end
 
 Aikotoba enable helper methods for authentication(ex. `current_user`, `authenticate_user!`) .
 
-``` ruby
+```ruby
 class ApplicationController < ActionController::Base
   include Aikotoba::ControllerHelper
 end
@@ -78,22 +86,28 @@ end
 
 ### Configuration
 
-The following configuration parameters are supported. You can override it. (ex. `initializers/aikotova.rb`)
+The following configuration parameters are supported. You can override it. (ex. `initializers/aikotoba.rb`)
 
-``` ruby
-Aikotoba.authenticate_class = 'User'
-Aikotoba.session_key = 'aikotoba-user-id'
+```ruby
+require 'aikotoba'
+
+Aikotoba.authenticate_class = "User"
+Aikotoba.authenticate_account_method = "current_user"
+Aikotoba.authorize_account_method = "authenticate_user!"
+Aikotoba.session_key = "aikotoba-user-id"
+Aikotoba.prevent_timing_atack = true
 Aikotoba.secret_generator = -> { SecureRandom.hex(16) }
-Aikotoba.secret_papper = 'aikotoba-default-papper'
+Aikotoba.secret_papper = "aikotoba-default-pepper"
 Aikotoba.secret_stretch = 3
 Aikotoba.secret_digest_generator = ->(secret) { Digest::SHA256.hexdigest(secret) }
-Aikotoba.sign_in_path = '/sign_in'
-Aikotoba.sign_up_path = '/sign_up'
-Aikotoba.sign_out_path = '/sign_out'
-Aikotoba.after_sign_in_path = '/'
-Aikotoba.failed_sign_in_path = '/sign_in'
-Aikotoba.after_sign_up_path = '/sign_in'
-Aikotoba.after_sign_out_path = '/sign_in'
+Aikotoba.sign_in_path = "/sign_in"
+Aikotoba.sign_up_path = "/sign_up"
+Aikotoba.sign_out_path = "/sign_out"
+Aikotoba.after_sign_in_path = "/"
+Aikotoba.failed_sign_in_path = "/sign_in"
+Aikotoba.after_sign_up_path = "/sign_in"
+Aikotoba.after_sign_out_path = "/sign_in"
+Aikotoba.appeal_sign_in_path = "/sign_in"
 ```
 
 ### Customize Message
@@ -102,7 +116,7 @@ All Messages are managed by `i18n` and can be freely overridden.
 
 ## Caution
 
-Aikotoba is intended to be used during development to implement simple authentication with only a simple password, and is not intended to be used in a production.
+Aikotoba is intended to be used during development to implement simple authentication with only a password, and is not intended to be used in a production.
 
 If you use Aikotoba in a production environment, please be careful about comments in the code and other security issues.
 
