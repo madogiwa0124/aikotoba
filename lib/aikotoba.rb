@@ -9,6 +9,7 @@ module Aikotoba
   mattr_accessor(:authorize_account_method) { "authenticate_user!" }
   mattr_accessor(:authenticate_class) { "User" }
   mattr_accessor(:session_key) { "aikotoba-user-id" }
+  mattr_accessor(:prevent_timing_atack) { true }
   mattr_accessor(:secret_generator) { -> { SecureRandom.hex(16) } }
   mattr_accessor(:secret_papper) { "aikotoba-default-pepper" }
   mattr_accessor(:secret_stretch) { 3 }
