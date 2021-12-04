@@ -26,20 +26,10 @@ gem 'aikotoba'
 
 ### Getting Start
 
-Aikotoba use `secret_digest` for authentication. Add it to the model(ex. `User`) used for authentication.
+Aikotoba use `Aikotoba::Account` for authentication. Add it to the migration for `Aikotoba::Account`.
 
 ```sh
-$ bin/rails g User secret_digest:string
-# or
-$ bin/rails g migration AddSecretDigestToUsers secret_digest:string
-```
-
-include `Aikotoba::ModelHelper` to the model(ex. `User`) used for authentication.
-
-```ruby
-class User < ApplicationRecord
-  include Aikotoba::ModelHelper
-end
+$ bin/rails aikotoba:install:migrations
 ```
 
 Mount `Aikotoba::Engine` your application.
@@ -88,15 +78,14 @@ The following configuration parameters are supported. You can override it. (ex. 
 ```ruby
 require 'aikotoba'
 
-Aikotoba.authenticate_class = "User"
 Aikotoba.authenticate_account_method = "current_user"
 Aikotoba.authorize_account_method = "authenticate_user!"
 Aikotoba.session_key = "aikotoba-user-id"
 Aikotoba.prevent_timing_atack = true
-Aikotoba.secret_generator = -> { SecureRandom.hex(16) }
-Aikotoba.secret_papper = "aikotoba-default-pepper"
-Aikotoba.secret_stretch = 3
-Aikotoba.secret_digest_generator = ->(secret) { Digest::SHA256.hexdigest(secret) }
+Aikotoba.password_generator = -> { SecureRandom.hex(16) }
+Aikotoba.password_papper = "aikotoba-default-pepper"
+Aikotoba.password_stretch = 3
+Aikotoba.password_digest_generator = ->(password) { Digest::SHA256.hexdigest(password) }
 Aikotoba.sign_in_path = "/sign_in"
 Aikotoba.sign_up_path = "/sign_up"
 Aikotoba.sign_out_path = "/sign_out"
@@ -110,6 +99,31 @@ Aikotoba.appeal_sign_in_path = "/sign_in"
 ### Customize Message
 
 All Messages are managed by `i18n` and can be freely overridden.
+
+### Create other model with `Aikotoba::Account`.
+
+You can override `Aikotoba::AccountsController#after_create_account_process` to create the other models together.
+
+```ruby
+require 'aikotoba'
+
+Rails.application.config.to_prepare do
+  Aikotoba::AccountsController.class_eval do
+    def after_create_account_process
+      profile = Profile.new(nickname: "foo")
+      profile.save!
+      @account.update!(authenticate_target: profile)
+    end
+  end
+end
+
+class Profile < ApplicationRecord
+  has_one :user, class_name: 'Aikotoba::Account'
+end
+
+current_user.profile #=> Profile instance
+profile.user #=> Aikotoba::Account instance
+```
 
 ## Caution
 

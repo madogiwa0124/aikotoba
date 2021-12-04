@@ -17,11 +17,11 @@ class Aikotoba::AccountsControllerTest < ActionDispatch::IntegrationTest
     post Aikotoba.sign_up_path
     account = @controller.instance_variable_get("@account")
     assert_redirected_to Aikotoba.after_sign_up_path
-    assert_equal I18n.t(".aikotoba.messages.registration.success", secret: account.secret), flash[:notice]
+    assert_equal I18n.t(".aikotoba.messages.registration.success", password: account.password), flash[:notice]
   end
 
   test "failed POST sign_up_path" do
-    Aikotoba.secret_digest_generator.stub(:call, nil) do
+    Aikotoba.password_digest_generator.stub(:call, nil) do
       post Aikotoba.sign_up_path
       assert_equal I18n.t(".aikotoba.messages.registration.failed"), flash[:alert]
     end

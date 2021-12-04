@@ -11,7 +11,7 @@ module Aikotoba
     end
 
     def create
-      @account = aikotoba_account_class.find_by_secret(session_params[:secret])
+      @account = ::Aikotoba::Account.find_by_password(session_params[:password])
       if @account
         aikotoba_sign_in(@account)
         redirect_to after_sign_in_path, notice: successed_message
@@ -28,7 +28,7 @@ module Aikotoba
     private
 
     def session_params
-      params.require(:account).permit(:secret)
+      params.require(:account).permit(:password)
     end
 
     def after_sign_in_path

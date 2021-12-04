@@ -9,8 +9,8 @@
   </div>
   <h1><%= I18n.t(".aikotoba.sessions.new") %></h1>
   <%= form_with scope: :account, method: :post, url: sign_in_path do |f| %>
-    <%= f.label :secret, I18n.t(".aikotoba.attributes.secret") %>
-    <%= f.password_field :secret, required: true %>
+    <%= f.label :password, I18n.t(".aikotoba.attributes.password") %>
+    <%= f.password_field :password, required: true %>
     <%= f.submit I18n.t(".aikotoba.sessions.new") %>
   <% end %>
   <p>

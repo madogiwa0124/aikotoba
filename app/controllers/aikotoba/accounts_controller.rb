@@ -6,27 +6,29 @@ module Aikotoba
     end
 
     def create
-      @account = aikotoba_account_class.build_with_secret(accounts_params)
-      if @account.save
-        redirect_to after_sign_up_path, flash: {notice: successed_message}
-      else
-        flash[:alert] = failed_message
-        render :new
+      @account = ::Aikotoba::Account.build_with_password(accounts_params)
+      ActiveRecord::Base.transaction do
+        @account.save!
+        after_create_account_process
       end
+      redirect_to after_sign_up_path, flash: {notice: successed_message}
+    rescue ActiveRecord::RecordInvalid
+      flash[:alert] = failed_message
+      render :new
     end
 
     private
 
-    def aikotoba_account_class
-      Aikotoba.authenticate_class.constantize
-    end    
+    # NOTE: Methods to override if you want to do something after account creation.
+    def after_create_account_process
+    end
 
     def after_sign_up_path
       Aikotoba.after_sign_up_path
     end
 
     def successed_message
-      I18n.t(".aikotoba.messages.registration.success", secret: @account.secret)
+      I18n.t(".aikotoba.messages.registration.success", password: @account.password)
     end
 
     def failed_message

@@ -5,7 +5,7 @@ class NavigationTest < ActionDispatch::SystemTestCase
   driven_by :rack_test
 
   test "sign_in by helper" do
-    user = User.build_with_secret({})
+    user = ::Aikotoba::Account.build_with_password({})
     user.save
     aikotoba_sign_in(user)
     visit "/sensitives"
@@ -15,7 +15,7 @@ class NavigationTest < ActionDispatch::SystemTestCase
   end
 
   test "sign_out by helper" do
-    user = User.build_with_secret({})
+    user = ::Aikotoba::Account.build_with_password({})
     user.save
     aikotoba_sign_in(user)
     visit "/sensitives"

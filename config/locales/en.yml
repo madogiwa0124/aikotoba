@@ -1,7 +1,7 @@
 en:
   aikotoba:
     attributes:
-      secret: Secret
+      password: Password
     sessions:
       new: Sign in
     accounts:
@@ -13,5 +13,5 @@ en:
         required: Oops. You need to Signed up or Signed in.
         sign_out: Signed out.
       registration:
-        success: Signed up successfully. Your Secret is %{secret} .
+        success: Signed up successfully. Your Password is %{password} .
         failed: Oops. Signed up failed.

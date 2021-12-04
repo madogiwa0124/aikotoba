@@ -3,8 +3,8 @@
 class Aikotoba::SessionsControllerTest < ActionDispatch::IntegrationTest
   def setup
     ActionController::Base.allow_forgery_protection = false
-    @user = User.build_with_secret({})
-    @user.save!
+    @account = ::Aikotoba::Account.build_with_password({})
+    @account.save!
   end
 
   test "success GET sign_in_path" do
@@ -14,19 +14,19 @@ class Aikotoba::SessionsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "success POST sign_in_path" do
-    post Aikotoba.sign_in_path, params: {account: {secret: @user.secret}}
+    post Aikotoba.sign_in_path, params: {account: {password: @account.password}}
     assert_redirected_to Aikotoba.after_sign_in_path
     assert_equal I18n.t(".aikotoba.messages.authentication.success"), flash[:notice]
   end
 
   test "failed POST sign_in_path" do
-    post Aikotoba.sign_in_path, params: {account: {secret: "invalid_secret"}}
+    post Aikotoba.sign_in_path, params: {account: {password: "invalid_password"}}
     assert_redirected_to Aikotoba.failed_sign_in_path
     assert_equal I18n.t(".aikotoba.messages.authentication.failed"), flash[:alert]
   end
 
   test "success DELETE sign_out_path" do
-    post Aikotoba.sign_in_path, params: {account: {secret: @user.secret}}
+    post Aikotoba.sign_in_path, params: {account: {password: @account.password}}
     assert_not_nil session[Aikotoba.session_key]
     delete Aikotoba.sign_out_path
     assert_nil session[Aikotoba.session_key]

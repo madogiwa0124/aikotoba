@@ -31,14 +31,10 @@ module Aikotoba
 
     def aikotoba_authenticate_by_session
       prevent_timing_atack
-      aikotoba_account_class.find_by(id: session[aikotoba_session_key])
+      Account.find_by(id: session[aikotoba_session_key])
     end
 
     private
-
-    def aikotoba_account_class
-      Aikotoba.authenticate_class.constantize
-    end
 
     def aikotoba_session_key
       Aikotoba.session_key

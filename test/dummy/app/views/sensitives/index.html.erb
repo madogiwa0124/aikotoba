@@ -1,7 +1,7 @@
 <h1>Sensitive Page</h1>
 <p class="message"><%= notice %></p>
 <p>id: <%= @user.id %></p>
-<p>secret_digest: <%= @user.secret_digest %></p>
+<p>password_digest: <%= @user.password_digest %></p>
 
 <%= form_with method: :delete, url: aikotoba.sign_out_path do |f| %>
   <%= f.submit 'Sign out' %>

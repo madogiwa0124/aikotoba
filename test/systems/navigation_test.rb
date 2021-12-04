@@ -7,9 +7,9 @@ class NavigationTest < ActionDispatch::SystemTestCase
     visit Aikotoba.sign_up_path
     click_on "Sign up"
     assert_selector ".message", text: "Signed up successfully."
-    # NOTE: get XXX from "Signed up successfully. Your Secret is XXX ."
-    secret = page.first(".message").text.split(" ")[-2]
-    fill_in "Secret",	with: secret
+    # NOTE: get XXX from "Signed up successfully. Your Password is XXX ."
+    password = page.first(".message").text.split(" ")[-2]
+    fill_in "Password",	with: password
     click_on "Sign in"
     assert_selector ".message", text: "Signed in successfully."
     click_on "Sign out"

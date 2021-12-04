@@ -1,5 +1,3 @@
 class User < ApplicationRecord
-  include Aikotoba::ModelHelper
-
-  validates :secret_digest, presence: true
+  has_one :account, class_name: 'Aikotoba::Account'
 end

@@ -5,8 +5,8 @@ class RequiredLoginControllerTest < ActionDispatch::IntegrationTest
 
   def setup
     ActionController::Base.allow_forgery_protection = false
-    @user = User.build_with_secret({})
-    @user.save!
+    @account = Aikotoba::Account.build_with_password({})
+    @account.save!
   end
 
   def requied_sign_in_path
@@ -14,7 +14,7 @@ class RequiredLoginControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "success after login access" do
-    aikotoba_sign_in(@user)
+    aikotoba_sign_in(@account)
     get requied_sign_in_path
     assert_equal 200, status
   end
@@ -26,7 +26,7 @@ class RequiredLoginControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "failed after logout access" do
-    aikotoba_sign_in(@user)
+    aikotoba_sign_in(@account)
     get requied_sign_in_path
     assert_equal 200, status
     aikotoba_sign_out
