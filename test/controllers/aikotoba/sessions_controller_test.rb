@@ -3,7 +3,7 @@
 class Aikotoba::SessionsControllerTest < ActionDispatch::IntegrationTest
   def setup
     ActionController::Base.allow_forgery_protection = false
-    @account = ::Aikotoba::Account.build_with_password({})
+    @account = ::Aikotoba::Account.build_account_by({})
     @account.save!
   end
 

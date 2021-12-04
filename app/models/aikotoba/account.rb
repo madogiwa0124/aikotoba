@@ -5,6 +5,8 @@ module Aikotoba
     belongs_to :authenticate_target, polymorphic: true, optional: true
     validates :password_digest, presence: true
 
+    attribute :password, :string
+
     after_initialize do
       if authenticate_target
         target_type_name = authenticate_target_type.gsub("::", "").underscore
@@ -12,35 +14,12 @@ module Aikotoba
       end
     end
 
-    class << self
-      def build_with_password(attributes = nil, password_salt: default_password_salt)
-        new(attributes).tap do |resource|
-          password_digest = build_digest(password: resource.password, salt: password_salt)
-          resource.assign_attributes(password_digest: password_digest)
-        end
-      end
-
-      # NOTE: 　By default, salt is fixed for simplicity of use in development environments.
-      # If you need more security, consider overriding it with a different value for each record.
-      def find_by_password(password, password_salt: default_password_salt)
-        find_by(password_digest: build_digest(password: password, salt: password_salt))
-      end
-
-      def build_digest(password:, salt:)
-        stretch, papper = Aikotoba.password_stretch, Aikotoba.password_papper
-        hash_generator = Aikotoba.password_digest_generator
-        (1..stretch).inject("#{password}-#{salt}-#{papper}") { |result, _| hash_generator.call(result) }
-      end
-
-      # NOTE: 　The default salt is a predictable value.
-      # If you need more security, consider overriding it and setting an unpredictable safe value.
-      def default_password_salt
-        "aikotoba-default-salt"
-      end
+    def self.build_account_by(attributes, strategy: Strategy::PasswordOnly)
+      strategy.build_account_by(attributes)
     end
 
-    def password
-      @password ||= Aikotoba.password_generator.call
+    def self.find_account_by(credentials, strategy: Strategy::PasswordOnly)
+      strategy.find_account_by(credentials)
     end
   end
 end

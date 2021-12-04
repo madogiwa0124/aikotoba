@@ -21,7 +21,7 @@ class Aikotoba::AccountsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "failed POST sign_up_path" do
-    Aikotoba.password_digest_generator.stub(:call, nil) do
+    Aikotoba::Account::Strategy::PasswordOnly.stub(:build_account_by, Aikotoba::Account.new) do
       post Aikotoba.sign_up_path
       assert_equal I18n.t(".aikotoba.messages.registration.failed"), flash[:alert]
     end

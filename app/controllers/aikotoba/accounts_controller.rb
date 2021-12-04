@@ -6,7 +6,7 @@ module Aikotoba
     end
 
     def create
-      @account = ::Aikotoba::Account.build_with_password(accounts_params)
+      @account = ::Aikotoba::Account.build_account_by(accounts_params.to_h)
       ActiveRecord::Base.transaction do
         @account.save!
         after_create_account_process

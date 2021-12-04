@@ -11,7 +11,7 @@ module Aikotoba
     end
 
     def create
-      @account = ::Aikotoba::Account.find_by_password(session_params[:password])
+      @account = ::Aikotoba::Account.find_account_by(session_params.to_h)
       if @account
         aikotoba_sign_in(@account)
         redirect_to after_sign_in_path, notice: successed_message
