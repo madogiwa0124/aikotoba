@@ -1,3 +1,4 @@
 class ApplicationController < ActionController::Base
-  include Aikotoba::ControllerHelper
+  include Aikotoba::Authorizable
+  include Aikotoba::Authenticatable
 end

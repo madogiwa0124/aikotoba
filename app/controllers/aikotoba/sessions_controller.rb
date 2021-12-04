@@ -2,7 +2,10 @@
 
 module Aikotoba
   class SessionsController < ApplicationController
-    include ControllerHelper
+    include Authenticatable
+    include Authorizable
+
+    before_action :aikotoba_authorize, only: :destroy
 
     def new
     end

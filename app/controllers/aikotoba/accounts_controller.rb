@@ -2,8 +2,6 @@
 
 module Aikotoba
   class AccountsController < ApplicationController
-    include ControllerHelper
-
     def new
     end
 
@@ -18,6 +16,10 @@ module Aikotoba
     end
 
     private
+
+    def aikotoba_account_class
+      Aikotoba.authenticate_class.constantize
+    end    
 
     def after_sign_up_path
       Aikotoba.after_sign_up_path
