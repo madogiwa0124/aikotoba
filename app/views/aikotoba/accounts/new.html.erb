@@ -8,7 +8,18 @@
     <% end %>
   </div>
   <h1><%= I18n.t(".aikotoba.accounts.new") %></h1>
-  <%= form_with scope: :account, method: :post, url: sign_up_path do |f| %>
+  <%= form_with model: @account, method: :post, url: sign_up_path do |f| %>
+    <% if @account.email_password? %>
+      <p>
+        <%= f.label :email %>
+        <%= f.email_field :email, reuired: true %>
+      </p>
+      <p>
+        <%= f.label :password %>
+        <%= f.password_field :password, reuired: true  %>
+      </p>
+    <% end  %>
+    <%= f.hidden_field :strategy %>
     <%= f.submit I18n.t(".aikotoba.accounts.new") %>
   <% end %>
   <p>

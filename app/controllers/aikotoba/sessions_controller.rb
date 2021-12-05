@@ -8,6 +8,7 @@ module Aikotoba
     before_action :aikotoba_authorize, only: :destroy
 
     def new
+      @account = ::Aikotoba::Account.new(strategy: Aikotoba.authentication_strategy)
     end
 
     def create
@@ -28,7 +29,7 @@ module Aikotoba
     private
 
     def session_params
-      params.require(:account).permit(:password)
+      params.require(:account).permit(:email, :password, :strategy)
     end
 
     def after_sign_in_path

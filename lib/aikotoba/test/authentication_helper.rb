@@ -10,8 +10,19 @@ module Aikotoba
         end
 
         def aikotoba_sign_in(account)
-          post Aikotoba.sign_in_path, params: {account: {password: account.password}}
+          use_password_only_strategy do
+            post Aikotoba.sign_in_path, params: {account: {password: account.password, strategy: :password_only}}
+          end
           follow_redirect!
+        end
+
+        private
+
+        def use_password_only_strategy
+          old_strategy = Aikotoba.authentication_strategy
+          Aikotoba.authentication_strategy = :password_only
+          yield
+          Aikotoba.authentication_strategy = old_strategy
         end
       end
 
@@ -27,7 +38,9 @@ module Aikotoba
         def aikotoba_sign_in(account)
           if page.driver.is_a?(Capybara::RackTest::Driver)
             disable_forgery_protection do
-              page.driver.send(:post, Aikotoba.sign_in_path, account: {password: account.password})
+              use_password_only_strategy do
+                page.driver.send(:post, Aikotoba.sign_in_path, account: {password: account.password, strategy: :password_only})
+              end
             end
           else
             raise NotImplementedError, "Sorry. Only RackTest::Driver is supported as a test helper for Aikotoba's authentication."
@@ -35,6 +48,13 @@ module Aikotoba
         end
 
         private
+
+        def use_password_only_strategy
+          old_strategy = Aikotoba.authentication_strategy
+          Aikotoba.authentication_strategy = :password_only
+          yield
+          Aikotoba.authentication_strategy = old_strategy
+        end
 
         def disable_forgery_protection
           csrf_protection = ActionController::Base.allow_forgery_protection

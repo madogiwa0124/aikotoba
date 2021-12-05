@@ -1,11 +1,15 @@
 require "test_helper"
 
-class NavigationTest < ActionDispatch::SystemTestCase
+class HelperTest < ActionDispatch::SystemTestCase
   include Aikotoba::Test::AuthenticationHelper::System
   driven_by :rack_test
 
+  def setup
+    Aikotoba.authentication_strategy = :password_only
+  end
+
   test "sign_in by helper" do
-    user = ::Aikotoba::Account.build_account_by({})
+    user = ::Aikotoba::Account.build_account_by({"strategy" => :password_only})
     user.save
     aikotoba_sign_in(user)
     visit "/sensitives"
@@ -15,7 +19,7 @@ class NavigationTest < ActionDispatch::SystemTestCase
   end
 
   test "sign_out by helper" do
-    user = ::Aikotoba::Account.build_account_by({})
+    user = ::Aikotoba::Account.build_account_by({"strategy" => :password_only})
     user.save
     aikotoba_sign_in(user)
     visit "/sensitives"

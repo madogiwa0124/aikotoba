@@ -3,6 +3,7 @@
 module Aikotoba
   class AccountsController < ApplicationController
     def new
+      @account = ::Aikotoba::Account.new(strategy: Aikotoba.authentication_strategy)
     end
 
     def create
@@ -27,8 +28,14 @@ module Aikotoba
       Aikotoba.after_sign_up_path
     end
 
+    # FIXME: I want to be able to handle strategies in the same way.
     def successed_message
-      I18n.t(".aikotoba.messages.registration.success", password: @account.password)
+      message = I18n.t(".aikotoba.messages.registration.success")
+      if @account.password_only?
+        message + I18n.t(".aikotoba.messages.registration.show_password", password: @account.password)
+      else
+        message
+      end
     end
 
     def failed_message
@@ -36,7 +43,7 @@ module Aikotoba
     end
 
     def accounts_params
-      {}
+      params.require(:account).permit(:email, :password, :strategy)
     end
   end
 end

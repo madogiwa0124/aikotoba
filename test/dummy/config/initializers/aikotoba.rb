@@ -2,6 +2,7 @@ require 'aikotoba'
 
 Aikotoba.authenticate_account_method = "current_user"
 Aikotoba.authorize_account_method = "authenticate_user!"
+Aikotoba.authentication_strategy = :email_password
 Aikotoba.prevent_timing_atack = false
 Aikotoba.password_papper = "aikotoba-default-pepper"
 Aikotoba.password_stretch = 3

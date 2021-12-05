@@ -1,11 +1,14 @@
 # frozen_string_literal: true
 
+require "test_helper"
+
 class RequiredLoginControllerTest < ActionDispatch::IntegrationTest
   include Aikotoba::Test::AuthenticationHelper::Request
 
   def setup
     ActionController::Base.allow_forgery_protection = false
-    @account = Aikotoba::Account.build_account_by({})
+    Aikotoba.authentication_strategy = :password_only
+    @account = ::Aikotoba::Account.build_account_by({"strategy" => :password_only})
     @account.save!
   end
 

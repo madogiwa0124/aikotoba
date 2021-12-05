@@ -15,10 +15,13 @@ ActiveRecord::Schema.define(version: 2021_12_04_121532) do
   create_table "aikotoba_accounts", force: :cascade do |t|
     t.string "authenticate_target_type"
     t.integer "authenticate_target_id"
+    t.integer "strategy", null: false
+    t.string "email"
     t.string "password_digest", null: false
     t.datetime "created_at", precision: 6, null: false
     t.datetime "updated_at", precision: 6, null: false
     t.index ["authenticate_target_type", "authenticate_target_id"], name: "authenticate_target"
+    t.index ["email"], name: "index_aikotoba_accounts_on_email", unique: true
     t.index ["password_digest"], name: "index_aikotoba_accounts_on_password_digest"
   end
 

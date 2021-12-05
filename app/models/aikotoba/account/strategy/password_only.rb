@@ -22,6 +22,7 @@ module Aikotoba
 
     def build_with_password(password = nil, password_salt: default_password_salt)
       Aikotoba::Account.new(password: password).tap do |resource|
+        resource.strategy = :password_only
         resource.password ||= generate_password
         password_digest = build_digest(password: resource.password, salt: password_salt)
         resource.assign_attributes(password_digest: password_digest)
@@ -35,7 +36,7 @@ module Aikotoba
     # NOTE: 　By default, salt is fixed for simplicity of use in development environments.
     # If you need more security, consider overriding it with a different value for each record.
     def find_by_password(password, password_salt: default_password_salt)
-      Aikotoba::Account.find_by(password_digest: build_digest(password: password, salt: password_salt))
+      Aikotoba::Account.password_only.find_by(password_digest: build_digest(password: password, salt: password_salt))
     end
 
     def build_digest(password:, salt:)
