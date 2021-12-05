@@ -1,7 +1,12 @@
 en:
-  aikotoba:
+  activerecord:
     attributes:
-      password: Password
+      aikotoba/account:
+        email: Email
+        password: Password
+    models:
+      aikotoba/account: Account
+  aikotoba:
     sessions:
       new: Sign in
     accounts:
@@ -13,5 +18,6 @@ en:
         required: Oops. You need to Signed up or Signed in.
         sign_out: Signed out.
       registration:
-        success: Signed up successfully. Your Password is %{password} .
+        success: Signed up successfully.
+        show_password: Your Password is %{password} .
         failed: Oops. Signed up failed.
