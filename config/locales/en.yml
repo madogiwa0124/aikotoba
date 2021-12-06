@@ -19,5 +19,9 @@ en:
         sign_out: Signed out.
       registration:
         success: Signed up successfully.
-        show_password: Your Password is %{password} .
         failed: Oops. Signed up failed.
+        strategies:
+          email_password:
+            success: Signed up successfully.
+          password_only:
+            success: Signed up successfully. Your Password is %{password} .

@@ -28,14 +28,8 @@ module Aikotoba
       Aikotoba.after_sign_up_path
     end
 
-    # FIXME: I want to be able to handle strategies in the same way.
     def successed_message
-      message = I18n.t(".aikotoba.messages.registration.success")
-      if @account.password_only?
-        message + I18n.t(".aikotoba.messages.registration.show_password", password: @account.password)
-      else
-        message
-      end
+      I18n.t(".aikotoba.messages.registration.strategies.#{@account.strategy}.success", password: @account.password)
     end
 
     def failed_message

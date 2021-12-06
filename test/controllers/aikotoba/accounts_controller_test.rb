@@ -19,7 +19,7 @@ class Aikotoba::AccountsControllerTest < ActionDispatch::IntegrationTest
     post Aikotoba.sign_up_path, params: {account: {strategy: :password_only}}
     account = @controller.instance_variable_get("@account")
     assert_redirected_to Aikotoba.after_sign_up_path
-    message = I18n.t(".aikotoba.messages.registration.success") + I18n.t(".aikotoba.messages.registration.show_password", password: account.password)
+    message = I18n.t(".aikotoba.messages.registration.strategies.password_only.success", password: account.password)
     assert_equal message, flash[:notice]
   end
 
