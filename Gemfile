@@ -6,6 +6,7 @@ gemspec
 
 group :development do
   gem "standard"
+  gem "letter_opener_web"
 end
 
 group :development, :test do
