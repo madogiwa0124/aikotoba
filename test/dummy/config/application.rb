@@ -1,6 +1,7 @@
 require 'active_record/railtie'
 require 'action_controller/railtie'
 require 'action_view/railtie'
+require 'action_mailer/railtie'
 
 ENV['BUNDLE_GEMFILE'] ||= File.expand_path('../../../Gemfile', __dir__)
 
@@ -24,5 +25,9 @@ module Dummy
     config.active_support.disallowed_deprecation_warnings = []
     config.active_record.migration_error = :page_load
     config.active_record.verbose_query_logs = true
+    config.action_mailer.raise_delivery_errors = false
+    config.action_mailer.perform_caching = false
+    config.action_mailer.delivery_method = :letter_opener_web
+    config.action_mailer.default_url_options = {host: "localhost", port: 3000}
   end
 end
