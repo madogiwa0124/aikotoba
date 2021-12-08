@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module Aikotoba
-  class Account::Strategy::PasswordOnly
+  class Account::Strategy::PasswordOnly < Account::Strategy::Base
     def self.build_account_by(attributes)
       new.build_account_by(password: attributes["password"])
     end

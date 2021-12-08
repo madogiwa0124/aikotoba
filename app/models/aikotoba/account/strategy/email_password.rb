@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module Aikotoba
-  class Account::Strategy::EmailPassword
+  class Account::Strategy::EmailPassword < Account::Strategy::Base
     include BCrypt
 
     def self.build_account_by(attributes)
