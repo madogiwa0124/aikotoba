@@ -1,3 +1,5 @@
+[![CI](https://github.com/madogiwa0124/aikotoba/actions/workflows/ci.yml/badge.svg)](https://github.com/madogiwa0124/aikotoba/actions/workflows/ci.yml)
+
 # Aikotoba
 
 Aikotoba meaning password in Japanese.
