@@ -14,19 +14,28 @@ module Aikotoba
       new.find_account_by(email: email, password: password)
     end
 
+    def self.confirmable?
+      true
+    end
+
     def build_account_by(email:, password:)
       build_with_email_password(email, password)
     end
 
     def find_account_by(email:, password:)
       account = find_by_email(email)
-      account if Password.new(account.password_digest) == password_with_papper(password)
+      account if password_match?(account, password)
     end
 
     private
 
     def find_by_email(email)
-      Aikotoba::Account.email_password.find_by(email: email)
+      Aikotoba::Account.authenticatable.email_password.find_by(email: email)
+    end
+
+    def password_match?(account, password)
+      return false unless account
+      Password.new(account.password_digest) == password_with_papper(password)
     end
 
     def build_with_email_password(email, password)

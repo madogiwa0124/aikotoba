@@ -11,6 +11,12 @@ en:
       new: Sign in
     accounts:
       new: Sign up
+    confirms:
+      new: Send confirm token
+    mailers:
+      confirm:
+        subject: "Confirmation instructions"
+
     messages:
       authentication:
         success: Signed in successfully.
@@ -25,3 +31,7 @@ en:
             success: Signed up successfully.
           password_only:
             success: Signed up successfully. Your Password is %{password} .
+      confirmation:
+        sent: Confirm url has been sent to your email address.
+        success: Confirmed you email successfully.
+        failed: Oops. Confirm url sent failed.

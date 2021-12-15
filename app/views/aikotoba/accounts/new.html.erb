@@ -25,4 +25,9 @@
   <p>
     <%= link_to I18n.t(".aikotoba.sessions.new"), sign_in_path %>
   </p>
+  <% if enable_confirm? %>
+    <p>
+      <%= link_to I18n.t(".aikotoba.confirms.new"), confirmable_new_path %>
+    </p>
+  <% end %>
 </div>

@@ -19,4 +19,8 @@ module Aikotoba
   mattr_accessor(:after_sign_up_path) { "/sign_in" }
   mattr_accessor(:after_sign_out_path) { "/sign_in" }
   mattr_accessor(:appeal_sign_in_path) { "/sign_in" }
+
+  # for confirmable
+  mattr_accessor(:enable_confirm) { false }
+  mattr_accessor(:confirm_path) { "/confirm" }
 end

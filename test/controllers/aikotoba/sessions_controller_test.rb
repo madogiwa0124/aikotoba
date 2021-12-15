@@ -5,6 +5,7 @@ require "test_helper"
 class Aikotoba::SessionsControllerTest < ActionDispatch::IntegrationTest
   def setup
     ActionController::Base.allow_forgery_protection = false
+    Aikotoba.enable_confirm = false
     Aikotoba.authentication_strategy = :password_only
     @account = ::Aikotoba::Account.build_account_by({"strategy" => :password_only})
     @account.save!

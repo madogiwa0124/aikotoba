@@ -1,0 +1,22 @@
+<div class="aikotoba-confirmation-new">
+  <div class="message">
+    <% if notice %>
+      <p><%= notice %></p>
+    <% end %>
+    <% if alert %>
+      <p><%= alert %></p>
+    <% end %>
+  </div>
+  <h1><%= I18n.t(".aikotoba.confirms.new") %></h1>
+  <%= form_with model: @account, method: :post, url: confirmable_create_path do |f| %>
+    <p>
+      <%= f.label :email %>
+      <%= f.email_field :email, reuired: true %>
+    </p>
+    <%= f.submit I18n.t(".aikotoba.confirms.new") %>
+  <% end %>
+  <p>
+    <%= link_to I18n.t(".aikotoba.accounts.new"), sign_up_path %>
+    <%= link_to I18n.t(".aikotoba.sessions.new"), sign_in_path %>
+  </p>
+</div>

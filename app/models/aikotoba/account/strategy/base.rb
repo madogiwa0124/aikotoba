@@ -9,5 +9,9 @@ module Aikotoba
     def self.find_account_by(credentials)
       raise NotImplementedError
     end
+
+    def self.confirmable?
+      raise NotImplementedError
+    end
   end
 end

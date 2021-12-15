@@ -7,7 +7,14 @@ module Aikotoba
     end
 
     def self.find_account_by(credentials)
+      if Aikotoba::Account.enable_confirm? && !confirmable?
+        Rails.logger.warn("PasswordOnly is not supported confirmable. Please set Aikotoba.enable_confirm to false or use a different strategy.")
+      end
       new.find_account_by(password: credentials["password"])
+    end
+
+    def self.confirmable?
+      false
     end
 
     def build_account_by(password: nil)
@@ -36,7 +43,9 @@ module Aikotoba
     # NOTE: 　By default, salt is fixed for simplicity of use in development environments.
     # If you need more security, consider overriding it with a different value for each record.
     def find_by_password(password, password_salt: default_password_salt)
-      Aikotoba::Account.password_only.find_by(password_digest: build_digest(password: password, salt: password_salt))
+      Aikotoba::Account.authenticatable.password_only.find_by(
+        password_digest: build_digest(password: password, salt: password_salt)
+      )
     end
 
     def build_digest(password:, salt:)

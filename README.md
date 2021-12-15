@@ -87,6 +87,26 @@ class SensitiveController < ApplicationController
 end
 ```
 
+### Additional Features
+
+#### Confirmable
+
+To enable it, set `Aikotoba.enable_confirm` to `true`.
+
+```ruby
+Aikotoba.enable_confirm = false
+```
+
+Aikotoba enable routes for confirmation account. And authenticate only with a confirmed account.
+
+| HTTP Verb | Path            | Overview                               |
+| --------- | --------------- | -------------------------------------- |
+| GET       | /confirm        | Display page for create confirm token. |
+| POST      | /confirm        | Create a confirm token to account.     |
+| GET       | /confirm/:token | Confirm account by token.              |
+
+:warning: Confirmable does not support PasswordOnly authentication.
+
 ### Configuration
 
 The following configuration parameters are supported. You can override it. (ex. `initializers/aikotoba.rb`)
@@ -108,6 +128,10 @@ Aikotoba.failed_sign_in_path = "/sign_in"
 Aikotoba.after_sign_up_path = "/sign_in"
 Aikotoba.after_sign_out_path = "/sign_in"
 Aikotoba.appeal_sign_in_path = "/sign_in"
+
+# for confirmable
+Aikotoba.enable_confirm = false
+Aikotoba.confirm_path = "/confirm"
 ```
 
 ### Customize Message

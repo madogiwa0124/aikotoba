@@ -11,6 +11,8 @@ module Aikotoba
 
     enum strategy: {password_only: 0, email_password: 1}
 
+    scope :authenticatable, -> { enable_confirm? ? confirmed : all }
+
     attribute :password, :string
 
     after_initialize do
@@ -37,6 +39,35 @@ module Aikotoba
         target = STRATEGIES[strategy.to_sym]
         raise InvalidStrategy unless target
         target
+      end
+    end
+
+    concerning :Confirmable do
+      included do
+        scope :confirmable, -> { where(strategy: confirmable_strategys.keys) }
+        scope :confirmed, -> { where(confirmed: true) }
+      end
+
+      class_methods do
+        def enable_confirm?
+          Aikotoba.enable_confirm
+        end
+
+        def confirmable_strategys
+          Aikotoba::Account::STRATEGIES.select { |k, v| v.confirmable? }
+        end
+      end
+
+      def send_confirm_token!
+        return if !self.class.enable_confirm? || email.blank?
+        update!(confirm_token: build_confirm_token)
+        AccountMailer.with(account: self).confirm.deliver_now
+      end
+
+      private
+
+      def build_confirm_token
+        SecureRandom.hex(32)
       end
     end
   end

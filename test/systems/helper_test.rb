@@ -5,6 +5,7 @@ class HelperTest < ActionDispatch::SystemTestCase
   driven_by :rack_test
 
   def setup
+    Aikotoba.enable_confirm = false
     Aikotoba.authentication_strategy = :password_only
   end
 

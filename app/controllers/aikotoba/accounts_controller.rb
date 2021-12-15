@@ -11,6 +11,7 @@ module Aikotoba
       ActiveRecord::Base.transaction do
         @account.save!
         after_create_account_process
+        @account.send_confirm_token!
       end
       redirect_to after_sign_up_path, flash: {notice: successed_message}
     rescue ActiveRecord::RecordInvalid
