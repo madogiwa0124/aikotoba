@@ -27,7 +27,7 @@ module Dummy
     config.active_record.verbose_query_logs = true
     config.action_mailer.raise_delivery_errors = false
     config.action_mailer.perform_caching = false
-    config.action_mailer.delivery_method = :letter_opener_web
+    config.action_mailer.delivery_method = Rails.env.test? ? :test : :letter_opener_web
     config.action_mailer.default_url_options = {host: "localhost", port: 3000}
   end
 end
