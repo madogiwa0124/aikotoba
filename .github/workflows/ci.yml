@@ -20,6 +20,8 @@ jobs:
           bin/rails db:create RAILS_ENV=test
           bin/rails db:migrate RAILS_ENV=test
       - name: lint
-        run: bundle exec standardrb
+        run: |
+          bundle exec standardrb
+          bundle exec brakeman
       - name: test
         run: bin/rails test

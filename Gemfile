@@ -5,6 +5,7 @@ git_source(:github) { |repo| "https://github.com/#{repo}.git" }
 gemspec
 
 group :development do
+  gem "brakeman"
   gem "standard"
   gem "letter_opener_web"
 end
