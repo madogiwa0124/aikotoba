@@ -2,8 +2,6 @@
 
 module Aikotoba
   class Account::Strategy::Base
-    class NotSupportError < StandardError; end
-
     def self.build_account_by(attributes)
       raise NotImplementedError
     end
