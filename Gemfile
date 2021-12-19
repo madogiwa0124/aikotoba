@@ -11,7 +11,6 @@ group :development do
 end
 
 group :development, :test do
-  gem "bcrypt"
   gem "sqlite3"
   gem "capybara"
   gem "webrick"

@@ -1,9 +1,9 @@
 # frozen_string_literal: true
 
+require 'argon2'
+
 module Aikotoba
   class Account::Strategy::EmailPassword < Account::Strategy::Base
-    include BCrypt
-
     def self.build_account_by(attributes)
       email, password = attributes.values_at("email", "password")
       new.build_account_by(email: email, password: password)
@@ -35,7 +35,7 @@ module Aikotoba
 
     def password_match?(account, password)
       return false unless account
-      Password.new(account.password_digest) == password_with_papper(password)
+      Argon2::Password.verify_password(password_with_papper(password), account.password_digest)
     end
 
     def build_with_email_password(email, password)
@@ -55,7 +55,8 @@ module Aikotoba
     end
 
     def generate_hash(password)
-      Password.create(password, cost: Aikotoba.password_stretch)
+      argon = Argon2::Password.new(t_cost: Aikotoba.password_stretch)
+      argon.create(password)
     end
   end
 end

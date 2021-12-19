@@ -2,6 +2,7 @@ PATH
   remote: .
   specs:
     aikotoba (0.1.0)
+      argon2 (~> 2.1)
       rails (~> 6.1.4, >= 6.1.4.1)
 
 GEM
@@ -68,8 +69,10 @@ GEM
       zeitwerk (~> 2.3)
     addressable (2.8.0)
       public_suffix (>= 2.0.2, < 5.0)
+    argon2 (2.1.1)
+      ffi (~> 1.14)
+      ffi-compiler (~> 1.0)
     ast (2.4.2)
-    bcrypt (3.1.16)
     brakeman (5.1.2)
     builder (3.2.4)
     capybara (3.36.0)
@@ -85,6 +88,10 @@ GEM
     concurrent-ruby (1.1.9)
     crass (1.0.6)
     erubi (1.10.0)
+    ffi (1.15.4)
+    ffi-compiler (1.0.1)
+      ffi (>= 1.0.0)
+      rake
     globalid (1.0.0)
       activesupport (>= 5.0)
     i18n (1.8.11)
@@ -201,7 +208,6 @@ PLATFORMS
 
 DEPENDENCIES
   aikotoba!
-  bcrypt
   brakeman
   capybara
   letter_opener_web
