@@ -9,7 +9,7 @@ class CreateAikotobaAccounts < ActiveRecord::Migration[6.1]
       t.integer :strategy, null: false
       t.string :email, index: {unique: true}
       t.string :password_digest, null: false, index: true
-      t.string :confirmed, null: false, default: false
+      t.boolean :confirmed, null: false, default: false
       t.string :confirm_token, index: {unique: true}
       t.timestamps
     end

@@ -18,7 +18,7 @@ ActiveRecord::Schema.define(version: 2021_12_04_121532) do
     t.integer "strategy", null: false
     t.string "email"
     t.string "password_digest", null: false
-    t.string "confirmed", default: "f", null: false
+    t.boolean "confirmed", default: false, null: false
     t.string "confirm_token"
     t.datetime "created_at", precision: 6, null: false
     t.datetime "updated_at", precision: 6, null: false
