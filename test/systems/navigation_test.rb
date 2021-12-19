@@ -4,6 +4,7 @@ class NavigationTest < ActionDispatch::SystemTestCase
   driven_by :rack_test
 
   test "PasswordOnly: sign_up -> sign_in -> sign_out" do
+    Aikotoba.enable_confirm = false
     Aikotoba.authentication_strategy = :password_only
     visit Aikotoba.sign_up_path
     click_on "Sign up"
@@ -14,9 +15,11 @@ class NavigationTest < ActionDispatch::SystemTestCase
     click_on "Sign in"
     assert_selector ".message", text: "Signed in successfully."
     click_on "Sign out"
+    Aikotoba.authentication_strategy = :email_password
   end
 
   test "EmailPassword: sign_up -> sign_in -> sign_out" do
+    Aikotoba.enable_confirm = false
     Aikotoba.authentication_strategy = :email_password
     visit Aikotoba.sign_up_path
     fill_in "Email", with: "sample1@example.com"

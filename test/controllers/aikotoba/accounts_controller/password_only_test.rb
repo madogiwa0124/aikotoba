@@ -3,10 +3,14 @@
 require "test_helper"
 require "minitest/autorun"
 
-class Aikotoba::AccountsControllerTest < ActionDispatch::IntegrationTest
+class Aikotoba::AccountsController::PasswordOnlyTest < ActionDispatch::IntegrationTest
   def setup
     Aikotoba.authentication_strategy = :password_only
     ActionController::Base.allow_forgery_protection = false
+  end
+
+  def teardown
+    Aikotoba.authentication_strategy = :email_password
   end
 
   test "success GET sign_up_path" do

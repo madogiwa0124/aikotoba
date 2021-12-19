@@ -6,9 +6,14 @@ class RequiredLoginControllerTest < ActionDispatch::IntegrationTest
   include Aikotoba::Test::AuthenticationHelper::Request
 
   def setup
+    Aikotoba.authentication_strategy = :password_only
     ActionController::Base.allow_forgery_protection = false
     @account = ::Aikotoba::Account.build_account_by({"strategy" => :password_only})
     @account.save!
+  end
+
+  def teardown
+    Aikotoba.authentication_strategy = :email_password
   end
 
   def requied_sign_in_path

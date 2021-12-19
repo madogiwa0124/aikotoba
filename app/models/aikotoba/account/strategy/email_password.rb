@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require 'argon2'
+require "argon2"
 
 module Aikotoba
   class Account::Strategy::EmailPassword < Account::Strategy::Base
