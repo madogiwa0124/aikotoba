@@ -59,7 +59,6 @@ module Aikotoba
       end
 
       def send_confirm_token!
-        return if !self.class.enable_confirm? || email.blank?
         update!(confirm_token: build_confirm_token)
         AccountMailer.with(account: self).confirm.deliver_now
       end
