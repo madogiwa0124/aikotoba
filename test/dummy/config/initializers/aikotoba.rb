@@ -14,7 +14,7 @@ Aikotoba.after_sign_up_path = "/sign_in"
 Aikotoba.after_sign_out_path = "/sign_in"
 Aikotoba.appeal_sign_in_path = "/sign_in"
 
-Aikotoba.enable_confirm = true
+# Aikotoba.enable_confirm = true
 
 Rails.application.config.to_prepare do
   Aikotoba::AccountsController.class_eval do
