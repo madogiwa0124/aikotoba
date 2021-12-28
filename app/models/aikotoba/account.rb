@@ -11,7 +11,12 @@ module Aikotoba
 
     enum strategy: {password_only: 0, email_password: 1}
 
-    scope :authenticatable, -> { enable_confirm? ? confirmed : all }
+    scope :authenticatable, -> {
+      result = all
+      result = result.confirmed if enable_confirm?
+      result = result.unlocked if enable_lock?
+      result
+    }
 
     attribute :password, :string
 
@@ -66,6 +71,53 @@ module Aikotoba
       private
 
       def build_confirm_token
+        SecureRandom.hex(32)
+      end
+    end
+
+    concerning :Lockable do
+      included do
+        scope :lockable, -> { where(strategy: lockable_strategys.keys) }
+        scope :locked, -> { where(locked: true) }
+        scope :unlocked, -> { where(locked: false) }
+      end
+
+      class_methods do
+        def enable_lock?
+          Aikotoba.enable_lock
+        end
+
+        def lockable_strategys
+          Aikotoba::Account::STRATEGIES.select { |k, v| v.lockable? }
+        end
+      end
+
+      def lock_when_exceed_max_failed_attempts!
+        ActiveRecord::Base.transaction do
+          increment!(:failed_attempts)
+          lock! if failed_attempts > max_failed_attempts
+        end
+      end
+
+      def lock!
+        update!(locked: true, unlock_token: build_unlock_token)
+      end
+
+      def unlock!
+        update!(locked: false, unlock_token: nil, failed_attempts: 0)
+      end
+
+      def send_unlock_token
+        AccountMailer.with(account: self).unlock.deliver_now
+      end
+
+      private
+
+      def max_failed_attempts
+        Aikotoba.max_failed_attempts
+      end
+
+      def build_unlock_token
         SecureRandom.hex(32)
       end
     end

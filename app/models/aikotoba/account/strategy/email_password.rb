@@ -18,6 +18,10 @@ module Aikotoba
       true
     end
 
+    def self.lockable?
+      true
+    end
+
     def build_account_by(email:, password:)
       build_with_email_password(email, password)
     end

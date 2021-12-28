@@ -107,6 +107,24 @@ Aikotoba enable routes for confirmation account. And authenticate only with a co
 
 :warning: Confirmable does not support PasswordOnly authentication.
 
+#### Lockable
+
+To enable it, set `Aikotoba.enable_lock` to `true`.
+
+```ruby
+Aikotoba.enable_lock = false
+```
+
+Aikotoba enables a route to unlock an account. Also, if the authentication fails a certain number of times, the account will be locked. Only accounts that are not locked will be authenticated.
+
+| HTTP Verb | Path           | Overview                              |
+| --------- | -------------- | ------------------------------------- |
+| GET       | /unlock        | Display page for create unlock token. |
+| POST      | /unlock        | Create a unlock token to account.     |
+| GET       | /unlock/:token | Unlock account by token.              |
+
+:warning: Lockable does not support PasswordOnly authentication.
+
 ### Configuration
 
 The following configuration parameters are supported. You can override it. (ex. `initializers/aikotoba.rb`)
@@ -132,6 +150,13 @@ Aikotoba.appeal_sign_in_path = "/sign_in"
 # for confirmable
 Aikotoba.enable_confirm = false
 Aikotoba.confirm_path = "/confirm"
+
+# for lockable
+Aikotoba.enable_lock = false
+Aikotoba.unlock_path = "/unlock"
+Aikotoba.max_failed_attempts = 10
+end
+
 ```
 
 ### Customize Message

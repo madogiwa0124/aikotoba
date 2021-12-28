@@ -23,4 +23,9 @@ module Aikotoba
   # for confirmable
   mattr_accessor(:enable_confirm) { false }
   mattr_accessor(:confirm_path) { "/confirm" }
+
+  # for lockable
+  mattr_accessor(:enable_lock) { false }
+  mattr_accessor(:unlock_path) { "/unlock" }
+  mattr_accessor(:max_failed_attempts) { 10 }
 end

@@ -30,4 +30,9 @@
       <%= link_to I18n.t(".aikotoba.confirms.new"), confirmable_new_path %>
     </p>
   <% end %>
+  <% if enable_lock? %>
+    <p>
+      <%= link_to I18n.t(".aikotoba.unlocks.new"), lockable_new_path %>
+    </p>
+  <% end %>
 </div>

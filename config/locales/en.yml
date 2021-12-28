@@ -13,9 +13,13 @@ en:
       new: Sign up
     confirms:
       new: Send confirm token
+    unlocks:
+      new: Send unlock token
     mailers:
       confirm:
         subject: "Confirmation instructions"
+      unlock:
+        subject: "Unlock instructions"
 
     messages:
       authentication:
@@ -35,3 +39,7 @@ en:
         sent: Confirm url has been sent to your email address.
         success: Confirmed you email successfully.
         failed: Oops. Confirm url sent failed.
+      unlocking:
+        sent: Unlock url has been sent to your email address.
+        success: Unlocked you account successfully.
+        failed: Oops. Unlock url sent failed.

@@ -61,4 +61,38 @@ class NavigationTest < ActionDispatch::SystemTestCase
     click_on "Sign out"
     Aikotoba.enable_confirm = false
   end
+
+  test "(Lockable) EmailPassword: sign_up -> sign_in -> locked -> generate unlock token -> unlock -> sign_in -> sign_out" do
+    Aikotoba.authentication_strategy = :email_password
+    Aikotoba.enable_lock = true
+    visit Aikotoba.sign_up_path
+    fill_in "Email", with: "sample3@example.com"
+    fill_in "Password",	with: "password"
+    click_on "Sign up"
+    assert_selector ".message", text: "Signed up successfully."
+    11.times do
+      fill_in "Email", with: "sample3@example.com"
+      fill_in "Password",	with: "wrong password"
+      click_on "Sign in"
+    end
+    fill_in "Email", with: "sample3@example.com"
+    fill_in "Password",	with: "password"
+    click_on "Sign in"
+    assert_selector ".message", text: "Oops. Signed in failed."
+    click_on "Send unlock token"
+    fill_in "Email", with: "sample3@example.com"
+    click_on "Send unlock token"
+    assert_selector ".message", text: "Unlock url has been sent to your email address."
+    unlock_email = ActionMailer::Base.deliveries.last
+    unlock_path = unlock_email.body.to_s.split(" ")[2] # NOTE: get XXX from "Unlock URL: XXX"
+    visit unlock_path
+    assert_selector ".message", text: "Unlocked you account successfully."
+    click_on "Sign in"
+    fill_in "Email", with: "sample3@example.com"
+    fill_in "Password",	with: "password"
+    click_on "Sign in"
+    assert_selector ".message", text: "Signed in successfully."
+    click_on "Sign out"
+    Aikotoba.enable_lock = false
+  end
 end

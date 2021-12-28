@@ -2,19 +2,24 @@
 
 module Aikotoba
   class Account::Strategy::PasswordOnly < Account::Strategy::Base
-    def self.build_account_by(attributes)
-      new.build_account_by(password: attributes["password"])
-    end
-
-    def self.find_account_by(credentials)
-      if Aikotoba::Account.enable_confirm? && !confirmable?
-        Rails.logger.warn("PasswordOnly is not supported confirmable. Please set Aikotoba.enable_confirm to false or use a different strategy.")
+    class << self
+      def build_account_by(attributes)
+        warning_not_supported
+        new.build_account_by(password: attributes["password"])
       end
-      new.find_account_by(password: credentials["password"])
-    end
 
-    def self.confirmable?
-      false
+      def find_account_by(credentials)
+        warning_not_supported
+        new.find_account_by(password: credentials["password"])
+      end
+
+      def confirmable?
+        false
+      end
+
+      def lockable?
+        false
+      end
     end
 
     def build_account_by(password: nil)
