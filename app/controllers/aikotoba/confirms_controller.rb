@@ -2,13 +2,15 @@
 
 module Aikotoba
   class ConfirmsController < ApplicationController
+    include Confirmable
+
     def new
       @account = ::Aikotoba::Account.new
     end
 
     def create
       account = ::Aikotoba::Account.confirmable.find_by!(email: confirm_accounts_params[:email])
-      account.send_confirm_token!
+      send_confirm_token!(account)
       redirect_to success_send_confirm_token_path, flash: {notice: success_send_confirm_token_message}
     rescue ActiveRecord::RecordNotFound
       redirect_to failed_send_confirm_token_path, flash: {alert: failed_send_confirm_token_message}
@@ -16,7 +18,7 @@ module Aikotoba
 
     def update
       account = ::Aikotoba::Account.confirmable.find_by!(confirm_token: params[:token])
-      account.update!(confirmed: true)
+      account.confirm!
       redirect_to after_confirmed_path, flash: {notice: confirmed_message}
     end
 

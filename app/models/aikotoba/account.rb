@@ -63,9 +63,16 @@ module Aikotoba
         end
       end
 
-      def send_confirm_token!
+      def update_confirm_token!
         update!(confirm_token: build_confirm_token)
+      end
+
+      def send_confirm_token
         AccountMailer.with(account: self).confirm.deliver_now
+      end
+
+      def confirm!
+        update!(confirmed: true)
       end
 
       private
