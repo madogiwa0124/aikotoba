@@ -5,9 +5,15 @@ module Aikotoba
     extend ActiveSupport::Concern
 
     def send_confirm_token_if_confirmable!(account)
-      return unless ::Aikotoba::Account.enable_confirm?
+      return unless enable_confirm?
       account.update_confirm_token!
       account.send_confirm_token
+    end
+
+    private
+
+    def enable_confirm?
+      ::Aikotoba::Account.enable_confirm?
     end
   end
 end
