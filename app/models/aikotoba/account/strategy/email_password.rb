@@ -39,7 +39,7 @@ module Aikotoba
 
     def password_match?(account, password)
       return false unless account
-      Argon2::Password.verify_password(password_with_papper(password), account.password_digest)
+      Argon2::Password.verify_password(password_with_pepper(password), account.password_digest)
     end
 
     def build_with_email_password(email, password)
@@ -51,11 +51,11 @@ module Aikotoba
     end
 
     def build_digest(password)
-      generate_hash(password_with_papper(password))
+      generate_hash(password_with_pepper(password))
     end
 
-    def password_with_papper(password)
-      "#{password}-#{Aikotoba.password_papper}"
+    def password_with_pepper(password)
+      "#{password}-#{Aikotoba.password_pepper}"
     end
 
     def generate_hash(password)

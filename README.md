@@ -115,7 +115,7 @@ require 'aikotoba'
 Aikotoba.authenticate_account_method = "current_user"
 Aikotoba.authorize_account_method = "authenticate_user!"
 Aikotoba.prevent_timing_atack = true
-Aikotoba.password_papper = "aikotoba-default-pepper"
+Aikotoba.password_pepper = "aikotoba-default-pepper"
 Aikotoba.password_stretch = 3
 Aikotoba.sign_in_path = "/sign_in"
 Aikotoba.sign_up_path = "/sign_up"
