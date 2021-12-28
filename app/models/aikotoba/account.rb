@@ -3,13 +3,13 @@
 module Aikotoba
   class Account < ApplicationRecord
     class InvalidStrategy < StandardError; end
-    STRATEGIES = {password_only: Strategy::PasswordOnly, email_password: Strategy::EmailPassword}
+    STRATEGIES = {email_password: Strategy::EmailPassword}
 
     belongs_to :authenticate_target, polymorphic: true, optional: true
     validates :password_digest, presence: true
-    validates :email, presence: true, uniqueness: true, if: :email_password?
+    validates :email, presence: true, uniqueness: true
 
-    enum strategy: {password_only: 0, email_password: 1}
+    enum strategy: {email_password: 0}
 
     scope :authenticatable, -> {
       result = all

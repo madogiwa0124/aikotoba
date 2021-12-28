@@ -7,7 +7,6 @@ class Aikotoba::LockableTest < ActionDispatch::IntegrationTest
   def setup
     ActionController::Base.allow_forgery_protection = false
     Aikotoba.enable_lock = true
-    Aikotoba.authentication_strategy = :email_password
     Aikotoba.max_failed_attempts = 2
     email, password = ["email@example.com", "password"]
     @account = ::Aikotoba::Account.build_account_by({"strategy" => :email_password, "email" => email, "password" => password})

@@ -33,8 +33,6 @@ en:
         strategies:
           email_password:
             success: Signed up successfully.
-          password_only:
-            success: Signed up successfully. Your Password is %{password} .
       confirmation:
         sent: Confirm url has been sent to your email address.
         success: Confirmed you email successfully.

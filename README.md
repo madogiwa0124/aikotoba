@@ -4,31 +4,15 @@
 
 Aikotoba meaning password in Japanese.
 
-Aikotoba is a Rails engine that makes it easy to implement simple authentication.
-
-**Available Strategies**
-
-- `email_password`(default): email and password authentication.
-- `password_only`: only password authentication.
-  - password_only is simple authentication with only a password, and is not intended to be used in a production. If you use in a production environment, please be careful about comments in the code and other security issues.
+Aikotoba is a Rails engine that makes it easy to implement simple email and password authentication.
 
 ## Demo
-
-### email_password
 
 Sign up
 ![sign_up](demo/email_password/sign_up.png "sign_up")
 
 Sign in
 ![sign_in](demo/email_password/sign_in.png "sign_up")
-
-### password_only
-
-Sign up
-![sign_up](demo/password_only/sign_up.png "sign_up")
-
-Sign in
-![sign_in](demo/password_only/sign_in.png "sign_up")
 
 ## Installation
 
@@ -94,10 +78,10 @@ end
 To enable it, set `Aikotoba.enable_confirm` to `true`.
 
 ```ruby
-Aikotoba.enable_confirm = false
+Aikotoba.enable_confirm = true
 ```
 
-Aikotoba enable routes for confirmation account. And authenticate only with a confirmed account.
+Aikotoba enable routes for confirmation account. Also, when account registers, a confirmation email is sent to the email address. Only accounts that are confirmed will be authenticated.
 
 | HTTP Verb | Path            | Overview                               |
 | --------- | --------------- | -------------------------------------- |
@@ -105,14 +89,12 @@ Aikotoba enable routes for confirmation account. And authenticate only with a co
 | POST      | /confirm        | Create a confirm token to account.     |
 | GET       | /confirm/:token | Confirm account by token.              |
 
-:warning: Confirmable does not support PasswordOnly authentication.
-
 #### Lockable
 
 To enable it, set `Aikotoba.enable_lock` to `true`.
 
 ```ruby
-Aikotoba.enable_lock = false
+Aikotoba.enable_lock = true
 ```
 
 Aikotoba enables a route to unlock an account. Also, if the authentication fails a certain number of times, the account will be locked. Only accounts that are not locked will be authenticated.
@@ -123,8 +105,6 @@ Aikotoba enables a route to unlock an account. Also, if the authentication fails
 | POST      | /unlock        | Create a unlock token to account.     |
 | GET       | /unlock/:token | Unlock account by token.              |
 
-:warning: Lockable does not support PasswordOnly authentication.
-
 ### Configuration
 
 The following configuration parameters are supported. You can override it. (ex. `initializers/aikotoba.rb`)
@@ -134,7 +114,6 @@ require 'aikotoba'
 
 Aikotoba.authenticate_account_method = "current_user"
 Aikotoba.authorize_account_method = "authenticate_user!"
-Aikotoba.authentication_strategy = :email_password
 Aikotoba.prevent_timing_atack = true
 Aikotoba.password_papper = "aikotoba-default-pepper"
 Aikotoba.password_stretch = 3
@@ -155,8 +134,6 @@ Aikotoba.confirm_path = "/confirm"
 Aikotoba.enable_lock = false
 Aikotoba.unlock_path = "/unlock"
 Aikotoba.max_failed_attempts = 10
-end
-
 ```
 
 ### Customize Message
@@ -181,7 +158,7 @@ Rails.application.config.to_prepare do
 end
 
 class Profile < ApplicationRecord
-  has_one :user, -> { your_strategy }, class_name: 'Aikotoba::Account'
+  has_one :user, class_name: 'Aikotoba::Account'
 end
 
 current_user.profile #=> Profile instance

@@ -6,11 +6,10 @@ class HelperTest < ActionDispatch::SystemTestCase
 
   def setup
     Aikotoba.enable_confirm = false
-    Aikotoba.authentication_strategy = :password_only
   end
 
   test "sign_in by helper" do
-    user = ::Aikotoba::Account.build_account_by({"strategy" => :password_only})
+    user = ::Aikotoba::Account.build_account_by({"strategy" => :email_password, "email" => "foo@bar", "password" => "foobar"})
     user.save
     aikotoba_sign_in(user)
     visit "/sensitives"
@@ -20,7 +19,7 @@ class HelperTest < ActionDispatch::SystemTestCase
   end
 
   test "sign_out by helper" do
-    user = ::Aikotoba::Account.build_account_by({"strategy" => :password_only})
+    user = ::Aikotoba::Account.build_account_by({"strategy" => :email_password})
     user.save
     aikotoba_sign_in(user)
     visit "/sensitives"

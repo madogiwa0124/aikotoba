@@ -5,14 +5,10 @@ require "minitest/autorun"
 
 class Aikotoba::ConfirmableTest < ActionDispatch::IntegrationTest
   def setup
-    Aikotoba.authentication_strategy = :email_password
     Aikotoba.enable_confirm = true
     ActionController::Base.allow_forgery_protection = false
-    @account = ::Aikotoba::Account.build_account_by({
-      "strategy" => :email_password,
-      "email" => "foo@example.com",
-      "password" => "password"
-    })
+    email, password = ["email@example.com", "password"]
+    @account = ::Aikotoba::Account.build_account_by({"strategy" => :email_password, "email" => email, "password" => password})
     @account.confirmed = false
     @account.confirm_token = SecureRandom.hex(32)
     @account.save!

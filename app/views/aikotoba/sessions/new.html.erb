@@ -9,12 +9,10 @@
   </div>
   <h1><%= I18n.t(".aikotoba.sessions.new") %></h1>
   <%= form_with model: @account, method: :post, url: sign_in_path do |f| %>
-        <% if @account.email_password? %>
-      <p>
-        <%= f.label :email %>
-        <%= f.email_field :email, reuired: true %>
-      </p>
-    <% end  %>
+    <p>
+      <%= f.label :email %>
+      <%= f.email_field :email, reuired: true %>
+    </p>
     <p>
       <%= f.label :password %>
       <%= f.password_field :password, reuired: true  %>

@@ -5,7 +5,6 @@ require "minitest/autorun"
 
 class Aikotoba::AccountsController::EmailPasswordTest < ActionDispatch::IntegrationTest
   def setup
-    Aikotoba.authentication_strategy = :email_password
     ActionController::Base.allow_forgery_protection = false
   end
 
