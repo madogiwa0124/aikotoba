@@ -10,7 +10,7 @@ module Aikotoba
 
     def create
       account = ::Aikotoba::Account.confirmable.find_by!(email: confirm_accounts_params[:email])
-      send_confirm_token!(account)
+      send_confirm_token_if_confirmable!(account)
       redirect_to success_send_confirm_token_path, flash: {notice: success_send_confirm_token_message}
     rescue ActiveRecord::RecordNotFound
       redirect_to failed_send_confirm_token_path, flash: {alert: failed_send_confirm_token_message}

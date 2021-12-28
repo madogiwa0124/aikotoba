@@ -16,10 +16,10 @@ module Aikotoba
       @account = ::Aikotoba::Account.find_account_by(session_params.to_h)
       if @account
         aikotoba_sign_in(@account)
-        reset_lock_status!(@account)
+        reset_lock_status_if_lockable!(@account)
         redirect_to after_sign_in_path, notice: successed_message
       else
-        lock_when_exceed_max_failed_attempts!(session_params["strategy"], session_params["email"])
+        lock_if_lockable_and_exceed_max_failed_attempts!(session_params["strategy"], session_params["email"])
         redirect_to failed_sign_in_path, alert: failed_message
       end
     end
