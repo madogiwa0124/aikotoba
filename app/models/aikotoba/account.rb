@@ -49,7 +49,7 @@ module Aikotoba
 
     concerning :Confirmable do
       included do
-        scope :confirmable, -> { where(strategy: confirmable_strategys.keys) }
+        scope :confirmable, -> { where(strategy: confirmable_strategies.keys) }
         scope :confirmed, -> { where(confirmed: true) }
       end
 
@@ -58,7 +58,7 @@ module Aikotoba
           Aikotoba.enable_confirm
         end
 
-        def confirmable_strategys
+        def confirmable_strategies
           Aikotoba::Account::STRATEGIES.select { |k, v| v.confirmable? }
         end
       end
@@ -84,7 +84,7 @@ module Aikotoba
 
     concerning :Lockable do
       included do
-        scope :lockable, -> { where(strategy: lockable_strategys.keys) }
+        scope :lockable, -> { where(strategy: lockable_strategies.keys) }
         scope :locked, -> { where(locked: true) }
         scope :unlocked, -> { where(locked: false) }
       end
@@ -94,7 +94,7 @@ module Aikotoba
           Aikotoba.enable_lock
         end
 
-        def lockable_strategys
+        def lockable_strategies
           Aikotoba::Account::STRATEGIES.select { |k, v| v.lockable? }
         end
       end
