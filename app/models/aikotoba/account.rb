@@ -6,19 +6,21 @@ module Aikotoba
     STRATEGIES = {email_password: Strategy::EmailPassword}
 
     belongs_to :authenticate_target, polymorphic: true, optional: true
+
+    attribute :password, :string
     validates :password_digest, presence: true
     validates :email, presence: true, uniqueness: true
 
-    enum strategy: {email_password: 0}
+    enum strategy: STRATEGIES.keys
 
+    scope :confirmable, -> { where(strategy: confirmable_strategies.keys) }
+    scope :lockable, -> { where(strategy: lockable_strategies.keys) }
     scope :authenticatable, -> {
       result = all
       result = result.confirmed if enable_confirm?
       result = result.unlocked if enable_lock?
       result
     }
-
-    attribute :password, :string
 
     after_initialize do
       if authenticate_target
@@ -38,6 +40,22 @@ module Aikotoba
         strategy.find_account_by(attributes)
       end
 
+      def enable_lock?
+        Aikotoba.enable_lock
+      end
+
+      def enable_confirm?
+        Aikotoba.enable_confirm
+      end
+
+      def lockable_strategies
+        STRATEGIES.select { |k, v| v.lockable? }
+      end
+
+      def confirmable_strategies
+        STRATEGIES.select { |k, v| v.confirmable? }
+      end
+
       private
 
       def authenticate_strategy(strategy)
@@ -49,18 +67,7 @@ module Aikotoba
 
     concerning :Confirmable do
       included do
-        scope :confirmable, -> { where(strategy: confirmable_strategies.keys) }
         scope :confirmed, -> { where(confirmed: true) }
-      end
-
-      class_methods do
-        def enable_confirm?
-          Aikotoba.enable_confirm
-        end
-
-        def confirmable_strategies
-          Aikotoba::Account::STRATEGIES.select { |k, v| v.confirmable? }
-        end
       end
 
       def update_confirm_token!
@@ -84,19 +91,8 @@ module Aikotoba
 
     concerning :Lockable do
       included do
-        scope :lockable, -> { where(strategy: lockable_strategies.keys) }
         scope :locked, -> { where(locked: true) }
         scope :unlocked, -> { where(locked: false) }
-      end
-
-      class_methods do
-        def enable_lock?
-          Aikotoba.enable_lock
-        end
-
-        def lockable_strategies
-          Aikotoba::Account::STRATEGIES.select { |k, v| v.lockable? }
-        end
       end
 
       def lock_when_exceed_max_failed_attempts!

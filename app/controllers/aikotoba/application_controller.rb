@@ -9,11 +9,11 @@ module Aikotoba
     end
 
     def enable_confirm?
-      Aikotoba.enable_confirm
+      ::Aikotoba::Account.enable_confirm?
     end
 
     def enable_lock?
-      Aikotoba.enable_lock
+      ::Aikotoba::Account.enable_lock?
     end
   end
 end
