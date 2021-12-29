@@ -3,9 +3,8 @@ require "test_helper"
 class NavigationTest < ActionDispatch::SystemTestCase
   driven_by :rack_test
 
-  test "EmailPassword: sign_up -> sign_in -> sign_out" do
+  test "sign_up -> sign_in -> sign_out" do
     Aikotoba.enable_confirm = false
-    Aikotoba.authentication_strategy = :email_password
     visit Aikotoba.sign_up_path
     fill_in "Email", with: "sample1@example.com"
     fill_in "Password",	with: "password"
@@ -18,8 +17,7 @@ class NavigationTest < ActionDispatch::SystemTestCase
     click_on "Sign out"
   end
 
-  test "(Confirmable) EmailPassword: sign_up -> generate confirm token -> confirm -> sign_in -> sign_out" do
-    Aikotoba.authentication_strategy = :email_password
+  test "(Confirmable) sign_up -> generate confirm token -> confirm -> sign_in -> sign_out" do
     Aikotoba.enable_confirm = true
     visit Aikotoba.sign_up_path
     fill_in "Email", with: "sample2@example.com"
@@ -47,8 +45,7 @@ class NavigationTest < ActionDispatch::SystemTestCase
     Aikotoba.enable_confirm = false
   end
 
-  test "(Lockable) EmailPassword: sign_up -> sign_in -> locked -> generate unlock token -> unlock -> sign_in -> sign_out" do
-    Aikotoba.authentication_strategy = :email_password
+  test "(Lockable) sign_up -> sign_in -> locked -> generate unlock token -> unlock -> sign_in -> sign_out" do
     Aikotoba.enable_lock = true
     visit Aikotoba.sign_up_path
     fill_in "Email", with: "sample3@example.com"
