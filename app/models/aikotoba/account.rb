@@ -4,10 +4,13 @@ module Aikotoba
   class Account < ApplicationRecord
     class InvalidStrategy < StandardError; end
     STRATEGIES = {email_password: Strategy::EmailPassword}
+    PASSWORD_MINIMUM_LENGTH = Aikotoba.password_minimum_length
 
     belongs_to :authenticate_target, polymorphic: true, optional: true
 
     attribute :password, :string
+    validates :password, presence: true, on: :create
+    validates :password, length: {minimum: PASSWORD_MINIMUM_LENGTH}, allow_blank: true, on: :create
     validates :password_digest, presence: true
     validates :email, presence: true, uniqueness: true
 

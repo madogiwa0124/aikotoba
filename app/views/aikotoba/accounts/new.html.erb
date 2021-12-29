@@ -9,6 +9,7 @@
   </div>
   <h1><%= I18n.t(".aikotoba.accounts.new") %></h1>
   <%= form_with model: @account, method: :post, url: sign_up_path do |f| %>
+    <%= render "aikotoba/common/errors", resource: @account %>
     <p>
       <%= f.label :email %>
       <%= f.email_field :email, reuired: true %>

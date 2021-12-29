@@ -14,7 +14,7 @@ class Aikotoba::AccountsController::EmailPasswordTest < ActionDispatch::Integrat
     assert_select "h1", I18n.t(".aikotoba.accounts.new")
   end
 
-  test "success POST sign_up_path" do
+  test "success POST sign_up_path when valid account attributes" do
     email, password = ["email@example.com", "password"]
     post Aikotoba.sign_up_path, params: {account: {strategy: :email_password, email: email, password: password}}
     assert_redirected_to Aikotoba.after_sign_up_path
@@ -22,9 +22,12 @@ class Aikotoba::AccountsController::EmailPasswordTest < ActionDispatch::Integrat
     assert_equal message, flash[:notice]
   end
 
-  test "failed POST sign_up_path" do
-    email, password = ["", "password"]
+  test "failed POST sign_up_path when invalid account attributes" do
+    email, password = ["", "pass"]
     post Aikotoba.sign_up_path, params: {account: {strategy: :email_password, email: email, password: password}}
     assert_equal I18n.t(".aikotoba.messages.registration.failed"), flash[:alert]
+    messages = @controller.instance_variable_get(:@account).errors.full_messages
+    assert_includes messages, "Password is too short (minimum is 8 characters)"
+    assert_includes messages, "Email can't be blank"
   end
 end
