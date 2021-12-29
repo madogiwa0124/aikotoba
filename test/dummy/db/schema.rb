@@ -15,7 +15,6 @@ ActiveRecord::Schema.define(version: 2021_12_04_121532) do
   create_table "aikotoba_accounts", force: :cascade do |t|
     t.string "authenticate_target_type"
     t.integer "authenticate_target_id"
-    t.integer "strategy", null: false
     t.string "email", null: false
     t.string "password_digest", null: false
     t.boolean "confirmed", default: false, null: false

@@ -6,7 +6,6 @@ require "aikotoba/engine"
 module Aikotoba
   mattr_accessor(:authenticate_account_method) { "current_user" }
   mattr_accessor(:authorize_account_method) { "authenticate_user!" }
-  mattr_accessor(:authentication_strategy) { :email_password }
   mattr_accessor(:session_key) { "aikotoba-user-id" }
   mattr_accessor(:prevent_timing_atack) { true }
   mattr_accessor(:password_pepper) { "aikotoba-default-pepper" }

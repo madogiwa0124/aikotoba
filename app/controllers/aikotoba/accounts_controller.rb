@@ -5,11 +5,11 @@ module Aikotoba
     include Confirmable
 
     def new
-      @account = ::Aikotoba::Account.new(strategy: Aikotoba.authentication_strategy)
+      @account = ::Aikotoba::Account.new
     end
 
     def create
-      @account = ::Aikotoba::Account.build_account_by(strategy: accounts_params[:strategy], attributes: accounts_params.to_h.symbolize_keys)
+      @account = ::Aikotoba::Account.build_account_by(attributes: accounts_params.to_h.symbolize_keys)
       ActiveRecord::Base.transaction do
         @account.save!
         after_create_account_process
@@ -32,7 +32,7 @@ module Aikotoba
     end
 
     def successed_message
-      I18n.t(".aikotoba.messages.registration.strategies.#{@account.strategy}.success", password: @account.password)
+      I18n.t(".aikotoba.messages.registration.success")
     end
 
     def failed_message
@@ -40,7 +40,7 @@ module Aikotoba
     end
 
     def accounts_params
-      params.require(:account).permit(:email, :password, :strategy)
+      params.require(:account).permit(:email, :password)
     end
   end
 end

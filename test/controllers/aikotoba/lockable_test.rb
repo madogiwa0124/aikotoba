@@ -9,7 +9,7 @@ class Aikotoba::LockableTest < ActionDispatch::IntegrationTest
     Aikotoba.enable_lock = true
     Aikotoba.max_failed_attempts = 2
     email, password = ["email@example.com", "password"]
-    @account = ::Aikotoba::Account.build_account_by(strategy: :email_password, attributes: {email: email, password: password})
+    @account = ::Aikotoba::Account.build_account_by(attributes: {email: email, password: password})
     @account.save!
   end
 
@@ -67,13 +67,13 @@ class Aikotoba::LockableTest < ActionDispatch::IntegrationTest
 
   test "account locked with sent unlock mail when failed POST sign_in_path exceed max failed attempts." do
     @account.unlock!
-    post aikotoba.sign_in_path, params: {account: {email: @account.email, password: "wrong password", strategy: @account.strategy}}
-    post aikotoba.sign_in_path, params: {account: {email: @account.email, password: "wrong password", strategy: @account.strategy}}
+    post aikotoba.sign_in_path, params: {account: {email: @account.email, password: "wrong password"}}
+    post aikotoba.sign_in_path, params: {account: {email: @account.email, password: "wrong password"}}
     assert_equal @account.reload.locked?, false
     assert_equal @account.reload.failed_attempts, 2
 
     assert_emails 1 do
-      post aikotoba.sign_in_path, params: {account: {email: @account.email, password: "wrong password", strategy: @account.strategy}}
+      post aikotoba.sign_in_path, params: {account: {email: @account.email, password: "wrong password"}}
       assert_equal @account.reload.locked?, true
       assert_equal @account.reload.failed_attempts, 3
       assert_redirected_to Aikotoba.failed_sign_in_path
@@ -89,23 +89,23 @@ class Aikotoba::LockableTest < ActionDispatch::IntegrationTest
 
   test "failed POST sign_in_path by locked accout." do
     @account.lock!
-    post aikotoba.sign_in_path, params: {account: {email: @account.email, password: "password", strategy: @account.strategy}}
+    post aikotoba.sign_in_path, params: {account: {email: @account.email, password: "password"}}
     assert_redirected_to Aikotoba.failed_sign_in_path
     assert_equal I18n.t(".aikotoba.messages.authentication.failed"), flash[:alert]
   end
 
   test "succes POST sign_in_path by unlocked accout." do
     @account.unlock!
-    post aikotoba.sign_in_path, params: {account: {email: @account.email, password: "password", strategy: @account.strategy}}
+    post aikotoba.sign_in_path, params: {account: {email: @account.email, password: "password"}}
     assert_redirected_to Aikotoba.after_sign_in_path
     assert_equal I18n.t(".aikotoba.messages.authentication.success"), flash[:notice]
   end
 
   test "reset lock status when succes POST sign_in_path." do
     @account.unlock!
-    post aikotoba.sign_in_path, params: {account: {email: @account.email, password: "wrong password", strategy: @account.strategy}}
+    post aikotoba.sign_in_path, params: {account: {email: @account.email, password: "wrong password"}}
     assert_equal @account.reload.failed_attempts, 1
-    post aikotoba.sign_in_path, params: {account: {email: @account.email, password: "password", strategy: @account.strategy}}
+    post aikotoba.sign_in_path, params: {account: {email: @account.email, password: "password"}}
     assert_redirected_to Aikotoba.after_sign_in_path
     assert_equal I18n.t(".aikotoba.messages.authentication.success"), flash[:notice]
     assert_equal @account.reload.failed_attempts, 0

@@ -2,8 +2,6 @@
 
 module Aikotoba
   class Account < ApplicationRecord
-    class InvalidStrategy < StandardError; end
-    STRATEGIES = {email_password: Strategy::EmailPassword}
     PASSWORD_MINIMUM_LENGTH = Aikotoba.password_minimum_length
 
     belongs_to :authenticate_target, polymorphic: true, optional: true
@@ -14,10 +12,6 @@ module Aikotoba
     validates :password_digest, presence: true
     validates :email, presence: true, uniqueness: true
 
-    enum strategy: STRATEGIES.keys
-
-    scope :confirmable, -> { where(strategy: confirmable_strategies.keys) }
-    scope :lockable, -> { where(strategy: lockable_strategies.keys) }
     scope :authenticatable, -> {
       result = all
       result = result.confirmed if enable_confirm?
@@ -33,14 +27,12 @@ module Aikotoba
     end
 
     class << self
-      def build_account_by(strategy:, attributes:)
-        strategy = authenticate_strategy(strategy)
-        strategy.build_account_by(attributes)
+      def build_account_by(attributes:)
+        Strategy::EmailPassword.build_account_by(attributes)
       end
 
-      def find_account_by(strategy:, attributes:)
-        strategy = authenticate_strategy(strategy)
-        strategy.find_account_by(attributes)
+      def find_account_by(attributes:)
+        Strategy::EmailPassword.find_account_by(attributes)
       end
 
       def enable_lock?
@@ -49,22 +41,6 @@ module Aikotoba
 
       def enable_confirm?
         Aikotoba.enable_confirm
-      end
-
-      def lockable_strategies
-        STRATEGIES.select { |k, v| v.lockable? }
-      end
-
-      def confirmable_strategies
-        STRATEGIES.select { |k, v| v.confirmable? }
-      end
-
-      private
-
-      def authenticate_strategy(strategy)
-        target = STRATEGIES[strategy.to_sym]
-        raise InvalidStrategy unless target
-        target
       end
     end
 

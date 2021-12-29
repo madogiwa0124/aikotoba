@@ -8,7 +8,7 @@ class Aikotoba::ConfirmableTest < ActionDispatch::IntegrationTest
     Aikotoba.enable_confirm = true
     ActionController::Base.allow_forgery_protection = false
     email, password = ["email@example.com", "password"]
-    @account = ::Aikotoba::Account.build_account_by(strategy: :email_password, attributes: {email: email, password: password})
+    @account = ::Aikotoba::Account.build_account_by(attributes: {email: email, password: password})
     @account.confirmed = false
     @account.confirm_token = SecureRandom.hex(32)
     @account.save!
@@ -53,9 +53,9 @@ class Aikotoba::ConfirmableTest < ActionDispatch::IntegrationTest
   end
 
   test "success POST sign_up_path with comfirm token send" do
-    post aikotoba.sign_up_path, params: {account: {strategy: :email_password, email: "bar@example.com", password: "pass"}}
+    post aikotoba.sign_up_path, params: {account: {email: "bar@example.com", password: "password"}}
     assert_redirected_to Aikotoba.after_sign_up_path
-    assert_equal I18n.t(".aikotoba.messages.registration.strategies.email_password.success"), flash[:notice]
+    assert_equal I18n.t(".aikotoba.messages.registration.success"), flash[:notice]
     account = @controller.instance_variable_get("@account")
     confirm_email = ActionMailer::Base.deliveries.last
     assert_equal I18n.t(".aikotoba.mailers.confirm.subject"), confirm_email.subject
@@ -66,13 +66,13 @@ class Aikotoba::ConfirmableTest < ActionDispatch::IntegrationTest
 
   test "success POST sign_in_path by comfirmed account" do
     get aikotoba.confirmable_confirm_path(token: @account.confirm_token)
-    post aikotoba.sign_in_path, params: {account: {strategy: :email_password, email: @account.email, password: @account.password}}
+    post aikotoba.sign_in_path, params: {account: {email: @account.email, password: @account.password}}
     assert_redirected_to Aikotoba.after_sign_in_path
     assert_equal I18n.t(".aikotoba.messages.authentication.success"), flash[:notice]
   end
 
   test "failed POST sign_in_path by not comfirmed account" do
-    post aikotoba.sign_in_path, params: {account: {strategy: :email_password, email: @account.email, password: @account.password}}
+    post aikotoba.sign_in_path, params: {account: {email: @account.email, password: @account.password}}
     assert_redirected_to Aikotoba.failed_sign_in_path
     assert_equal I18n.t(".aikotoba.messages.authentication.failed"), flash[:alert]
   end

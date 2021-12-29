@@ -7,9 +7,9 @@ module Aikotoba
       account.unlock! if account.failed_attempts.positive?
     end
 
-    def lock_if_lockable_and_exceed_max_failed_attempts!(strategy, email)
+    def lock_if_lockable_and_exceed_max_failed_attempts!(email:)
       return unless enable_lock?
-      account = Aikotoba::Account.where(strategy: strategy).find_by(email: email)
+      account = Aikotoba::Account.find_by(email: email)
       if account
         account.lock_when_exceed_max_failed_attempts!
         account.send_unlock_token if account.locked?

@@ -15,14 +15,6 @@ module Aikotoba
         new(email, password).find_account
       end
 
-      def self.confirmable?
-        true
-      end
-
-      def self.lockable?
-        true
-      end
-
       def initialize(email, password)
         @email, @password = email, password
         raise InvalidAttributeError, "EmailPassword requires an email and password." if [@email, @password].any?(&:nil?)
@@ -30,14 +22,13 @@ module Aikotoba
 
       def build_account
         Aikotoba::Account.new(email: @email, password: @password).tap do |resource|
-          resource.strategy = :email_password
           password_digest = build_digest(resource.password)
           resource.assign_attributes(password_digest: password_digest)
         end
       end
 
       def find_account
-        account = Aikotoba::Account.authenticatable.email_password.find_by(email: @email)
+        account = Aikotoba::Account.authenticatable.find_by(email: @email)
         account if account && password_match?(account, @password)
       end
 

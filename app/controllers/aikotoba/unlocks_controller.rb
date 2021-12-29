@@ -7,7 +7,7 @@ module Aikotoba
     end
 
     def create
-      account = ::Aikotoba::Account.lockable.locked.find_by!(email: unlock_accounts_params[:email])
+      account = ::Aikotoba::Account.locked.find_by!(email: unlock_accounts_params[:email])
       account.send_unlock_token
       redirect_to success_send_unlock_token_path, flash: {notice: success_send_unlock_token_message}
     rescue ActiveRecord::RecordNotFound
@@ -15,7 +15,7 @@ module Aikotoba
     end
 
     def update
-      account = ::Aikotoba::Account.lockable.find_by!(unlock_token: params[:token])
+      account = ::Aikotoba::Account.find_by!(unlock_token: params[:token])
       account.unlock!
       redirect_to after_unlocked_path, flash: {notice: unlocked_message}
     end

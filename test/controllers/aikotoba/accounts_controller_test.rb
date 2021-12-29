@@ -16,15 +16,15 @@ class Aikotoba::AccountsController::EmailPasswordTest < ActionDispatch::Integrat
 
   test "success POST sign_up_path when valid account attributes" do
     email, password = ["email@example.com", "password"]
-    post Aikotoba.sign_up_path, params: {account: {strategy: :email_password, email: email, password: password}}
+    post Aikotoba.sign_up_path, params: {account: {email: email, password: password}}
     assert_redirected_to Aikotoba.after_sign_up_path
-    message = I18n.t(".aikotoba.messages.registration.strategies.email_password.success")
+    message = I18n.t(".aikotoba.messages.registration.success")
     assert_equal message, flash[:notice]
   end
 
   test "failed POST sign_up_path when invalid account attributes" do
     email, password = ["", "pass"]
-    post Aikotoba.sign_up_path, params: {account: {strategy: :email_password, email: email, password: password}}
+    post Aikotoba.sign_up_path, params: {account: {email: email, password: password}}
     assert_equal I18n.t(".aikotoba.messages.registration.failed"), flash[:alert]
     messages = @controller.instance_variable_get(:@account).errors.full_messages
     assert_includes messages, "Password is too short (minimum is 8 characters)"
