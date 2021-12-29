@@ -64,7 +64,7 @@ module Aikotoba
       private
 
       def build_confirm_token
-        SecureRandom.hex(32)
+        SecureRandom.urlsafe_base64(32)
       end
     end
 
@@ -100,7 +100,7 @@ module Aikotoba
       end
 
       def build_unlock_token
-        SecureRandom.hex(32)
+        SecureRandom.urlsafe_base64(32)
       end
     end
   end
