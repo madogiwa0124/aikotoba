@@ -6,12 +6,13 @@ class HelperTest < ActionDispatch::SystemTestCase
 
   def setup
     Aikotoba.enable_confirm = false
+    email, password = ["email@example.com", "password"]
+    @account = ::Aikotoba::Account.build_account_by(strategy: :email_password, attributes: {email: email, password: password})
+    @account.save
   end
 
   test "sign_in by helper" do
-    user = ::Aikotoba::Account.build_account_by({"strategy" => :email_password, "email" => "foo@bar", "password" => "foobar"})
-    user.save
-    aikotoba_sign_in(user)
+    aikotoba_sign_in(@account)
     visit "/sensitives"
     assert_selector "h1", text: "Sensitive Page"
     click_on "Sign out"
@@ -19,9 +20,7 @@ class HelperTest < ActionDispatch::SystemTestCase
   end
 
   test "sign_out by helper" do
-    user = ::Aikotoba::Account.build_account_by({"strategy" => :email_password})
-    user.save
-    aikotoba_sign_in(user)
+    aikotoba_sign_in(@account)
     visit "/sensitives"
     aikotoba_sign_out
     visit "/sensitives"

@@ -8,7 +8,7 @@ class Aikotoba::SessionsController::EmailPasswordTest < ActionDispatch::Integrat
     Aikotoba.authentication_strategy = :email_password
     Aikotoba.enable_confirm = false
     email, password = ["email@example.com", "password"]
-    @account = ::Aikotoba::Account.build_account_by({"strategy" => :email_password, "email" => email, "password" => password})
+    @account = ::Aikotoba::Account.build_account_by(strategy: :email_password, attributes: {email: email, password: password})
     @account.save!
   end
 

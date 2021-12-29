@@ -5,12 +5,12 @@ require "argon2"
 module Aikotoba
   class Account::Strategy::EmailPassword < Account::Strategy::Base
     def self.build_account_by(attributes)
-      email, password = attributes.values_at("email", "password")
+      email, password = attributes.values_at(:email, :password)
       new.build_account_by(email: email, password: password)
     end
 
-    def self.find_account_by(credentials)
-      email, password = credentials.values_at("email", "password")
+    def self.find_account_by(attributes)
+      email, password = attributes.values_at(:email, :password)
       new.find_account_by(email: email, password: password)
     end
 

@@ -8,7 +8,7 @@ class Aikotoba::ConfirmableTest < ActionDispatch::IntegrationTest
     Aikotoba.enable_confirm = true
     ActionController::Base.allow_forgery_protection = false
     email, password = ["email@example.com", "password"]
-    @account = ::Aikotoba::Account.build_account_by({"strategy" => :email_password, "email" => email, "password" => password})
+    @account = ::Aikotoba::Account.build_account_by(strategy: :email_password, attributes: {email: email, password: password})
     @account.confirmed = false
     @account.confirm_token = SecureRandom.hex(32)
     @account.save!

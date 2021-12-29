@@ -9,7 +9,7 @@ module Aikotoba
     end
 
     def create
-      @account = ::Aikotoba::Account.build_account_by(accounts_params.to_h)
+      @account = ::Aikotoba::Account.build_account_by(strategy: accounts_params[:strategy], attributes: accounts_params.to_h.symbolize_keys)
       ActiveRecord::Base.transaction do
         @account.save!
         after_create_account_process

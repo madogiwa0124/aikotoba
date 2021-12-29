@@ -28,14 +28,14 @@ module Aikotoba
     end
 
     class << self
-      def build_account_by(attributes)
-        strategy = authenticate_strategy(attributes["strategy"])
+      def build_account_by(strategy:, attributes:)
+        strategy = authenticate_strategy(strategy)
         strategy.build_account_by(attributes)
       end
 
-      def find_account_by(credentials)
-        strategy = authenticate_strategy(credentials["strategy"])
-        strategy.find_account_by(credentials)
+      def find_account_by(strategy:, attributes:)
+        strategy = authenticate_strategy(strategy)
+        strategy.find_account_by(attributes)
       end
 
       private
