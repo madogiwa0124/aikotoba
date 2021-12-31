@@ -16,6 +16,7 @@ Aikotoba.appeal_sign_in_path = "/sign_in"
 
 # Aikotoba.enable_confirm = true
 # Aikotoba.enable_lock= true
+# Aikotoba.enable_recover = true
 
 Rails.application.config.to_prepare do
   Aikotoba::AccountsController.class_eval do

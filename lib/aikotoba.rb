@@ -28,4 +28,8 @@ module Aikotoba
   mattr_accessor(:enable_lock) { false }
   mattr_accessor(:unlock_path) { "/unlock" }
   mattr_accessor(:max_failed_attempts) { 10 }
+
+  # for recoverable
+  mattr_accessor(:enable_recover) { false }
+  mattr_accessor(:recover_path) { "/recover" }
 end

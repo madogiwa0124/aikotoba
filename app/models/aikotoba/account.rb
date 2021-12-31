@@ -42,6 +42,10 @@ module Aikotoba
       def enable_confirm?
         Aikotoba.enable_confirm
       end
+
+      def enable_recover?
+        Aikotoba.enable_recover
+      end
     end
 
     concerning :Confirmable do
@@ -101,6 +105,29 @@ module Aikotoba
       end
 
       def build_unlock_token
+        SecureRandom.urlsafe_base64(32)
+      end
+    end
+
+    concerning :Recoverable do
+      def recover!(password:)
+        password = Password.new(value: password)
+        assign_attributes(password: password.value, password_digest: password.digest, recover_token: nil)
+        # NOTE: To verify the password, run the verification in the same context as when it was created.
+        save!(context: :create)
+      end
+
+      def update_recover_token!
+        update!(recover_token: build_recover_token)
+      end
+
+      def send_recover_token
+        AccountMailer.with(account: self).recover.deliver_now
+      end
+
+      private
+
+      def build_recover_token
         SecureRandom.urlsafe_base64(32)
       end
     end

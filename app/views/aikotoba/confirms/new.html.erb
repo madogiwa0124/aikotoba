@@ -11,7 +11,7 @@
   <%= form_with model: @account, method: :post, url: confirmable_create_path do |f| %>
     <p>
       <%= f.label :email %>
-      <%= f.email_field :email, reuired: true %>
+      <%= f.email_field :email, required: true %>
     </p>
     <%= f.submit I18n.t(".aikotoba.confirms.new") %>
   <% end %>

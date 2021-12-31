@@ -12,11 +12,11 @@
     <%= render "aikotoba/common/errors", resource: @account %>
     <p>
       <%= f.label :email %>
-      <%= f.email_field :email, reuired: true %>
+      <%= f.email_field :email, required: true %>
     </p>
     <p>
       <%= f.label :password %>
-      <%= f.password_field :password, reuired: true  %>
+      <%= f.password_field :password, required: true  %>
     </p>
     <%= f.submit I18n.t(".aikotoba.accounts.new") %>
   <% end %>
@@ -31,6 +31,11 @@
   <% if enable_lock? %>
     <p>
       <%= link_to I18n.t(".aikotoba.unlocks.new"), lockable_new_path %>
+    </p>
+  <% end %>
+  <% if enable_recover? %>
+    <p>
+      <%= link_to I18n.t(".aikotoba.recoveries.new"), recoverable_new_path %>
     </p>
   <% end %>
 </div>

@@ -1,0 +1,23 @@
+<div class="aikotoba-recoveries-edit">
+  <div class="message">
+    <% if notice %>
+      <p><%= notice %></p>
+    <% end %>
+    <% if alert %>
+      <p><%= alert %></p>
+    <% end %>
+  </div>
+  <h1><%= I18n.t(".aikotoba.recoveries.edit") %></h1>
+  <%= form_with model: @account, method: :patch, url: recoverable_update_path(token: @account.recover_token) do |f| %>
+    <%= render "aikotoba/common/errors", resource: @account %>
+    <p>
+      <%= f.label :password %>
+      <%= f.password_field :password, required: true  %>
+    </p>
+    <%= f.submit I18n.t(".aikotoba.recoveries.edit") %>
+  <% end %>
+  <p>
+    <%= link_to I18n.t(".aikotoba.accounts.new"), sign_up_path %>
+    <%= link_to I18n.t(".aikotoba.sessions.new"), sign_in_path %>
+  </p>
+</div>

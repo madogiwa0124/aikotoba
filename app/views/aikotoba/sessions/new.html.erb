@@ -11,11 +11,11 @@
   <%= form_with model: @account, method: :post, url: sign_in_path do |f| %>
     <p>
       <%= f.label :email %>
-      <%= f.email_field :email, reuired: true %>
+      <%= f.email_field :email, required: true %>
     </p>
     <p>
       <%= f.label :password %>
-      <%= f.password_field :password, reuired: true  %>
+      <%= f.password_field :password, required: true  %>
     </p>
     <%= f.submit I18n.t(".aikotoba.sessions.new") %>
   <% end %>
@@ -30,6 +30,11 @@
   <% if enable_lock? %>
     <p>
       <%= link_to I18n.t(".aikotoba.unlocks.new"), lockable_new_path %>
+    </p>
+  <% end %>
+  <% if enable_recover? %>
+    <p>
+      <%= link_to I18n.t(".aikotoba.recoveries.new"), recoverable_new_path %>
     </p>
   <% end %>
 </div>

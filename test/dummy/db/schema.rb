@@ -22,12 +22,14 @@ ActiveRecord::Schema.define(version: 2021_12_04_121532) do
     t.integer "failed_attempts", default: 0, null: false
     t.boolean "locked", default: false, null: false
     t.string "unlock_token"
+    t.string "recover_token"
     t.datetime "created_at", precision: 6, null: false
     t.datetime "updated_at", precision: 6, null: false
     t.index ["authenticate_target_type", "authenticate_target_id"], name: "authenticate_target"
     t.index ["confirm_token"], name: "index_aikotoba_accounts_on_confirm_token", unique: true
     t.index ["email"], name: "index_aikotoba_accounts_on_email", unique: true
     t.index ["password_digest"], name: "index_aikotoba_accounts_on_password_digest"
+    t.index ["recover_token"], name: "index_aikotoba_accounts_on_recover_token", unique: true
     t.index ["unlock_token"], name: "index_aikotoba_accounts_on_unlock_token", unique: true
   end
 

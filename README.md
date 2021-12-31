@@ -105,6 +105,23 @@ Aikotoba enables a route to unlock an account. Also, if the authentication fails
 | POST      | /unlock        | Create a unlock token to account.     |
 | GET       | /unlock/:token | Unlock account by token.              |
 
+#### Recoverable
+
+To enable it, set `Aikotoba.enable_recover` to `true`.
+
+```ruby
+Aikotoba.enable_recover = true
+```
+
+Aikotoba enables a route to recover an account by password reset.
+
+| HTTP Verb | Path            | Overview                                            |
+| --------- | --------------- | --------------------------------------------------- |
+| GET       | /recover        | Display page for create recover token.              |
+| POST      | /recover        | Create a recover token to account.                  |
+| GET       | /recover/:token | Display page for recover account by password reset. |
+| PATCH     | /recover/:token | Recover account by password reset.                  |
+
 ### Configuration
 
 The following configuration parameters are supported. You can override it. (ex. `initializers/aikotoba.rb`)
@@ -135,6 +152,10 @@ Aikotoba.confirm_path = "/confirm"
 Aikotoba.enable_lock = false
 Aikotoba.unlock_path = "/unlock"
 Aikotoba.max_failed_attempts = 10
+
+# for Recoverable
+Aikotoba.enable_recover = false
+Aikotoba.recover_path = "/unlock"
 ```
 
 ### Customize Message

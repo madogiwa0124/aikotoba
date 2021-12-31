@@ -15,11 +15,16 @@ en:
       new: Send confirm token
     unlocks:
       new: Send unlock token
+    recoveries:
+      new: Send password reset token
+      edit: Password reset
     mailers:
       confirm:
         subject: "Confirmation instructions"
       unlock:
         subject: "Unlock instructions"
+      recover:
+        subject: "Password reset instructions"
 
     messages:
       authentication:
@@ -38,3 +43,8 @@ en:
         sent: Unlock url has been sent to your email address.
         success: Unlocked you account successfully.
         failed: Oops. Unlock url sent failed.
+      recovery:
+        sent: Password reset url has been sent to your email address.
+        sent_failed: Oops. Password reset url sent failed.
+        success: Password reset you account successfully.
+        failed: Oops. Password reset failed.

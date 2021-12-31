@@ -2,7 +2,7 @@
 
 module Aikotoba
   class ApplicationController < ::ApplicationController
-    helper_method :enable_confirm?, :enable_lock?
+    helper_method :enable_confirm?, :enable_lock?, :enable_recover?
 
     def aikotoba_controller?
       true
@@ -10,6 +10,10 @@ module Aikotoba
 
     def enable_confirm?
       ::Aikotoba::Account.enable_confirm?
+    end
+
+    def enable_recover?
+      ::Aikotoba::Account.enable_recover?
     end
 
     def enable_lock?

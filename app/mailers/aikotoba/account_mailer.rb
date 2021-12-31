@@ -11,5 +11,11 @@ module Aikotoba
       @unlock_url = lockable_unlock_url(token: @account.unlock_token)
       mail(to: @account.email, subject: I18n.t(".aikotoba.mailers.unlock.subject"))
     end
+
+    def recover
+      @account = params[:account]
+      @recover_url = recoverable_edit_url(token: @account.recover_token)
+      mail(to: @account.email, subject: I18n.t(".aikotoba.mailers.recover.subject"))
+    end
   end
 end

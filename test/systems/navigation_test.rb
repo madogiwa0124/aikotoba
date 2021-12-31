@@ -4,7 +4,6 @@ class NavigationTest < ActionDispatch::SystemTestCase
   driven_by :rack_test
 
   test "sign_up -> sign_in -> sign_out" do
-    Aikotoba.enable_confirm = false
     visit Aikotoba.sign_up_path
     fill_in "Email", with: "sample1@example.com"
     fill_in "Password",	with: "password"
@@ -76,5 +75,30 @@ class NavigationTest < ActionDispatch::SystemTestCase
     assert_selector ".message", text: "Signed in successfully."
     click_on "Sign out"
     Aikotoba.enable_lock = false
+  end
+
+  test "(Recoverable) sign_up -> sign_in -> generate recover token -> password reset -> sign_in -> sign_out" do
+    Aikotoba.enable_recover = true
+    visit Aikotoba.sign_up_path
+    fill_in "Email", with: "sample4@example.com"
+    fill_in "Password",	with: "password"
+    click_on "Sign up"
+    assert_selector ".message", text: "Signed up successfully."
+    click_on "Send password reset token"
+    fill_in "Email", with: "sample4@example.com"
+    click_on "Send password reset token"
+    assert_selector ".message", text: "Password reset url has been sent to your email address."
+    recover_email = ActionMailer::Base.deliveries.last
+    recover_path = recover_email.body.to_s.split(" ")[3] # NOTE: get XXX from "Password reset URL: XXX"
+    visit recover_path
+    fill_in "Password",	with: "updated_password"
+    click_on "Password reset"
+    assert_selector ".message", text: "Password reset you account successfully."
+    fill_in "Email", with: "sample4@example.com"
+    fill_in "Password",	with: "updated_password"
+    click_on "Sign in"
+    assert_selector ".message", text: "Signed in successfully."
+    click_on "Sign out"
+    Aikotoba.enable_recover = false
   end
 end
