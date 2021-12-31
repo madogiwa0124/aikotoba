@@ -26,10 +26,6 @@ module Aikotoba
       params.require(:account).permit(:email)
     end
 
-    def enabled_lockable?
-      Aikotoba.enable_lock
-    end
-
     def after_unlocked_path
       Aikotoba.sign_in_path
     end
