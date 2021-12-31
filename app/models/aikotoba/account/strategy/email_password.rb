@@ -22,33 +22,15 @@ module Aikotoba
 
       def build_account
         Aikotoba::Account.new(email: @email, password: @password).tap do |resource|
-          password_digest = build_digest(resource.password)
+          password_digest = Account::Password.new(value: resource.password).digest
           resource.assign_attributes(password_digest: password_digest)
         end
       end
 
       def find_account
         account = Aikotoba::Account.authenticatable.find_by(email: @email)
-        account if account && password_match?(account, @password)
-      end
-
-      private
-
-      def password_match?(account, password)
-        Argon2::Password.verify_password(password_with_pepper(password), account.password_digest)
-      end
-
-      def build_digest(password)
-        generate_hash(password_with_pepper(password))
-      end
-
-      def password_with_pepper(password)
-        "#{password}-#{Aikotoba.password_pepper}"
-      end
-
-      def generate_hash(password)
-        argon = Argon2::Password.new(t_cost: Aikotoba.password_stretch)
-        argon.create(password)
+        password = Account::Password.new(value: @password)
+        account if account && password.match?(digest: account.password_digest)
       end
     end
   end
