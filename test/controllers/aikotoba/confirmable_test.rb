@@ -37,7 +37,7 @@ class Aikotoba::ConfirmableTest < ActionDispatch::IntegrationTest
     assert_includes(confirm_email.body.to_s, @account.reload.confirm_token)
   end
 
-  test "failed POST confirmable_create_path due to not exist account" do
+  test "failed POST confirmable_create_path by not exist account" do
     assert_emails 0 do
       post aikotoba.confirmable_create_path, params: {account: {email: "not_found@example.com"}}
     end
@@ -45,11 +45,26 @@ class Aikotoba::ConfirmableTest < ActionDispatch::IntegrationTest
     assert_equal I18n.t(".aikotoba.messages.confirmation.failed"), flash[:alert]
   end
 
-  test "success GET confirmable_confirm_path" do
+  test "failed POST confirmable_create_path by confirmed account" do
+    @account.update!(confirmed: true)
+    assert_emails 0 do
+      post aikotoba.confirmable_create_path, params: {account: {email: @account.email}}
+    end
+    assert_redirected_to Aikotoba.sign_up_path
+    assert_equal I18n.t(".aikotoba.messages.confirmation.failed"), flash[:alert]
+  end
+
+  test "success GET confirmable_confirm_path by unconfirmed account" do
     get aikotoba.confirmable_confirm_path(token: @account.confirm_token)
     assert_redirected_to Aikotoba.sign_in_path
     assert_equal I18n.t(".aikotoba.messages.confirmation.success"), flash[:notice]
     assert_equal @account.reload.confirmed?, true
+  end
+
+  test "failed GET confirmable_confirm_path by confirmed account" do
+    @account.update!(confirmed: true)
+    get aikotoba.confirmable_confirm_path(token: @account.confirm_token)
+    assert_equal status, 404
   end
 
   test "success POST sign_up_path with comfirm token send" do

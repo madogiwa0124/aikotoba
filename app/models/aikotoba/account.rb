@@ -47,6 +47,7 @@ module Aikotoba
     concerning :Confirmable do
       included do
         scope :confirmed, -> { where(confirmed: true) }
+        scope :unconfirmed, -> { where(confirmed: false) }
       end
 
       def update_confirm_token!
@@ -58,7 +59,7 @@ module Aikotoba
       end
 
       def confirm!
-        update!(confirmed: true)
+        update!(confirmed: true, confirm_token: nil)
       end
 
       private

@@ -9,7 +9,7 @@ module Aikotoba
     end
 
     def create
-      account = ::Aikotoba::Account.find_by!(email: confirm_accounts_params[:email])
+      account = ::Aikotoba::Account.unconfirmed.find_by!(email: confirm_accounts_params[:email])
       send_confirm_token!(account)
       redirect_to success_send_confirm_token_path, flash: {notice: success_send_confirm_token_message}
     rescue ActiveRecord::RecordNotFound
@@ -17,7 +17,7 @@ module Aikotoba
     end
 
     def update
-      account = ::Aikotoba::Account.find_by!(confirm_token: params[:token])
+      account = ::Aikotoba::Account.unconfirmed.find_by!(confirm_token: params[:token])
       account.confirm!
       redirect_to after_confirmed_path, flash: {notice: confirmed_message}
     end
