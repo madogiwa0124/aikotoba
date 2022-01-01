@@ -3,21 +3,18 @@
 module Aikotoba
   class Account < ApplicationRecord
     PASSWORD_MINIMUM_LENGTH = Aikotoba.password_minimum_length
+    EMAIL_REGEXP = /\A[^\s]+@[^\s]+\z/
 
     belongs_to :authenticate_target, polymorphic: true, optional: true
 
     attribute :password, :string
+    validates :email, presence: true, uniqueness: true, format: EMAIL_REGEXP
     validates :password, presence: true, on: :create
     validates :password, length: {minimum: PASSWORD_MINIMUM_LENGTH}, allow_blank: true, on: :create
     validates :password_digest, presence: true
-    validates :email, presence: true, uniqueness: true
-
-    scope :authenticatable, -> {
-      result = all
-      result = result.confirmed if enable_confirm?
-      result = result.unlocked if enable_lock?
-      result
-    }
+    validates :confirmed, inclusion: [true, false]
+    validates :failed_attempts, presence: true, numericality: true
+    validates :locked, inclusion: [true, false]
 
     after_initialize do
       if authenticate_target
@@ -27,14 +24,6 @@ module Aikotoba
     end
 
     class << self
-      def build_account_by(attributes:)
-        Strategy::EmailPassword.build_account_by(attributes)
-      end
-
-      def find_account_by(attributes:)
-        Strategy::EmailPassword.find_account_by(attributes)
-      end
-
       def enable_lock?
         Aikotoba.enable_lock
       end
@@ -45,6 +34,38 @@ module Aikotoba
 
       def enable_recover?
         Aikotoba.enable_recover
+      end
+    end
+
+    concerning :Registrable do
+      class_methods do
+        def build_account_by(attributes:)
+          email, password = attributes.values_at(:email, :password)
+          new(email: email, password: password).tap do |resource|
+            password_digest = Password.new(value: resource.password).digest
+            resource.assign_attributes(password_digest: password_digest)
+          end
+        end
+      end
+    end
+
+    concerning :Authenticatable do
+      included do
+        scope :authenticatable, -> {
+          result = all
+          result = result.confirmed if enable_confirm?
+          result = result.unlocked if enable_lock?
+          result
+        }
+      end
+
+      class_methods do
+        def find_account_by(attributes:)
+          email, password = attributes.values_at(:email, :password)
+          account = authenticatable.find_by(email: email)
+          password = Password.new(value: password)
+          account if account && password.match?(digest: account.password_digest)
+        end
       end
     end
 
