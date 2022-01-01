@@ -50,10 +50,17 @@ class Aikotoba::RecoverableTest < ActionDispatch::IntegrationTest
     assert_select "h1", I18n.t(".aikotoba.recoveries.edit")
   end
 
-  test "failed GET confirmable_confirm_path by not found token" do
+  test "failed GET recoverable_edit_path by not found token" do
     @account.update_recover_token!
     get aikotoba.recoverable_edit_path(token: "not found token")
     assert_equal status, 404
+  end
+
+  test "failed GET recoverable_edit_path by nil token" do
+    @account.update!(recover_token: nil)
+    assert_raises(ActionController::UrlGenerationError) do
+      get aikotoba.recoverable_edit_path(token: nil)
+    end
   end
 
   test "success PATCH recoverable_update_path by valid password" do
@@ -72,6 +79,19 @@ class Aikotoba::RecoverableTest < ActionDispatch::IntegrationTest
     assert_equal I18n.t(".aikotoba.messages.recovery.failed"), flash[:alert]
     messages = @controller.instance_variable_get(:@account).errors.full_messages
     assert_includes messages, "Password is too short (minimum is 8 characters)"
+  end
+
+  test "failed PATCH recoverable_update_path by not found token" do
+    @account.update_recover_token!
+    patch aikotoba.recoverable_update_path(token: "not found token", account: {password: "password"})
+    assert_equal 404, status
+  end
+
+  test "failed PATCH recoverable_edit_path by nil token" do
+    @account.update!(recover_token: nil)
+    assert_raises(ActionController::UrlGenerationError) do
+      patch aikotoba.recoverable_update_path(token: @account.recover_token, account: {password: "password"})
+    end
   end
 
   test "Recoverable path to 404 when Aikotoba.enable_recover is false" do

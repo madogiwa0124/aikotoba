@@ -59,12 +59,20 @@ class Aikotoba::ConfirmableTest < ActionDispatch::IntegrationTest
     assert_redirected_to Aikotoba.sign_in_path
     assert_equal I18n.t(".aikotoba.messages.confirmation.success"), flash[:notice]
     assert_equal @account.reload.confirmed?, true
+    assert_nil @account.reload.confirm_token
   end
 
   test "failed GET confirmable_confirm_path by confirmed account" do
     @account.update!(confirmed: true)
     get aikotoba.confirmable_confirm_path(token: @account.confirm_token)
     assert_equal status, 404
+  end
+
+  test "faild GET confirmable_confirm_path by nil token" do
+    @account.update!(confirm_token: nil)
+    assert_raises(ActionController::UrlGenerationError) do
+      get aikotoba.confirmable_confirm_path(token: nil)
+    end
   end
 
   test "success POST sign_up_path with comfirm token send" do

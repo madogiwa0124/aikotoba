@@ -17,7 +17,7 @@ module Aikotoba
     end
 
     def update
-      account = ::Aikotoba::Account.unconfirmed.find_by!(confirm_token: params[:token])
+      account = ::Aikotoba::Account.unconfirmed.has_confirm_token.find_by!(confirm_token: params[:token])
       account.confirm!
       redirect_to after_confirmed_path, flash: {notice: confirmed_message}
     end

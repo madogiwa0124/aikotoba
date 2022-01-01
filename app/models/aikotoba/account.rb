@@ -73,6 +73,7 @@ module Aikotoba
       included do
         scope :confirmed, -> { where(confirmed: true) }
         scope :unconfirmed, -> { where(confirmed: false) }
+        scope :has_confirm_token, -> { where.not(confirm_token: nil) }
       end
 
       def update_confirm_token!
@@ -98,6 +99,7 @@ module Aikotoba
       included do
         scope :locked, -> { where(locked: true) }
         scope :unlocked, -> { where(locked: false) }
+        scope :has_unlock_token, -> { where.not(unlock_token: nil) }
       end
 
       def lock_when_exceed_max_failed_attempts!
@@ -131,6 +133,10 @@ module Aikotoba
     end
 
     concerning :Recoverable do
+      included do
+        scope :has_recover_token, -> { where.not(recover_token: nil) }
+      end
+
       def recover!(password:)
         password = Password.new(value: password)
         assign_attributes(password: password.value, password_digest: password.digest, recover_token: nil)

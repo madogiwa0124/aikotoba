@@ -17,11 +17,11 @@ module Aikotoba
     end
 
     def edit
-      @account = ::Aikotoba::Account.find_by!(recover_token: params[:token])
+      @account = ::Aikotoba::Account.has_recover_token.find_by!(recover_token: params[:token])
     end
 
     def update
-      @account = ::Aikotoba::Account.find_by!(recover_token: params[:token])
+      @account = ::Aikotoba::Account.has_recover_token.find_by!(recover_token: params[:token])
       @account.recover!(password: recover_accounts_params[:password])
       redirect_to success_recovered_path, flash: {notice: success_recovered_message}
     rescue ActiveRecord::RecordInvalid

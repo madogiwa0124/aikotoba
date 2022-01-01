@@ -65,6 +65,13 @@ class Aikotoba::LockableTest < ActionDispatch::IntegrationTest
     assert_equal @account.reload.failed_attempts, 0
   end
 
+  test "faild GET lockable_unlock_path by nil token" do
+    @account.update!(unlock_token: nil)
+    assert_raises(ActionController::UrlGenerationError) do
+      get aikotoba.lockable_unlock_path(token: nil)
+    end
+  end
+
   test "account locked with sent unlock mail when failed POST sign_in_path exceed max failed attempts." do
     @account.unlock!
     post aikotoba.sign_in_path, params: {account: {email: @account.email, password: "wrong password"}}
