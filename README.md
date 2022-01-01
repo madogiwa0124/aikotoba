@@ -6,13 +6,21 @@ Aikotoba meaning password in Japanese.
 
 Aikotoba is a Rails engine that makes it easy to implement simple email and password authentication.
 
-## Demo
+**Motivation**
 
-Sign up
-![sign_up](demo/email_password/sign_up.png "sign_up")
+- Simple implementation using the Rails engine.
+- Modern hashing algorithm.
+- Separate the authentication logic from User.
 
-Sign in
-![sign_in](demo/email_password/sign_in.png "sign_up")
+**Features**
+
+- Registrable : Register an account using your email address and password.
+- Authenticatable : Authenticate account using email and password.
+- Confirmable(optional) : After registration, send an email with a token to confirm account.
+- Lockable(optional) : Lock account if make a mistake with password more than a certain number of times.
+- Recoverable(optional) : Recover account by resetting password.
+
+[For more information](#features)
 
 ## Installation
 
@@ -40,15 +48,7 @@ Rails.application.routes.draw do
 end
 ```
 
-Aikotoba enabled routes for authentication.
-
-| HTTP Verb | Path      | Overview                                  |
-| --------- | --------- | ----------------------------------------- |
-| GET       | /sign_in  | Display sign in page.                     |
-| POST      | /sign_in  | Create a login session by authenticating. |
-| GET       | /sign_up  | Display sign up page.                     |
-| POST      | /sign_up  | Create an account.                        |
-| DELETE    | /sign_out | Clear aikotoba login session.             |
+Aikotoba enabled routes for registration(`/sign_up`) and authentication(`/sign_in`).
 
 include `Aikotoba::Authorizable` and `Aikotoba::Authenticatable` to the controller(ex. `ApplicationController`) use authentication.
 
@@ -59,7 +59,7 @@ class ApplicationController < ActionController::Base
 end
 ```
 
-Aikotoba enable helper methods for authentication.
+Aikotoba enable helper methods for authentication(ex. `authenticate_user!`, `current_user`).
 
 ```ruby
 class SensitiveController < ApplicationController
@@ -71,9 +71,33 @@ class SensitiveController < ApplicationController
 end
 ```
 
-### Additional Features
+## Features
 
-#### Confirmable
+### Registrable
+
+Register an account using email and password. The password is stored as a hash in [Argon2](https://github.com/technion/ruby-argon2).
+
+| HTTP Verb | Path     | Overview              |
+| --------- | -------- | --------------------- |
+| GET       | /sign_up | Display sign up page. |
+| POST      | /sign_up | Create an account.    |
+
+### Authenticatable
+
+Authenticate an account using email and password.
+
+| HTTP Verb | Path      | Overview                                  |
+| --------- | --------- | ----------------------------------------- |
+| GET       | /sign_in  | Display sign in page.                     |
+| POST      | /sign_in  | Create a login session by authenticating. |
+| DELETE    | /sign_out | Clear aikotoba login session.             |
+
+Aikotoba enable helper methods for authentication. The method name can be changed by configuration.
+
+- `authenticate_user!` : Redirects to the specified path if the user is not logged in. The redirect path can be changed by configuration.
+- `current_user` : Returns the logged in instance of `Aikotoba::Account`.
+
+### Confirmable
 
 To enable it, set `Aikotoba.enable_confirm` to `true`.
 
@@ -89,7 +113,7 @@ Aikotoba enable routes for confirmation account. Also, when account registers, a
 | POST      | /confirm        | Create a confirm token to account.     |
 | GET       | /confirm/:token | Confirm account by token.              |
 
-#### Lockable
+### Lockable
 
 To enable it, set `Aikotoba.enable_lock` to `true`.
 
@@ -105,7 +129,7 @@ Aikotoba enables a route to unlock an account. Also, if the authentication fails
 | POST      | /unlock        | Create a unlock token to account.     |
 | GET       | /unlock/:token | Unlock account by token.              |
 
-#### Recoverable
+### Recoverable
 
 To enable it, set `Aikotoba.enable_recover` to `true`.
 
@@ -122,7 +146,7 @@ Aikotoba enables a route to recover an account by password reset.
 | GET       | /recover/:token | Display page for recover account by password reset. |
 | PATCH     | /recover/:token | Recover account by password reset.                  |
 
-### Configuration
+## Configuration
 
 The following configuration parameters are supported. You can override it. (ex. `initializers/aikotoba.rb`)
 
@@ -158,6 +182,8 @@ Aikotoba.enable_recover = false
 Aikotoba.recover_path = "/unlock"
 ```
 
+## Tips
+
 ### Customize Message
 
 All Messages are managed by `i18n` and can be freely overridden.
@@ -185,6 +211,44 @@ end
 
 current_user.profile #=> Profile instance
 profile.user #=> Aikotoba::Account instance
+```
+
+### Testing
+
+You can use a helper to login/logout by Aikotoba.
+:warning: It only supports rack testing.
+
+```ruby
+require "aikotoba/test/authentication_helper"
+require "test_helper"
+
+class HelperTest < ActionDispatch::SystemTestCase
+  include Aikotoba::Test::AuthenticationHelper::System
+  driven_by :rack_test
+
+  def setup
+    email, password = ["email@example.com", "password"]
+    @account = ::Aikotoba::Account.build_account_by(attributes: {email: email, password: password})
+    @account.save
+  end
+
+  test "sign_in by helper" do
+    aikotoba_sign_in(@account)
+    visit "/sensitives"
+    assert_selector "h1", text: "Sensitive Page"
+    click_on "Sign out"
+    assert_selector ".message", text: "Signed out."
+  end
+
+  test "sign_out by helper" do
+    aikotoba_sign_in(@account)
+    visit "/sensitives"
+    aikotoba_sign_out
+    visit "/sensitives"
+    assert_selector "h1", text: "Sign in"
+    assert_selector ".message", text: "Oops. You need to Signed up or Signed in."
+  end
+end
 ```
 
 ## Contributing
