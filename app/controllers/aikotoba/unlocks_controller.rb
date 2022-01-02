@@ -3,20 +3,25 @@
 module Aikotoba
   class UnlocksController < ApplicationController
     def new
-      @account = ::Aikotoba::Account.new
+      @account = build_account({email: "", password: ""})
     end
 
     def create
-      account = ::Aikotoba::Account.locked.find_by!(email: unlock_accounts_params[:email])
+      account = find_by_send_token_account!(unlock_accounts_params)
+      before_send_unlock_token_process
       account.send_unlock_token
+      after_send_unlock_token_process
       redirect_to success_send_unlock_token_path, flash: {notice: success_send_unlock_token_message}
-    rescue ActiveRecord::RecordNotFound
+    rescue ActiveRecord::RecordNotFound => e
+      failed_send_unlock_token_process(e)
       redirect_to failed_send_unlock_token_path, flash: {alert: failed_send_unlock_token_message}
     end
 
     def update
-      account = ::Aikotoba::Account.has_unlock_token.find_by!(unlock_token: params[:token])
+      account = find_by_has_token_account!(params)
+      before_unlock_process
       account.unlock!
+      after_unlock_process
       redirect_to after_unlocked_path, flash: {notice: unlocked_message}
     end
 
@@ -24,6 +29,18 @@ module Aikotoba
 
     def unlock_accounts_params
       params.require(:account).permit(:email)
+    end
+
+    def build_account(params)
+      ::Aikotoba::Account.build_account_by(attributes: params)
+    end
+
+    def find_by_send_token_account!(params)
+      ::Aikotoba::Account.locked.find_by!(email: params[:email])
+    end
+
+    def find_by_has_token_account!(params)
+      ::Aikotoba::Account.has_unlock_token.find_by!(unlock_token: params[:token])
     end
 
     def after_unlocked_path
@@ -48,6 +65,26 @@ module Aikotoba
 
     def failed_send_unlock_token_message
       I18n.t(".aikotoba.messages.unlocking.failed")
+    end
+
+    # NOTE: Methods to override if you want to do something before send unlock token.
+    def before_send_unlock_token_process
+    end
+
+    # NOTE: Methods to override if you want to do something after send unlock token.
+    def after_send_unlock_token_process
+    end
+
+    # NOTE: Methods to override if you want to do something failed send unlock token.
+    def failed_send_unlock_token_process(e)
+    end
+
+    # NOTE: Methods to override if you want to do something before unlock.
+    def before_unlock_process
+    end
+
+    # NOTE: Methods to override if you want to do something after unlock.
+    def after_unlock_process
     end
   end
 end

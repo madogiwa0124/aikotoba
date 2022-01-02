@@ -5,26 +5,32 @@ module Aikotoba
     include Confirmable
 
     def new
-      @account = ::Aikotoba::Account.new
+      @account = build_account({email: "", password: ""})
     end
 
     def create
-      @account = ::Aikotoba::Account.build_account_by(attributes: accounts_params.to_h.symbolize_keys)
+      @account = build_account(accounts_params.to_h.symbolize_keys)
       ActiveRecord::Base.transaction do
+        before_create_account_process
         @account.save!
         after_create_account_process
         send_confirm_token!(@account) if enable_confirm?
       end
       redirect_to after_sign_up_path, flash: {notice: successed_message}
-    rescue ActiveRecord::RecordInvalid
+    rescue ActiveRecord::RecordInvalid => e
+      failed_create_account_process(e)
       flash[:alert] = failed_message
       render :new
     end
 
     private
 
-    # NOTE: Methods to override if you want to do something after account creation.
-    def after_create_account_process
+    def accounts_params
+      params.require(:account).permit(:email, :password)
+    end
+
+    def build_account(params)
+      ::Aikotoba::Account.build_account_by(attributes: params)
     end
 
     def after_sign_up_path
@@ -39,8 +45,16 @@ module Aikotoba
       I18n.t(".aikotoba.messages.registration.failed")
     end
 
-    def accounts_params
-      params.require(:account).permit(:email, :password)
+    # NOTE: Methods to override if you want to do something before account creation.
+    def before_create_account_process
+    end
+
+    # NOTE: Methods to override if you want to do something after account creation.
+    def after_create_account_process
+    end
+
+    # NOTE: Methods to override if you want to do something failed account creation.
+    def failed_create_account_process(e)
     end
   end
 end

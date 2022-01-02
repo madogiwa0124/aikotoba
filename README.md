@@ -213,6 +213,24 @@ current_user.profile #=> Profile instance
 profile.user #=> Aikotoba::Account instance
 ```
 
+### Do something on before, after, failure.
+
+Controllers provides methods to execute the overridden process.
+
+For example, if you want to record an error log when the account creation fails, you can do the following.
+
+```ruby
+require 'aikotoba'
+
+Rails.application.config.to_prepare do
+  Aikotoba::AccountsController.class_eval do
+    def failed_create_account_process(e)
+      logger.error(e)
+    end
+  end
+end
+```
+
 ### Testing
 
 You can use a helper to login/logout by Aikotoba.
