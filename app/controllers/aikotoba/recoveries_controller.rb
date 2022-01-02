@@ -12,14 +12,14 @@ module Aikotoba
     end
 
     def create
-      account = find_by_send_token_account!(send_recover_token_params)
-      before_send_recover_token_process
-      send_recover_token!(account)
-      after_send_recover_token_process
-      redirect_to success_send_recover_token_path, flash: {notice: success_send_recover_token_message}
+      account = find_by_send_token_account!(send_recovery_token_params)
+      before_send_recovery_token_process
+      send_recovery_token!(account)
+      after_send_recovery_token_process
+      redirect_to success_send_recovery_token_path, flash: {notice: success_send_recovery_token_message}
     rescue ActiveRecord::RecordNotFound => e
-      failed_send_recover_token_process(e)
-      redirect_to failed_send_recover_token_path, flash: {alert: failed_send_recover_token_message}
+      failed_send_recovery_token_process(e)
+      redirect_to failed_send_recovery_token_path, flash: {alert: failed_send_recovery_token_message}
     end
 
     def edit
@@ -34,14 +34,14 @@ module Aikotoba
       redirect_to success_recovered_path, flash: {notice: success_recovered_message}
     rescue ActiveRecord::RecordInvalid => e
       failed_recover_process(e)
-      @account.recover_token = params[:token]
+      @account.recovery_token = params[:token]
       flash[:alert] = failed_message
       render :edit
     end
 
     private
 
-    def send_recover_token_params
+    def send_recovery_token_params
       params.require(:account).permit(:email)
     end
 
@@ -58,18 +58,18 @@ module Aikotoba
     end
 
     def find_by_has_token_account!(params)
-      ::Aikotoba::Account.has_recover_token.find_by!(recover_token: params[:token])
+      ::Aikotoba::Account.has_recovery_token.find_by!(recovery_token: params[:token])
     end
 
     def success_recovered_path
       Aikotoba.sign_in_path
     end
 
-    def success_send_recover_token_path
+    def success_send_recovery_token_path
       Aikotoba.sign_in_path
     end
 
-    def failed_send_recover_token_path
+    def failed_send_recovery_token_path
       Aikotoba.sign_in_path
     end
 
@@ -81,24 +81,24 @@ module Aikotoba
       I18n.t(".aikotoba.messages.recovery.success")
     end
 
-    def success_send_recover_token_message
+    def success_send_recovery_token_message
       I18n.t(".aikotoba.messages.recovery.sent")
     end
 
-    def failed_send_recover_token_message
+    def failed_send_recovery_token_message
       I18n.t(".aikotoba.messages.recovery.sent_failed")
     end
 
     # NOTE: Methods to override if you want to do something before send recover token.
-    def before_send_recover_token_process
+    def before_send_recovery_token_process
     end
 
     # NOTE: Methods to override if you want to do something after send recover token.
-    def after_send_recover_token_process
+    def after_send_recovery_token_process
     end
 
     # NOTE: Methods to override if you want to do something failed send recover token.
-    def failed_send_recover_token_process(e)
+    def failed_send_recovery_token_process(e)
     end
 
     # NOTE: Methods to override if you want to do something before recover.

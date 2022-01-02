@@ -68,24 +68,24 @@ module Aikotoba
       included do
         scope :confirmed, -> { where(confirmed: true) }
         scope :unconfirmed, -> { where(confirmed: false) }
-        scope :has_confirm_token, -> { where.not(confirm_token: nil) }
+        scope :has_confirmation_token, -> { where.not(confirmation_token: nil) }
       end
 
-      def update_confirm_token!
-        update!(confirm_token: build_confirm_token)
+      def update_confirmation_token!
+        update!(confirmation_token: build_confirmation_token)
       end
 
-      def send_confirm_token
+      def send_confirmation_token
         AccountMailer.with(account: self).confirm.deliver_now
       end
 
       def confirm!
-        update!(confirmed: true, confirm_token: nil)
+        update!(confirmed: true, confirmation_token: nil)
       end
 
       private
 
-      def build_confirm_token
+      def build_confirmation_token
         SecureRandom.urlsafe_base64(32)
       end
     end
@@ -129,26 +129,26 @@ module Aikotoba
 
     concerning :Recoverable do
       included do
-        scope :has_recover_token, -> { where.not(recover_token: nil) }
+        scope :has_recovery_token, -> { where.not(recovery_token: nil) }
       end
 
       def recover!(password:)
         password = Password.new(value: password)
-        assign_attributes(password: password.value, password_digest: password.digest, recover_token: nil)
+        assign_attributes(password: password.value, password_digest: password.digest, recovery_token: nil)
         save!(context: :recover)
       end
 
-      def update_recover_token!
-        update!(recover_token: build_recover_token)
+      def update_recovery_token!
+        update!(recovery_token: build_recovery_token)
       end
 
-      def send_recover_token
+      def send_recovery_token
         AccountMailer.with(account: self).recover.deliver_now
       end
 
       private
 
-      def build_recover_token
+      def build_recovery_token
         SecureRandom.urlsafe_base64(32)
       end
     end

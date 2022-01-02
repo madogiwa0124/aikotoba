@@ -7,7 +7,7 @@ class CreateAikotobaAccounts < ActiveRecord::Migration[6.1]
 
       # for confirmable
       t.boolean :confirmed, null: false, default: false
-      t.string :confirm_token, index: {unique: true}
+      t.string :confirmation_token, index: {unique: true}
 
       # for lockable
       t.integer :failed_attempts, null: false, default: 0
@@ -15,7 +15,7 @@ class CreateAikotobaAccounts < ActiveRecord::Migration[6.1]
       t.string :unlock_token, index: {unique: true}
 
       # for recoverable
-      t.string :recover_token, index: {unique: true}
+      t.string :recovery_token, index: {unique: true}
 
       t.timestamps
     end

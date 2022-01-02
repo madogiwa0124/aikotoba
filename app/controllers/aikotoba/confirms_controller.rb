@@ -13,13 +13,13 @@ module Aikotoba
 
     def create
       account = find_by_send_token_account!(confirm_accounts_params)
-      before_send_confirm_token_process
-      send_confirm_token!(account)
-      after_send_confirm_token_process
-      redirect_to success_send_confirm_token_path, flash: {notice: success_send_confirm_token_message}
+      before_send_confirmation_token_process
+      send_confirmation_token!(account)
+      after_send_confirmation_token_process
+      redirect_to success_send_confirmation_token_path, flash: {notice: success_send_confirmation_token_message}
     rescue ActiveRecord::RecordNotFound => e
-      failed_send_confirm_token_process(e)
-      redirect_to failed_send_confirm_token_path, flash: {alert: failed_send_confirm_token_message}
+      failed_send_confirmation_token_process(e)
+      redirect_to failed_send_confirmation_token_path, flash: {alert: failed_send_confirmation_token_message}
     end
 
     def update
@@ -45,7 +45,7 @@ module Aikotoba
     end
 
     def find_by_has_token_account!(params)
-      ::Aikotoba::Account.unconfirmed.has_confirm_token.find_by!(confirm_token: params[:token])
+      ::Aikotoba::Account.unconfirmed.has_confirmation_token.find_by!(confirmation_token: params[:token])
     end
 
     def enabled_confirmable?
@@ -56,11 +56,11 @@ module Aikotoba
       Aikotoba.sign_in_path
     end
 
-    def success_send_confirm_token_path
+    def success_send_confirmation_token_path
       Aikotoba.sign_up_path
     end
 
-    def failed_send_confirm_token_path
+    def failed_send_confirmation_token_path
       Aikotoba.sign_up_path
     end
 
@@ -68,24 +68,24 @@ module Aikotoba
       I18n.t(".aikotoba.messages.confirmation.success")
     end
 
-    def success_send_confirm_token_message
+    def success_send_confirmation_token_message
       I18n.t(".aikotoba.messages.confirmation.sent")
     end
 
-    def failed_send_confirm_token_message
+    def failed_send_confirmation_token_message
       I18n.t(".aikotoba.messages.confirmation.failed")
     end
 
     # NOTE: Methods to override if you want to do something before send confirm token.
-    def before_send_confirm_token_process
+    def before_send_confirmation_token_process
     end
 
     # NOTE: Methods to override if you want to do something after send confirm token.
-    def after_send_confirm_token_process
+    def after_send_confirmation_token_process
     end
 
     # NOTE: Methods to override if you want to do something failed send confirm token.
-    def failed_send_confirm_token_process(e)
+    def failed_send_confirmation_token_process(e)
     end
 
     # NOTE: Methods to override if you want to do something before confirm.
