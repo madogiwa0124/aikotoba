@@ -9,8 +9,8 @@ module Aikotoba
 
     attribute :password, :string
     validates :email, presence: true, uniqueness: true, format: EMAIL_REGEXP
-    validates :password, presence: true, on: :create
-    validates :password, length: {minimum: PASSWORD_MINIMUM_LENGTH}, allow_blank: true, on: :create
+    validates :password, presence: true, on: [:create, :recover]
+    validates :password, length: {minimum: PASSWORD_MINIMUM_LENGTH}, allow_blank: true, on: [:create, :recover]
     validates :password_digest, presence: true
     validates :confirmed, inclusion: [true, false]
     validates :failed_attempts, presence: true, numericality: true
@@ -135,8 +135,7 @@ module Aikotoba
       def recover!(password:)
         password = Password.new(value: password)
         assign_attributes(password: password.value, password_digest: password.digest, recover_token: nil)
-        # NOTE: To verify the password, run the verification in the same context as when it was created.
-        save!(context: :create)
+        save!(context: :recover)
       end
 
       def update_recover_token!
