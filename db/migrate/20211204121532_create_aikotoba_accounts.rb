@@ -1,7 +1,7 @@
 class CreateAikotobaAccounts < ActiveRecord::Migration[6.1]
   def change
     create_table :aikotoba_accounts do |t|
-      t.belongs_to :authenticate_target, polymorphic: true
+      t.belongs_to :authenticate_target, polymorphic: true, index: {unique: true}
       t.string :email, null: false, index: {unique: true}
       t.string :password_digest, null: false
 
