@@ -3,6 +3,9 @@
 module Aikotoba
   class RecoveriesController < ApplicationController
     include Recoverable
+    include Protection::TimingAtack
+
+    before_action :prevent_timing_atack, only: [:edit, :update]
 
     def new
       @account = build_account({email: "", password: ""})
