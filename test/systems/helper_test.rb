@@ -7,7 +7,7 @@ class HelperTest < ActionDispatch::SystemTestCase
   def setup
     Aikotoba.enable_confirm = false
     email, password = ["email@example.com", "password"]
-    @account = ::Aikotoba::Account.build_account_by(attributes: {email: email, password: password})
+    @account = ::Aikotoba::Account.build_by(attributes: {email: email, password: password})
     @account.save
   end
 

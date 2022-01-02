@@ -246,7 +246,7 @@ class HelperTest < ActionDispatch::SystemTestCase
 
   def setup
     email, password = ["email@example.com", "password"]
-    @account = ::Aikotoba::Account.build_account_by(attributes: {email: email, password: password})
+    @account = ::Aikotoba::Account.build_by(attributes: {email: email, password: password})
     @account.save
   end
 

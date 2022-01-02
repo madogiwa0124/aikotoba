@@ -8,7 +8,7 @@ class RequiredLoginControllerTest < ActionDispatch::IntegrationTest
   def setup
     ActionController::Base.allow_forgery_protection = false
     email, password = ["email@example.com", "password"]
-    @account = ::Aikotoba::Account.build_account_by(attributes: {email: email, password: password})
+    @account = ::Aikotoba::Account.build_by(attributes: {email: email, password: password})
     @account.save!
   end
 

@@ -37,7 +37,7 @@ module Aikotoba
     end
 
     def build_account(params)
-      ::Aikotoba::Account.build_account_by(attributes: params)
+      ::Aikotoba::Account.build_by(attributes: params)
     end
 
     def find_by_send_token_account!(params)

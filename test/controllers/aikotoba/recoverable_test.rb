@@ -8,7 +8,7 @@ class Aikotoba::RecoverableTest < ActionDispatch::IntegrationTest
     Aikotoba.enable_recover = true
     ActionController::Base.allow_forgery_protection = false
     email, password = ["email@example.com", "password"]
-    @account = ::Aikotoba::Account.build_account_by(attributes: {email: email, password: password})
+    @account = ::Aikotoba::Account.build_by(attributes: {email: email, password: password})
     @account.save!
   end
 
@@ -69,7 +69,7 @@ class Aikotoba::RecoverableTest < ActionDispatch::IntegrationTest
     assert_redirected_to Aikotoba.sign_in_path
     assert_equal I18n.t(".aikotoba.messages.recovery.success"), flash[:notice]
     assert_nil @account.reload.recover_token
-    updated_account = ::Aikotoba::Account.find_account_by(attributes: {email: @account.email, password: "updated_password"})
+    updated_account = ::Aikotoba::Account.authenticate_by(attributes: {email: @account.email, password: "updated_password"})
     assert_equal updated_account.id, @account.id
   end
 

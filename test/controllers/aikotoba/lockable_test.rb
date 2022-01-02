@@ -9,7 +9,7 @@ class Aikotoba::LockableTest < ActionDispatch::IntegrationTest
     Aikotoba.enable_lock = true
     Aikotoba.max_failed_attempts = 2
     email, password = ["email@example.com", "password"]
-    @account = ::Aikotoba::Account.build_account_by(attributes: {email: email, password: password})
+    @account = ::Aikotoba::Account.build_by(attributes: {email: email, password: password})
     @account.save!
   end
 

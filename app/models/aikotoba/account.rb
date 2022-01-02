@@ -39,12 +39,9 @@ module Aikotoba
 
     concerning :Registrable do
       class_methods do
-        def build_account_by(attributes:)
+        def build_by(attributes:)
           email, password = attributes.values_at(:email, :password)
-          new(email: email, password: password).tap do |resource|
-            password_digest = Password.new(value: resource.password).digest
-            resource.assign_attributes(password_digest: password_digest)
-          end
+          Registration.build(email: email, password: password)
         end
       end
     end
@@ -60,11 +57,9 @@ module Aikotoba
       end
 
       class_methods do
-        def find_account_by(attributes:)
+        def authenticate_by(attributes:)
           email, password = attributes.values_at(:email, :password)
-          account = authenticatable.find_by(email: email)
-          password = Password.new(value: password)
-          account if account && password.match?(digest: account.password_digest)
+          Authentication.call(email: email, password: password)
         end
       end
     end
