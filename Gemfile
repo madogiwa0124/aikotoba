@@ -15,6 +15,7 @@ group :development, :test do
   gem "capybara"
   gem "webrick"
   gem "webdrivers"
+  gem "sprockets-rails"
 end
 
 # To use a debugger

@@ -8,6 +8,9 @@ jobs:
     strategy:
       matrix:
         ruby: ["2.7", "3.0"]
+        gemfile: ["Gemfile", "gemfiles/rails_6_1.gemfile"]
+    env:
+      BUNDLE_GEMFILE: ${{ matrix.gemfile }}
     steps:
       - uses: actions/checkout@v2
       - uses: ruby/setup-ruby@v1
