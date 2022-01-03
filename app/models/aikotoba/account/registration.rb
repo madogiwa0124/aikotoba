@@ -3,18 +3,28 @@
 module Aikotoba
   class Account::Registration
     def self.build(email:, password:)
-      new(email: email, password: password).build
+      new.build(email: email, password: password)
     end
 
-    def initialize(email:, password:)
-      @email = email
-      @password = password
+    def self.save_with_callbacks!(account:)
+      new.save_with_callbacks!(account: account)
     end
 
-    def build
-      Account.new(email: @email, password: @password).tap do |resource|
-        password_digest = build_password_digest(@password)
+    def initialize
+      @enable_confirm = Account.enable_confirm?
+    end
+
+    def build(email:, password:)
+      Account.new(email: email, password: password).tap do |resource|
+        password_digest = build_password_digest(password)
         resource.assign_attributes(password_digest: password_digest)
+      end
+    end
+
+    def save_with_callbacks!(account:)
+      ActiveRecord::Base.transaction do
+        account.save!
+        send_confirmation_token!(account) if @enable_confirm
       end
     end
 
@@ -22,6 +32,12 @@ module Aikotoba
 
     def build_password_digest(password)
       Account::Password.new(value: password).digest
+    end
+
+    concerning :Confirmable do
+      def send_confirmation_token!(account)
+        Account::Confirmation.create_token!(account: account, notify: true)
+      end
     end
   end
 end

@@ -13,7 +13,7 @@ module Aikotoba
     def create
       account = find_by_send_token_account!(confirm_accounts_params)
       before_send_confirmation_token_process
-      account.send_confirmation_token!
+      send_confirmation_token!(account)
       after_send_confirmation_token_process
       redirect_to success_send_confirmation_token_path, flash: {notice: success_send_confirmation_token_message}
     rescue ActiveRecord::RecordNotFound => e
@@ -45,6 +45,10 @@ module Aikotoba
 
     def find_by_has_token_account!(params)
       ::Aikotoba::Account::ConfirmationToken.find_by!(token: params[:token]).account
+    end
+
+    def send_confirmation_token!(account)
+      Account::Confirmation.create_token!(account: account, notify: true)
     end
 
     def enabled_confirmable?

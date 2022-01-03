@@ -17,11 +17,9 @@ module Aikotoba
         before_sign_in_process
         aikotoba_sign_in(@account)
         after_sign_in_process
-        @account.reset_lock_status! if enable_lock?
         redirect_to after_sign_in_path, notice: successed_message
       else
         failed_sign_in_process
-        find_account(session_params)&.lock_when_exceed_max_failed_attempts! if enable_lock?
         redirect_to failed_sign_in_path, alert: failed_message
       end
     end

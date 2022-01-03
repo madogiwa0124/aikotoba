@@ -10,9 +10,8 @@ module Aikotoba
       @account = build_account(accounts_params.to_h.symbolize_keys)
       ActiveRecord::Base.transaction do
         before_create_account_process
-        @account.save!
+        @account.save_with_callbacks!
         after_create_account_process
-        @account.send_confirmation_token! if enable_confirm?
       end
       redirect_to after_sign_up_path, flash: {notice: successed_message}
     rescue ActiveRecord::RecordInvalid => e

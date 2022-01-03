@@ -13,7 +13,7 @@ module Aikotoba
     def create
       account = find_by_send_token_account!(send_recovery_token_params)
       before_send_recovery_token_process
-      account.send_recovery_token!
+      send_recovery_token!(account)
       after_send_recovery_token_process
       redirect_to success_send_recovery_token_path, flash: {notice: success_send_recovery_token_message}
     rescue ActiveRecord::RecordNotFound => e
@@ -57,6 +57,10 @@ module Aikotoba
 
     def find_by_has_token_account!(params)
       ::Aikotoba::Account::RecoveryToken.find_by!(token: params[:token]).account
+    end
+
+    def send_recovery_token!(account)
+      ::Aikotoba::Account::Recovery.create_token!(account: account, notify: true)
     end
 
     def success_recovered_path

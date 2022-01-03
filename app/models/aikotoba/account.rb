@@ -44,6 +44,10 @@ module Aikotoba
           Registration.build(email: email, password: password)
         end
       end
+
+      def save_with_callbacks!
+        Registration.save_with_callbacks!(account: self)
+      end
     end
 
     concerning :Authenticatable do
@@ -59,7 +63,7 @@ module Aikotoba
       class_methods do
         def authenticate_by(attributes:)
           email, password = attributes.values_at(:email, :password)
-          Authentication.call(email: email, password: password)
+          Authentication.call!(email: email, password: password)
         end
       end
     end
@@ -67,64 +71,34 @@ module Aikotoba
     concerning :Confirmable do
       included do
         has_one :confirmation_token, dependent: :destroy, foreign_key: "aikotoba_account_id"
-
         scope :confirmed, -> { where(confirmed: true) }
         scope :unconfirmed, -> { where(confirmed: false) }
       end
 
       def confirm!
-        ActiveRecord::Base.transaction do
-          update!(confirmed: true)
-          confirmation_token&.destroy!
-        end
-      end
-
-      def send_confirmation_token!
-        build_confirmation_token.save!
-        confirmation_token.notify
+        Confirmation.confirm!(account: self)
       end
     end
 
     concerning :Lockable do
       included do
         has_one :unlock_token, dependent: :destroy, foreign_key: "aikotoba_account_id"
-
         scope :locked, -> { where(locked: true) }
         scope :unlocked, -> { where(locked: false) }
       end
 
-      def lock_when_exceed_max_failed_attempts!
-        ActiveRecord::Base.transaction do
-          increment!(:failed_attempts)
-          if failed_attempts > max_failed_attempts
-            lock!
-            unlock_token.notify
-          end
+      class_methods do
+        def max_failed_attempts
+          Aikotoba.max_failed_attempts
         end
-      end
-
-      def reset_lock_status!
-        unlock! if failed_attempts.positive?
       end
 
       def lock!
-        ActiveRecord::Base.transaction do
-          update!(locked: true)
-          build_unlock_token.save!
-        end
+        Lock.lock!(account: self, notify: true)
       end
 
       def unlock!
-        ActiveRecord::Base.transaction do
-          update!(locked: false, failed_attempts: 0)
-          unlock_token&.destroy!
-        end
-      end
-
-      private
-
-      def max_failed_attempts
-        Aikotoba.max_failed_attempts
+        Lock.unlock!(account: self)
       end
     end
 
@@ -134,17 +108,7 @@ module Aikotoba
       end
 
       def recover!(password:)
-        ActiveRecord::Base.transaction do
-          password = Password.new(value: password)
-          assign_attributes(password: password.value, password_digest: password.digest)
-          save!(context: :recover)
-          recovery_token&.destroy!
-        end
-      end
-
-      def send_recovery_token!
-        build_recovery_token.save!
-        recovery_token.notify
+        Account::Recovery.recover!(account: self, new_password: password)
       end
     end
   end
