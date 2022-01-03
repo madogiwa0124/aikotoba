@@ -6,7 +6,7 @@ Gem::Specification.new do |spec|
   spec.authors = ["Madogiwa"]
   spec.email = ["madogiwa0124@gmail.com"]
   spec.homepage = "https://github.com/madogiwa0124/aikotoba"
-  spec.summary = "Aikotoba is a Rails engine that makes it easy to implement very simple password-only authentication."
+  spec.summary = "Aikotoba is a Rails engine that makes it easy to implement simple email and password authentication."
   spec.license = "MIT"
   spec.metadata["source_code_uri"] = "https://github.com/madogiwa0124/aikotoba"
   spec.files = Dir["{app,config,lib}/**/*", "MIT-LICENSE", "Rakefile", "README.md"]
