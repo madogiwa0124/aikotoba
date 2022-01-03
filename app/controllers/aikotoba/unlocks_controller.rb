@@ -13,7 +13,7 @@ module Aikotoba
     def create
       account = find_by_send_token_account!(unlock_accounts_params)
       before_send_unlock_token_process
-      account.send_unlock_token
+      account.unlock_token.notify
       after_send_unlock_token_process
       redirect_to success_send_unlock_token_path, flash: {notice: success_send_unlock_token_message}
     rescue ActiveRecord::RecordNotFound => e
@@ -44,7 +44,7 @@ module Aikotoba
     end
 
     def find_by_has_token_account!(params)
-      ::Aikotoba::Account.has_unlock_token.find_by!(unlock_token: params[:token])
+      ::Aikotoba::Account::UnlockToken.find_by!(token: params[:token]).account
     end
 
     def after_unlocked_path

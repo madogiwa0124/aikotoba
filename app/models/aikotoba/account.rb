@@ -66,35 +66,26 @@ module Aikotoba
 
     concerning :Confirmable do
       included do
+        has_one :confirmation_token, dependent: :destroy, foreign_key: "aikotoba_account_id"
+
         scope :confirmed, -> { where(confirmed: true) }
         scope :unconfirmed, -> { where(confirmed: false) }
-        scope :has_confirmation_token, -> { where.not(confirmation_token: nil) }
-      end
-
-      def update_confirmation_token!
-        update!(confirmation_token: build_confirmation_token)
-      end
-
-      def send_confirmation_token
-        AccountMailer.with(account: self).confirm.deliver_now
       end
 
       def confirm!
-        update!(confirmed: true, confirmation_token: nil)
-      end
-
-      private
-
-      def build_confirmation_token
-        SecureRandom.urlsafe_base64(32)
+        ActiveRecord::Base.transaction do
+          update!(confirmed: true)
+          confirmation_token&.destroy!
+        end
       end
     end
 
     concerning :Lockable do
       included do
+        has_one :unlock_token, dependent: :destroy, foreign_key: "aikotoba_account_id"
+
         scope :locked, -> { where(locked: true) }
         scope :unlocked, -> { where(locked: false) }
-        scope :has_unlock_token, -> { where.not(unlock_token: nil) }
       end
 
       def lock_when_exceed_max_failed_attempts!
@@ -105,15 +96,17 @@ module Aikotoba
       end
 
       def lock!
-        update!(locked: true, unlock_token: build_unlock_token)
+        ActiveRecord::Base.transaction do
+          update!(locked: true)
+          build_unlock_token.save!
+        end
       end
 
       def unlock!
-        update!(locked: false, unlock_token: nil, failed_attempts: 0)
-      end
-
-      def send_unlock_token
-        AccountMailer.with(account: self).unlock.deliver_now
+        ActiveRecord::Base.transaction do
+          update!(locked: false, failed_attempts: 0)
+          unlock_token&.destroy!
+        end
       end
 
       private
@@ -121,35 +114,20 @@ module Aikotoba
       def max_failed_attempts
         Aikotoba.max_failed_attempts
       end
-
-      def build_unlock_token
-        SecureRandom.urlsafe_base64(32)
-      end
     end
 
     concerning :Recoverable do
       included do
-        scope :has_recovery_token, -> { where.not(recovery_token: nil) }
+        has_one :recovery_token, dependent: :destroy, foreign_key: "aikotoba_account_id"
       end
 
       def recover!(password:)
-        password = Password.new(value: password)
-        assign_attributes(password: password.value, password_digest: password.digest, recovery_token: nil)
-        save!(context: :recover)
-      end
-
-      def update_recovery_token!
-        update!(recovery_token: build_recovery_token)
-      end
-
-      def send_recovery_token
-        AccountMailer.with(account: self).recover.deliver_now
-      end
-
-      private
-
-      def build_recovery_token
-        SecureRandom.urlsafe_base64(32)
+        ActiveRecord::Base.transaction do
+          password = Password.new(value: password)
+          assign_attributes(password: password.value, password_digest: password.digest)
+          save!(context: :recover)
+          recovery_token&.destroy!
+        end
       end
     end
   end

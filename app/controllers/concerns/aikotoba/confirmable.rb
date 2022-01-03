@@ -5,8 +5,8 @@ module Aikotoba
     extend ActiveSupport::Concern
 
     def send_confirmation_token!(account)
-      account.update_confirmation_token!
-      account.send_confirmation_token
+      account.build_confirmation_token.save!
+      account.confirmation_token.notify
     end
   end
 end

@@ -45,7 +45,7 @@ module Aikotoba
     end
 
     def find_by_has_token_account!(params)
-      ::Aikotoba::Account.unconfirmed.has_confirmation_token.find_by!(confirmation_token: params[:token])
+      ::Aikotoba::Account::ConfirmationToken.find_by!(token: params[:token]).account
     end
 
     def enabled_confirmable?

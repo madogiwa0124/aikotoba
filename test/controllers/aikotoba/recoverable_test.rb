@@ -32,7 +32,7 @@ class Aikotoba::RecoverableTest < ActionDispatch::IntegrationTest
     assert_equal I18n.t(".aikotoba.mailers.recover.subject"), recover_email.subject
     assert_equal [@account.email], recover_email.to
     assert_match(/Password reset URL:/, recover_email.body.to_s)
-    assert_includes(recover_email.body.to_s, @account.reload.recovery_token)
+    assert_includes(recover_email.body.to_s, @account.reload.recovery_token.token)
   end
 
   test "failed POST recoverable_create_path by not exist account" do
@@ -44,28 +44,27 @@ class Aikotoba::RecoverableTest < ActionDispatch::IntegrationTest
   end
 
   test "success GET recoverable_edit_path" do
-    @account.update_recovery_token!
-    get aikotoba.recoverable_edit_path(token: @account.recovery_token)
+    @account.build_recovery_token.save!
+    get aikotoba.recoverable_edit_path(token: @account.recovery_token.token)
     assert_equal 200, status
     assert_select "h1", I18n.t(".aikotoba.recoveries.edit")
   end
 
   test "failed GET recoverable_edit_path by not found token" do
-    @account.update_recovery_token!
+    @account.build_recovery_token.save!
     get aikotoba.recoverable_edit_path(token: "not found token")
     assert_equal status, 404
   end
 
   test "failed GET recoverable_edit_path by nil token" do
-    @account.update!(recovery_token: nil)
     assert_raises(ActionController::UrlGenerationError) do
       get aikotoba.recoverable_edit_path(token: nil)
     end
   end
 
   test "success PATCH recoverable_update_path by valid password" do
-    @account.update_recovery_token!
-    patch aikotoba.recoverable_update_path(token: @account.recovery_token, account: {password: "updated_password"})
+    @account.build_recovery_token.save!
+    patch aikotoba.recoverable_update_path(token: @account.recovery_token.token, account: {password: "updated_password"})
     assert_redirected_to Aikotoba.sign_in_path
     assert_equal I18n.t(".aikotoba.messages.recovery.success"), flash[:notice]
     assert_nil @account.reload.recovery_token
@@ -74,32 +73,31 @@ class Aikotoba::RecoverableTest < ActionDispatch::IntegrationTest
   end
 
   test "faild PATCH recoverable_update_path by invalid password" do
-    @account.update_recovery_token!
-    patch aikotoba.recoverable_update_path(token: @account.recovery_token, account: {password: "short"})
+    @account.build_recovery_token.save!
+    patch aikotoba.recoverable_update_path(token: @account.recovery_token.token, account: {password: "short"})
     assert_equal I18n.t(".aikotoba.messages.recovery.failed"), flash[:alert]
     messages = @controller.instance_variable_get(:@account).errors.full_messages
     assert_includes messages, "Password is too short (minimum is 8 characters)"
   end
 
   test "failed PATCH recoverable_update_path by not found token" do
-    @account.update_recovery_token!
+    @account.build_recovery_token.save!
     patch aikotoba.recoverable_update_path(token: "not found token", account: {password: "password"})
     assert_equal 404, status
   end
 
   test "failed PATCH recoverable_edit_path by nil token" do
-    @account.update!(recovery_token: nil)
     assert_raises(ActionController::UrlGenerationError) do
-      patch aikotoba.recoverable_update_path(token: @account.recovery_token, account: {password: "password"})
+      patch aikotoba.recoverable_update_path(token: nil, account: {password: "password"})
     end
   end
 
   test "Recoverable path to 404 when Aikotoba.enable_recover is false" do
     Aikotoba.enable_recover = false
-    @account.update_recovery_token!
+    @account.build_recovery_token.save!
     get aikotoba.recoverable_new_path
     assert_equal 404, status
-    get aikotoba.recoverable_edit_path(token: @account.recovery_token)
+    get aikotoba.recoverable_edit_path(token: @account.recovery_token.token)
     assert_equal 404, status
   end
 end

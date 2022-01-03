@@ -8,7 +8,7 @@
     <% end %>
   </div>
   <h1><%= I18n.t(".aikotoba.recoveries.edit") %></h1>
-  <%= form_with model: @account, method: :patch, url: recoverable_update_path(token: @account.recovery_token) do |f| %>
+  <%= form_with model: @account, method: :patch, url: recoverable_update_path(token: @account.recovery_token.token) do |f| %>
     <%= render "aikotoba/common/errors", resource: @account %>
     <p>
       <%= f.label :password %>

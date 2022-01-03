@@ -5,8 +5,8 @@ module Aikotoba
     extend ActiveSupport::Concern
 
     def send_recovery_token!(account)
-      account.update_recovery_token!
-      account.send_recovery_token
+      account.build_recovery_token.save!
+      account.recovery_token.notify
     end
   end
 end

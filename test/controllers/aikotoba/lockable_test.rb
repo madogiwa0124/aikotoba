@@ -34,7 +34,7 @@ class Aikotoba::LockableTest < ActionDispatch::IntegrationTest
     assert_equal I18n.t(".aikotoba.mailers.unlock.subject"), unlock_email.subject
     assert_equal @account.email, unlock_email.to[0]
     assert_match(/Unlock URL:/, unlock_email.body.to_s)
-    assert_includes(unlock_email.body.to_s, @account.reload.unlock_token)
+    assert_includes(unlock_email.body.to_s, @account.reload.unlock_token.token)
   end
 
   test "failed POST lockable_create_path due to not exist account" do
@@ -57,7 +57,7 @@ class Aikotoba::LockableTest < ActionDispatch::IntegrationTest
   test "success GET lockable_unlock_path" do
     @account.update!(failed_attempts: 3)
     @account.lock!
-    get aikotoba.lockable_unlock_path(token: @account.reload.unlock_token)
+    get aikotoba.lockable_unlock_path(token: @account.reload.unlock_token.token)
     assert_redirected_to Aikotoba.sign_in_path
     assert_equal I18n.t(".aikotoba.messages.unlocking.success"), flash[:notice]
     assert_equal @account.reload.locked?, false
@@ -66,7 +66,6 @@ class Aikotoba::LockableTest < ActionDispatch::IntegrationTest
   end
 
   test "faild GET lockable_unlock_path by nil token" do
-    @account.update!(unlock_token: nil)
     assert_raises(ActionController::UrlGenerationError) do
       get aikotoba.lockable_unlock_path(token: nil)
     end
@@ -91,7 +90,7 @@ class Aikotoba::LockableTest < ActionDispatch::IntegrationTest
     assert_equal I18n.t(".aikotoba.mailers.unlock.subject"), unlock_email.subject
     assert_equal @account.email, unlock_email.to[0]
     assert_match(/Unlock URL:/, unlock_email.body.to_s)
-    assert_includes(unlock_email.body.to_s, @account.unlock_token)
+    assert_includes(unlock_email.body.to_s, @account.reload.unlock_token.token)
   end
 
   test "failed POST sign_in_path by locked accout." do

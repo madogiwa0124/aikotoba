@@ -34,7 +34,6 @@ module Aikotoba
       redirect_to success_recovered_path, flash: {notice: success_recovered_message}
     rescue ActiveRecord::RecordInvalid => e
       failed_recover_process(e)
-      @account.recovery_token = params[:token]
       flash[:alert] = failed_message
       render :edit
     end
@@ -58,7 +57,7 @@ module Aikotoba
     end
 
     def find_by_has_token_account!(params)
-      ::Aikotoba::Account.has_recovery_token.find_by!(recovery_token: params[:token])
+      ::Aikotoba::Account::RecoveryToken.find_by!(token: params[:token]).account
     end
 
     def success_recovered_path
