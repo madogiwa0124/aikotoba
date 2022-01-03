@@ -4,7 +4,6 @@ module Aikotoba
   class SessionsController < ApplicationController
     include Authenticatable
     include Authorizable
-    include Lockable
 
     before_action :aikotoba_authorize, only: :destroy
 
@@ -13,16 +12,16 @@ module Aikotoba
     end
 
     def create
-      @account = find_account(session_params.to_h.symbolize_keys)
+      @account = authenticate_account(session_params.to_h.symbolize_keys)
       if @account
         before_sign_in_process
         aikotoba_sign_in(@account)
         after_sign_in_process
-        reset_lock_status!(@account) if enable_lock?
+        @account.reset_lock_status! if enable_lock?
         redirect_to after_sign_in_path, notice: successed_message
       else
         failed_sign_in_process
-        lock_if_exceed_max_failed_attempts!(email: session_params[:email]) if enable_lock?
+        find_account(session_params)&.lock_when_exceed_max_failed_attempts! if enable_lock?
         redirect_to failed_sign_in_path, alert: failed_message
       end
     end
@@ -42,8 +41,12 @@ module Aikotoba
       ::Aikotoba::Account.build_by(attributes: params)
     end
 
-    def find_account(params)
+    def authenticate_account(params)
       ::Aikotoba::Account.authenticate_by(attributes: params)
+    end
+
+    def find_account(params)
+      ::Aikotoba::Account.find_by(email: params[:email])
     end
 
     def after_sign_in_path

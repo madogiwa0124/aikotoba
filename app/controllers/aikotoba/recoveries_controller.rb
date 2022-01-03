@@ -2,7 +2,6 @@
 
 module Aikotoba
   class RecoveriesController < ApplicationController
-    include Recoverable
     include Protection::TimingAtack
 
     before_action :prevent_timing_atack, only: [:edit, :update]
@@ -14,7 +13,7 @@ module Aikotoba
     def create
       account = find_by_send_token_account!(send_recovery_token_params)
       before_send_recovery_token_process
-      send_recovery_token!(account)
+      account.send_recovery_token!
       after_send_recovery_token_process
       redirect_to success_send_recovery_token_path, flash: {notice: success_send_recovery_token_message}
     rescue ActiveRecord::RecordNotFound => e

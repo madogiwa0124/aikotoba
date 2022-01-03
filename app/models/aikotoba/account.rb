@@ -78,6 +78,11 @@ module Aikotoba
           confirmation_token&.destroy!
         end
       end
+
+      def send_confirmation_token!
+        build_confirmation_token.save!
+        confirmation_token.notify
+      end
     end
 
     concerning :Lockable do
@@ -91,8 +96,15 @@ module Aikotoba
       def lock_when_exceed_max_failed_attempts!
         ActiveRecord::Base.transaction do
           increment!(:failed_attempts)
-          lock! if failed_attempts > max_failed_attempts
+          if failed_attempts > max_failed_attempts
+            lock!
+            unlock_token.notify
+          end
         end
+      end
+
+      def reset_lock_status!
+        unlock! if failed_attempts.positive?
       end
 
       def lock!
@@ -128,6 +140,11 @@ module Aikotoba
           save!(context: :recover)
           recovery_token&.destroy!
         end
+      end
+
+      def send_recovery_token!
+        build_recovery_token.save!
+        recovery_token.notify
       end
     end
   end

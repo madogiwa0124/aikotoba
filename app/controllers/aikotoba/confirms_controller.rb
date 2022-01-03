@@ -2,7 +2,6 @@
 
 module Aikotoba
   class ConfirmsController < ApplicationController
-    include Confirmable
     include Protection::TimingAtack
 
     before_action :prevent_timing_atack, only: [:update]
@@ -14,7 +13,7 @@ module Aikotoba
     def create
       account = find_by_send_token_account!(confirm_accounts_params)
       before_send_confirmation_token_process
-      send_confirmation_token!(account)
+      account.send_confirmation_token!
       after_send_confirmation_token_process
       redirect_to success_send_confirmation_token_path, flash: {notice: success_send_confirmation_token_message}
     rescue ActiveRecord::RecordNotFound => e
