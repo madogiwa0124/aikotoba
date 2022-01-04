@@ -46,7 +46,7 @@ class Aikotoba::ConfirmableTest < ActionDispatch::IntegrationTest
   end
 
   test "failed POST confirmable_create_path by confirmed account" do
-    @account.update!(confirmed: true)
+    @account.confirm!
     assert_emails 0 do
       post aikotoba.confirmable_create_path, params: {account: {email: @account.email}}
     end
@@ -63,7 +63,7 @@ class Aikotoba::ConfirmableTest < ActionDispatch::IntegrationTest
   end
 
   test "failed GET confirmable_confirm_path by confirmed account" do
-    @account.update!(confirmed: true)
+    @account.confirm!
     get aikotoba.confirmable_confirm_path(token: @account.confirmation_token)
     assert_equal status, 404
   end

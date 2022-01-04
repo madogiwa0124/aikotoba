@@ -66,6 +66,14 @@ module Aikotoba
           Authentication.call!(email: email, password: password)
         end
       end
+
+      def authentication_failed!
+        increment!(:failed_attempts)
+      end
+
+      def authentication_success!
+        update!(failed_attempts: 0)
+      end
     end
 
     concerning :Confirmable do
@@ -76,7 +84,7 @@ module Aikotoba
       end
 
       def confirm!
-        Confirmation.confirm!(account: self)
+        update!(confirmed: true)
       end
     end
 
@@ -93,12 +101,16 @@ module Aikotoba
         end
       end
 
+      def should_lock?
+        failed_attempts > Account.max_failed_attempts
+      end
+
       def lock!
-        Lock.lock!(account: self, notify: true)
+        update!(locked: true)
       end
 
       def unlock!
-        Lock.unlock!(account: self)
+        update!(locked: false, failed_attempts: 0)
       end
     end
 
@@ -107,8 +119,9 @@ module Aikotoba
         has_one :recovery_token, dependent: :destroy, foreign_key: "aikotoba_account_id"
       end
 
-      def recover!(password:)
-        Account::Recovery.recover!(account: self, new_password: password)
+      def recover!(new_password:, new_password_digest:)
+        assign_attributes(password: new_password, password_digest: new_password_digest)
+        save!(context: :recover)
       end
     end
   end

@@ -28,7 +28,7 @@ module Aikotoba
     def update
       @account = find_by_has_token_account!(params)
       before_recover_process
-      @account.recover!(password: recover_accounts_params[:password])
+      recover_account!(@account, recover_accounts_params[:password])
       after_recover_process
       redirect_to success_recovered_path, flash: {notice: success_recovered_message}
     rescue ActiveRecord::RecordInvalid => e
@@ -61,6 +61,10 @@ module Aikotoba
 
     def send_recovery_token!(account)
       ::Aikotoba::Account::Recovery.create_token!(account: account, notify: true)
+    end
+
+    def recover_account!(account, new_password)
+      ::Aikotoba::Account::Recovery.recover!(account: account, new_password: new_password)
     end
 
     def success_recovered_path

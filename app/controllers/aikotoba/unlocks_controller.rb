@@ -24,7 +24,7 @@ module Aikotoba
     def update
       account = find_by_has_token_account!(params)
       before_unlock_process
-      account.unlock!
+      unlock_account!(account)
       after_unlock_process
       redirect_to after_unlocked_path, flash: {notice: unlocked_message}
     end
@@ -45,6 +45,10 @@ module Aikotoba
 
     def find_by_has_token_account!(params)
       ::Aikotoba::Account::UnlockToken.find_by!(token: params[:token]).account
+    end
+
+    def unlock_account!(account)
+      ::Aikotoba::Account::Lock.unlock!(account: account)
     end
 
     def after_unlocked_path

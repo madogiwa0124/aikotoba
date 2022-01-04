@@ -2,7 +2,7 @@
 
 module Aikotoba
   class Account::Confirmation
-    def self.create_token!(account:, notify:)
+    def self.create_token!(account:, notify: false)
       new(account: account).create_token!(notify: notify)
     end
 
@@ -14,7 +14,7 @@ module Aikotoba
       @account = account
     end
 
-    def create_token!(notify: false)
+    def create_token!(notify:)
       ActiveRecord::Base.transaction do
         @account.build_confirmation_token.save!
         @account.confirmation_token.notify if notify
@@ -23,7 +23,7 @@ module Aikotoba
 
     def confirm!
       ActiveRecord::Base.transaction do
-        @account.update!(confirmed: true)
+        @account.confirm!
         @account.confirmation_token&.destroy!
       end
     end

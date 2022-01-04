@@ -15,19 +15,30 @@ module Aikotoba
 
     def call!
       account = find_by_identifier
-      result = authenticate(account)
-      reset_or_lock!(success: result, account: account) if @enable_lock
-      result
+      return unless account
+      authenticate(account).tap do |result|
+        ActiveRecord::Base.transaction do
+          result ? success_callback(account) : failed_callback(account)
+        end
+      end
     end
 
     private
+
+    def success_callback(account)
+      account.authentication_success!
+    end
+
+    def failed_callback(account)
+      account.authentication_failed!
+      lock_when_should_lock!(account) if @enable_lock
+    end
 
     def find_by_identifier
       Account.authenticatable.find_by(email: @email)
     end
 
     def authenticate(account)
-      return unless account
       password_match?(account.password_digest) ? account : nil
     end
 
@@ -37,26 +48,8 @@ module Aikotoba
     end
 
     concerning :Lockable do
-      def reset_or_lock!(success:, account:)
-        return unless account
-        if success
-          reset_lock_status!(account)
-        else
-          lock_when_exceed_max_failed_attempts!(account)
-        end
-      end
-
-      private
-
-      def reset_lock_status!(account)
-        account.unlock! if account.failed_attempts.positive?
-      end
-
-      def lock_when_exceed_max_failed_attempts!(account)
-        ActiveRecord::Base.transaction do
-          account.increment!(:failed_attempts)
-          account.lock! if account.failed_attempts > @max_failed_attempts
-        end
+      def lock_when_should_lock!(account)
+        Account::Lock.lock!(account: account, notify: true) if account.should_lock?
       end
     end
   end

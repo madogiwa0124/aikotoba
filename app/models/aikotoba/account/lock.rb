@@ -2,7 +2,7 @@
 
 module Aikotoba
   class Account::Lock
-    def self.lock!(account:, notify:)
+    def self.lock!(account:, notify: false)
       new(account: account).lock!(notify: notify)
     end
 
@@ -14,9 +14,9 @@ module Aikotoba
       @account = account
     end
 
-    def lock!(notify: false)
+    def lock!(notify:)
       ActiveRecord::Base.transaction do
-        @account.update!(locked: true)
+        @account.lock!
         @account.build_unlock_token.save!
         @account.unlock_token.notify if notify
       end
@@ -24,7 +24,7 @@ module Aikotoba
 
     def unlock!
       ActiveRecord::Base.transaction do
-        @account.update!(locked: false, failed_attempts: 0)
+        @account.unlock!
         @account.unlock_token&.destroy!
       end
     end
