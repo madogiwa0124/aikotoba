@@ -10,7 +10,6 @@ module Aikotoba
       @email = email
       @password = password
       @enable_lock = Account.enable_lock?
-      @max_failed_attempts = Account.max_failed_attempts
     end
 
     def call!

@@ -10,6 +10,7 @@ module Aikotoba
     belongs_to :authenticate_target, polymorphic: true, optional: true
 
     attribute :password, :string
+    attribute :max_failed_attempts, :integer, default: -> { Aikotoba.max_failed_attempts }
     validates :email, presence: true, uniqueness: true, format: EMAIL_REGEXP
     validates :password, presence: true, on: [:create, :recover]
     validates :password, length: {minimum: PASSWORD_MINIMUM_LENGTH}, allow_blank: true, on: [:create, :recover]
@@ -83,14 +84,8 @@ module Aikotoba
         scope :unlocked, -> { where(locked: false) }
       end
 
-      class_methods do
-        def max_failed_attempts
-          Aikotoba.max_failed_attempts
-        end
-      end
-
       def should_lock?
-        failed_attempts > Account.max_failed_attempts
+        failed_attempts > max_failed_attempts
       end
 
       def lock!
