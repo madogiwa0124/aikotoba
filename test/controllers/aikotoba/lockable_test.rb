@@ -41,7 +41,7 @@ class Aikotoba::LockableTest < ActionDispatch::IntegrationTest
     assert_emails 0 do
       post aikotoba.lockable_create_path, params: {account: {email: "not_found@example.com"}}
     end
-    assert_redirected_to Aikotoba.unlock_path
+    assert_equal status, 422
     assert_equal I18n.t(".aikotoba.messages.unlocking.failed"), flash[:alert]
   end
 
@@ -50,7 +50,7 @@ class Aikotoba::LockableTest < ActionDispatch::IntegrationTest
     assert_emails 0 do
       post aikotoba.lockable_create_path, params: {account: {email: "not_found@example.com"}}
     end
-    assert_redirected_to Aikotoba.unlock_path
+    assert_equal status, 422
     assert_equal I18n.t(".aikotoba.messages.unlocking.failed"), flash[:alert]
   end
 
@@ -82,7 +82,7 @@ class Aikotoba::LockableTest < ActionDispatch::IntegrationTest
       post aikotoba.sign_in_path, params: {account: {email: @account.email, password: "wrong password"}}
       assert_equal @account.reload.locked?, true
       assert_equal @account.reload.failed_attempts, 3
-      assert_redirected_to Aikotoba.failed_sign_in_path
+      assert_equal status, 422
       assert_equal I18n.t(".aikotoba.messages.authentication.failed"), flash[:alert]
     end
 
@@ -96,7 +96,7 @@ class Aikotoba::LockableTest < ActionDispatch::IntegrationTest
   test "failed POST sign_in_path by locked accout." do
     Aikotoba::Account::Lock.lock!(account: @account)
     post aikotoba.sign_in_path, params: {account: {email: @account.email, password: "password"}}
-    assert_redirected_to Aikotoba.failed_sign_in_path
+    assert_equal status, 422
     assert_equal I18n.t(".aikotoba.messages.authentication.failed"), flash[:alert]
   end
 

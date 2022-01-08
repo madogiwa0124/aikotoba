@@ -25,7 +25,7 @@ class Aikotoba::SessionsController::EmailPasswordTest < ActionDispatch::Integrat
 
   test "failed POST sign_in_path" do
     post Aikotoba.sign_in_path, params: {account: {email: @account.email, password: "invalid_password"}}
-    assert_redirected_to Aikotoba.failed_sign_in_path
+    assert_equal status, 422
     assert_equal I18n.t(".aikotoba.messages.authentication.failed"), flash[:alert]
   end
 

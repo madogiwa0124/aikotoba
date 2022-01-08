@@ -18,7 +18,9 @@ module Aikotoba
       redirect_to success_send_confirmation_token_path, flash: {notice: success_send_confirmation_token_message}
     rescue ActiveRecord::RecordNotFound => e
       failed_send_confirmation_token_process(e)
-      redirect_to failed_send_confirmation_token_path, flash: {alert: failed_send_confirmation_token_message}
+      @account = build_account({email: "", password: ""})
+      flash[:alert] = failed_send_confirmation_token_message
+      render :new, status: :unprocessable_entity
     end
 
     def update
@@ -51,19 +53,11 @@ module Aikotoba
       ::Aikotoba::Account::Confirmation.confirm!(account: account)
     end
 
-    def enabled_confirmable?
-      Aikotoba.enable_confirm
-    end
-
     def after_confirmed_path
       Aikotoba.sign_in_path
     end
 
     def success_send_confirmation_token_path
-      Aikotoba.sign_up_path
-    end
-
-    def failed_send_confirmation_token_path
       Aikotoba.sign_up_path
     end
 

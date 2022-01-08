@@ -39,7 +39,7 @@ class Aikotoba::RecoverableTest < ActionDispatch::IntegrationTest
     assert_emails 0 do
       post aikotoba.recoverable_create_path, params: {account: {email: "not_found@example.com"}}
     end
-    assert_redirected_to Aikotoba.sign_in_path
+    assert_equal status, 422
     assert_equal I18n.t(".aikotoba.messages.recovery.sent_failed"), flash[:alert]
   end
 

@@ -41,7 +41,7 @@ class Aikotoba::ConfirmableTest < ActionDispatch::IntegrationTest
     assert_emails 0 do
       post aikotoba.confirmable_create_path, params: {account: {email: "not_found@example.com"}}
     end
-    assert_redirected_to Aikotoba.sign_up_path
+    assert_equal status, 422
     assert_equal I18n.t(".aikotoba.messages.confirmation.failed"), flash[:alert]
   end
 
@@ -50,7 +50,7 @@ class Aikotoba::ConfirmableTest < ActionDispatch::IntegrationTest
     assert_emails 0 do
       post aikotoba.confirmable_create_path, params: {account: {email: @account.email}}
     end
-    assert_redirected_to Aikotoba.sign_up_path
+    assert_equal status, 422
     assert_equal I18n.t(".aikotoba.messages.confirmation.failed"), flash[:alert]
   end
 
@@ -95,7 +95,7 @@ class Aikotoba::ConfirmableTest < ActionDispatch::IntegrationTest
 
   test "failed POST sign_in_path by not comfirmed account" do
     post aikotoba.sign_in_path, params: {account: {email: @account.email, password: @account.password}}
-    assert_redirected_to Aikotoba.failed_sign_in_path
+    assert_equal status, 422
     assert_equal I18n.t(".aikotoba.messages.authentication.failed"), flash[:alert]
   end
 

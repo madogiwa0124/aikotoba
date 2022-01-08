@@ -20,7 +20,9 @@ module Aikotoba
         redirect_to after_sign_in_path, notice: successed_message
       else
         failed_sign_in_process
-        redirect_to failed_sign_in_path, alert: failed_message
+        @account = build_account({email: "", password: ""})
+        flash[:alert] = failed_message
+        render :new, status: :unprocessable_entity
       end
     end
 
@@ -49,10 +51,6 @@ module Aikotoba
 
     def after_sign_in_path
       Aikotoba.after_sign_in_path
-    end
-
-    def failed_sign_in_path
-      Aikotoba.failed_sign_in_path
     end
 
     def after_sign_out_path

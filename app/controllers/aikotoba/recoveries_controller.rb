@@ -18,7 +18,9 @@ module Aikotoba
       redirect_to success_send_recovery_token_path, flash: {notice: success_send_recovery_token_message}
     rescue ActiveRecord::RecordNotFound => e
       failed_send_recovery_token_process(e)
-      redirect_to failed_send_recovery_token_path, flash: {alert: failed_send_recovery_token_message}
+      @account = build_account({email: "", password: ""})
+      flash[:alert] = failed_send_recovery_token_message
+      render :new, status: :unprocessable_entity
     end
 
     def edit
@@ -34,7 +36,7 @@ module Aikotoba
     rescue ActiveRecord::RecordInvalid => e
       failed_recover_process(e)
       flash[:alert] = failed_message
-      render :edit
+      render :edit, status: :unprocessable_entity
     end
 
     private
@@ -72,10 +74,6 @@ module Aikotoba
     end
 
     def success_send_recovery_token_path
-      Aikotoba.sign_in_path
-    end
-
-    def failed_send_recovery_token_path
       Aikotoba.sign_in_path
     end
 

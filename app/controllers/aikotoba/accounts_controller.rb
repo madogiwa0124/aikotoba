@@ -17,7 +17,7 @@ module Aikotoba
     rescue ActiveRecord::RecordInvalid => e
       failed_create_account_process(e)
       flash[:alert] = failed_message
-      render :new
+      render :new, status: :unprocessable_entity
     end
 
     private

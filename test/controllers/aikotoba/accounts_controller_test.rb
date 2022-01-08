@@ -26,6 +26,7 @@ class Aikotoba::AccountsController::EmailPasswordTest < ActionDispatch::Integrat
     email, password = ["", "pass"]
     post Aikotoba.sign_up_path, params: {account: {email: email, password: password}}
     assert_equal I18n.t(".aikotoba.messages.registration.failed"), flash[:alert]
+    assert_equal status, 422
     messages = @controller.instance_variable_get(:@account).errors.full_messages
     assert_includes messages, "Password is too short (minimum is 8 characters)"
     assert_includes messages, "Email can't be blank"
