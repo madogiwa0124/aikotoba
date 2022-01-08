@@ -2,6 +2,8 @@
 
 module Aikotoba
   class Account < ApplicationRecord
+    include EnabledFeatureCheckable
+
     PASSWORD_MINIMUM_LENGTH = Aikotoba.password_minimum_length
     EMAIL_REGEXP = /\A[^\s]+@[^\s]+\z/
 
@@ -20,20 +22,6 @@ module Aikotoba
       if authenticate_target
         target_type_name = authenticate_target_type.gsub("::", "").underscore
         define_singleton_method(target_type_name) { authenticate_target }
-      end
-    end
-
-    class << self
-      def enable_lock?
-        Aikotoba.enable_lock
-      end
-
-      def enable_confirm?
-        Aikotoba.enable_confirm
-      end
-
-      def enable_recover?
-        Aikotoba.enable_recover
       end
     end
 
