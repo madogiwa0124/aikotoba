@@ -78,7 +78,7 @@ class Aikotoba::ConfirmableTest < ActionDispatch::IntegrationTest
     post aikotoba.sign_up_path, params: {account: {email: "bar@example.com", password: "password"}}
     assert_redirected_to Aikotoba.after_sign_up_path
     assert_equal I18n.t(".aikotoba.messages.registration.success"), flash[:notice]
-    account = @controller.instance_variable_get("@account")
+    account = @controller.instance_variable_get(:@account)
     confirm_email = ActionMailer::Base.deliveries.last
     assert_equal I18n.t(".aikotoba.mailers.confirm.subject"), confirm_email.subject
     assert_equal account.email, confirm_email.to[0]
