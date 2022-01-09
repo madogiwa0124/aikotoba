@@ -61,10 +61,6 @@ module Aikotoba
       Aikotoba.sign_in_path
     end
 
-    def failed_send_unlock_token_path
-      Aikotoba.unlock_path
-    end
-
     def unlocked_message
       I18n.t(".aikotoba.messages.unlocking.success")
     end

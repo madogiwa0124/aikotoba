@@ -45,10 +45,6 @@ module Aikotoba
       ::Aikotoba::Account.authenticate_by(attributes: params)
     end
 
-    def find_account(params)
-      ::Aikotoba::Account.find_by(email: params[:email])
-    end
-
     def after_sign_in_path
       Aikotoba.after_sign_in_path
     end
