@@ -11,6 +11,7 @@ group :development do
 end
 
 group :development, :test do
+  gem "net-smtp"
   gem "sqlite3"
   gem "capybara"
   gem "webrick"

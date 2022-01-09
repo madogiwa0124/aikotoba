@@ -239,6 +239,7 @@ DEPENDENCIES
   brakeman
   capybara
   letter_opener_web
+  net-smtp
   sprockets-rails
   sqlite3
   standard
