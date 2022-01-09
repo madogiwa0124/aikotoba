@@ -38,19 +38,19 @@ module Aikotoba
     end
 
     def build_account(params)
-      ::Aikotoba::Account.build_by(attributes: params)
+      Account.build_by(attributes: params)
     end
 
     def find_by_send_token_account!(params)
-      ::Aikotoba::Account.unconfirmed.find_by!(email: params[:email])
+      Account.unconfirmed.find_by!(email: params[:email])
     end
 
     def find_by_has_token_account!(params)
-      ::Aikotoba::Account::ConfirmationToken.find_by!(token: params[:token]).account
+      Account::ConfirmationToken.find_by!(token: params[:token]).account
     end
 
     def confirm_account!(account)
-      ::Aikotoba::Account::Service::Confirmation.confirm!(account: account)
+      Account::Service::Confirmation.confirm!(account: account)
     end
 
     def after_confirmed_path

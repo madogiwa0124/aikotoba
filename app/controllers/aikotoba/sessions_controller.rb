@@ -38,11 +38,11 @@ module Aikotoba
     end
 
     def build_account(params)
-      ::Aikotoba::Account.build_by(attributes: params)
+      Account.build_by(attributes: params)
     end
 
     def authenticate_account(params)
-      ::Aikotoba::Account.authenticate_by(attributes: params)
+      Account.authenticate_by(attributes: params)
     end
 
     def after_sign_in_path

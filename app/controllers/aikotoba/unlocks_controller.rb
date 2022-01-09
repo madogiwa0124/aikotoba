@@ -38,19 +38,19 @@ module Aikotoba
     end
 
     def build_account(params)
-      ::Aikotoba::Account.build_by(attributes: params)
+      Account.build_by(attributes: params)
     end
 
     def find_by_send_token_account!(params)
-      ::Aikotoba::Account.locked.find_by!(email: params[:email])
+      Account.locked.find_by!(email: params[:email])
     end
 
     def find_by_has_token_account!(params)
-      ::Aikotoba::Account::UnlockToken.find_by!(token: params[:token]).account
+      Account::UnlockToken.find_by!(token: params[:token]).account
     end
 
     def unlock_account!(account)
-      ::Aikotoba::Account::Service::Lock.unlock!(account: account)
+      Account::Service::Lock.unlock!(account: account)
     end
 
     def after_unlocked_path

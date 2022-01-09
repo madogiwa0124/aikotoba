@@ -9,15 +9,15 @@ module Aikotoba
     end
 
     def enable_confirm?
-      ::Aikotoba::Account.enable_confirm?
+      Account.enable_confirm?
     end
 
     def enable_recover?
-      ::Aikotoba::Account.enable_recover?
+      Account.enable_recover?
     end
 
     def enable_lock?
-      ::Aikotoba::Account.enable_lock?
+      Account.enable_lock?
     end
   end
 end
