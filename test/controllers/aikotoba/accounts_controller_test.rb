@@ -3,7 +3,7 @@
 require "test_helper"
 require "minitest/autorun"
 
-class Aikotoba::AccountsController::EmailPasswordTest < ActionDispatch::IntegrationTest
+class Aikotoba::AccountsControllerTest < ActionDispatch::IntegrationTest
   def setup
     ActionController::Base.allow_forgery_protection = false
   end
