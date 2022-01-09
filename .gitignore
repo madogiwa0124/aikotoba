@@ -10,3 +10,4 @@
 /test/dummy/tmp/
 .byebug_history
 /vendor/bundle
+/coverage

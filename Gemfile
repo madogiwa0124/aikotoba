@@ -17,6 +17,7 @@ group :development, :test do
   gem "webrick"
   gem "webdrivers"
   gem "sprockets-rails"
+  gem "simplecov", require: false
 end
 
 # To use a debugger
