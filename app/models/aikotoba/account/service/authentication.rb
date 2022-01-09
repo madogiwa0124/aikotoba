@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module Aikotoba
-  class Account::Authentication
+  class Account::Service::Authentication
     def self.call!(email:, password:)
       new(email: email, password: password).call!
     end
@@ -48,7 +48,7 @@ module Aikotoba
 
     concerning :Lockable do
       def lock_when_should_lock!(account)
-        Account::Lock.lock!(account: account, notify: true) if account.should_lock?
+        Account::Service::Lock.lock!(account: account, notify: true) if account.should_lock?
       end
     end
   end

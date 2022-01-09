@@ -50,7 +50,7 @@ module Aikotoba
     end
 
     def confirm_account!(account)
-      ::Aikotoba::Account::Confirmation.confirm!(account: account)
+      ::Aikotoba::Account::Service::Confirmation.confirm!(account: account)
     end
 
     def after_confirmed_path

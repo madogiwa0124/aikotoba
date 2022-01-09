@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module Aikotoba
-  class Account::Confirmation
+  class Account::Service::Confirmation
     def self.create_token!(account:, notify: false)
       new(account: account).create_token!(notify: notify)
     end

@@ -30,12 +30,12 @@ module Aikotoba
       class_methods do
         def build_by(attributes:)
           email, password = attributes.values_at(:email, :password)
-          Registration.build(email: email, password: password)
+          Service::Registration.build(email: email, password: password)
         end
       end
 
       def save_with_callbacks!
-        Registration.save_with_callbacks!(account: self)
+        Service::Registration.save_with_callbacks!(account: self)
       end
     end
 
@@ -52,7 +52,7 @@ module Aikotoba
       class_methods do
         def authenticate_by(attributes:)
           email, password = attributes.values_at(:email, :password)
-          Authentication.call!(email: email, password: password)
+          Service::Authentication.call!(email: email, password: password)
         end
       end
 

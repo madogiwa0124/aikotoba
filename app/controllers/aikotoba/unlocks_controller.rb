@@ -50,7 +50,7 @@ module Aikotoba
     end
 
     def unlock_account!(account)
-      ::Aikotoba::Account::Lock.unlock!(account: account)
+      ::Aikotoba::Account::Service::Lock.unlock!(account: account)
     end
 
     def after_unlocked_path

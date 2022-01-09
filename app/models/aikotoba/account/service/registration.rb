@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module Aikotoba
-  class Account::Registration
+  class Account::Service::Registration
     def self.build(email:, password:)
       new.build(email: email, password: password)
     end
@@ -36,7 +36,7 @@ module Aikotoba
 
     concerning :Confirmable do
       def send_confirmation_token!(account)
-        Account::Confirmation.create_token!(account: account, notify: true)
+        Account::Service::Confirmation.create_token!(account: account, notify: true)
       end
     end
   end
