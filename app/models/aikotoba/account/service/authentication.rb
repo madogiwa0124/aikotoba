@@ -7,9 +7,12 @@ module Aikotoba
     end
 
     def initialize(email:, password:)
+      @account_class = Account
+      @password_class = Account::Password
+      @lock_service = Account::Service::Lock
+      @enable_lock = @account_class.enable_lock?
       @email = email
       @password = password
-      @enable_lock = Account.enable_lock?
     end
 
     def call!
@@ -34,7 +37,7 @@ module Aikotoba
     end
 
     def find_by_identifier
-      Account.authenticatable.find_by(email: @email)
+      @account_class.authenticatable.find_by(email: @email)
     end
 
     def authenticate(account)
@@ -42,13 +45,13 @@ module Aikotoba
     end
 
     def password_match?(password_digest)
-      password = Account::Password.new(value: @password)
+      password = @password_class.new(value: @password)
       password.match?(digest: password_digest)
     end
 
     concerning :Lockable do
       def lock_when_should_lock!(account)
-        Account::Service::Lock.lock!(account: account, notify: true) if account.should_lock?
+        @lock_service.lock!(account: account, notify: true) if account.should_lock?
       end
     end
   end

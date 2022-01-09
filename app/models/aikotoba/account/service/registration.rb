@@ -11,12 +11,15 @@ module Aikotoba
     end
 
     def initialize
-      @enable_confirm = Account.enable_confirm?
+      @password_class = Account::Password
+      @account_class = Account
+      @confirm_service = Account::Service::Confirmation
+      @enable_confirm = @account_class.enable_confirm?
     end
 
     def build(email:, password:)
-      Account.new(email: email, password: password).tap do |resource|
-        password_digest = build_password_digest(password)
+      @account_class.new(email: email, password: password).tap do |resource|
+        password_digest = @password_class.new(value: password).digest
         resource.assign_attributes(password_digest: password_digest)
       end
     end
@@ -30,13 +33,9 @@ module Aikotoba
 
     private
 
-    def build_password_digest(password)
-      Account::Password.new(value: password).digest
-    end
-
     concerning :Confirmable do
       def send_confirmation_token!(account)
-        Account::Service::Confirmation.create_token!(account: account, notify: true)
+        @confirm_service.create_token!(account: account, notify: true)
       end
     end
   end
