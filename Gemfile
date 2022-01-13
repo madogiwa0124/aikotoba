@@ -5,18 +5,21 @@ git_source(:github) { |repo| "https://github.com/#{repo}.git" }
 gemspec
 
 group :development do
-  gem "brakeman"
-  gem "standard"
   gem "letter_opener_web"
+  gem "brakeman", require: false
 end
 
 group :development, :test do
   gem "net-smtp"
-  gem "sqlite3"
-  gem "capybara"
   gem "webrick"
-  gem "webdrivers"
+  gem "sqlite3"
   gem "sprockets-rails"
+  gem "standard", require: false
+end
+
+group :test do
+  gem "capybara", require: false
+  gem "webdrivers"
   gem "simplecov", require: false
 end
 
