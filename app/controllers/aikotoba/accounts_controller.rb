@@ -10,7 +10,7 @@ module Aikotoba
       @account = build_account(accounts_params.to_h.symbolize_keys)
       ActiveRecord::Base.transaction do
         before_create_account_process
-        @account.save_with_callbacks!
+        save_with_callbacks!(@account)
         after_create_account_process
       end
       redirect_to after_sign_up_path, flash: {notice: successed_message}
@@ -28,6 +28,10 @@ module Aikotoba
 
     def build_account(params)
       Account.build_by(attributes: params)
+    end
+
+    def save_with_callbacks!(account)
+      Account::Service::Registration.call!(account: account)
     end
 
     def after_sign_up_path

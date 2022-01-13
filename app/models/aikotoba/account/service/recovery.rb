@@ -12,7 +12,6 @@ module Aikotoba
 
     def initialize(account:)
       @account = account
-      @password_class = Account::Password
     end
 
     def create_token!(notify:)
@@ -24,8 +23,7 @@ module Aikotoba
 
     def recover!(new_password:)
       ActiveRecord::Base.transaction do
-        password = @password_class.new(value: new_password)
-        @account.recover!(new_password: password.value, new_password_digest: password.digest)
+        @account.recover!(new_password: new_password)
         @account.recovery_token&.destroy!
       end
     end

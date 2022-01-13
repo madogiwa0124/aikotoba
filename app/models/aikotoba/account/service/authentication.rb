@@ -8,7 +8,6 @@ module Aikotoba
 
     def initialize(email:, password:)
       @account_class = Account
-      @password_class = Account::Password
       @lock_service = Account::Service::Lock
       @enable_lock = @account_class.enable_lock?
       @email = email
@@ -41,12 +40,7 @@ module Aikotoba
     end
 
     def authenticate(account)
-      password_match?(account.password_digest) ? account : nil
-    end
-
-    def password_match?(password_digest)
-      password = @password_class.new(value: @password)
-      password.match?(digest: password_digest)
+      account.password_match?(@password) ? account : nil
     end
 
     concerning :Lockable do

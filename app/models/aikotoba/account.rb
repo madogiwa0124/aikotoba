@@ -30,12 +30,14 @@ module Aikotoba
       class_methods do
         def build_by(attributes:)
           email, password = attributes.values_at(:email, :password)
-          Service::Registration.build(email: email, password: password)
+          new(email: email, password: password)
         end
       end
 
-      def save_with_callbacks!
-        Service::Registration.save_with_callbacks!(account: self)
+      def password=(value)
+        new_password = Password.new(value: value)
+        write_attribute(:password, new_password.value)
+        write_attribute(:password_digest, new_password.digest)
       end
     end
 
@@ -54,6 +56,10 @@ module Aikotoba
           email, password = attributes.values_at(:email, :password)
           Service::Authentication.call!(email: email, password: password)
         end
+      end
+
+      def password_match?(password)
+        Password.new(value: password).match?(digest: password_digest)
       end
 
       def authentication_failed!
@@ -102,8 +108,8 @@ module Aikotoba
         has_one :recovery_token, dependent: :destroy, foreign_key: "aikotoba_account_id"
       end
 
-      def recover!(new_password:, new_password_digest:)
-        assign_attributes(password: new_password, password_digest: new_password_digest)
+      def recover!(new_password:)
+        assign_attributes(password: new_password)
         save!(context: :recover)
       end
     end

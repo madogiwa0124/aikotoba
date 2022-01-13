@@ -2,29 +2,17 @@
 
 module Aikotoba
   class Account::Service::Registration
-    def self.build(email:, password:)
-      new.build(email: email, password: password)
-    end
-
-    def self.save_with_callbacks!(account:)
-      new.save_with_callbacks!(account: account)
+    def self.call!(account:)
+      new.call!(account: account)
     end
 
     def initialize
-      @password_class = Account::Password
       @account_class = Account
       @confirm_service = Account::Service::Confirmation
       @enable_confirm = @account_class.enable_confirm?
     end
 
-    def build(email:, password:)
-      @account_class.new(email: email, password: password).tap do |resource|
-        password_digest = @password_class.new(value: password).digest
-        resource.assign_attributes(password_digest: password_digest)
-      end
-    end
-
-    def save_with_callbacks!(account:)
+    def call!(account:)
       ActiveRecord::Base.transaction do
         account.save!
         send_confirmation_token!(account) if @enable_confirm
