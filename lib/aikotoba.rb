@@ -9,7 +9,7 @@ module Aikotoba
   mattr_accessor(:session_key) { "aikotoba-user-id" }
   mattr_accessor(:prevent_timing_atack) { true }
   mattr_accessor(:password_pepper) { "aikotoba-default-pepper" }
-  mattr_accessor(:password_stretch) { 5 }
+  mattr_accessor(:password_stretch) { 2 }
   mattr_accessor(:password_minimum_length) { 8 }
   mattr_accessor(:sign_in_path) { "/sign_in" }
   mattr_accessor(:sign_up_path) { "/sign_up" }
