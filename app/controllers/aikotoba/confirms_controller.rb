@@ -54,7 +54,10 @@ module Aikotoba
     end
 
     def confirm_account!(account)
-      Account::Service::Confirmation.confirm!(account: account)
+      # NOTE: Confirmation is done using URL tokens, so it is done in the writing role.
+      ActiveRecord::Base.connected_to(role: :writing) do
+        Account::Service::Confirmation.confirm!(account: account)
+      end
     end
 
     def after_confirmed_path

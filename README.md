@@ -11,6 +11,7 @@ Aikotoba is a Rails engine that makes it easy to implement simple email and pass
 - Simple implementation using the Rails engine.
 - Modern hashing algorithm.
 - Separate the authentication logic from User.
+- Implementation for multiple DB.
 
 **Features**
 

@@ -54,7 +54,10 @@ module Aikotoba
     end
 
     def unlock_account!(account)
-      Account::Service::Lock.unlock!(account: account)
+      # NOTE: Unlocking is done using URL tokens, so it is done in the writing role.
+      ActiveRecord::Base.connected_to(role: :writing) do
+        Account::Service::Lock.unlock!(account: account)
+      end
     end
 
     def after_unlocked_path
