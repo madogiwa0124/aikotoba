@@ -37,6 +37,16 @@ class Aikotoba::LockableTest < ActionDispatch::IntegrationTest
     assert_includes(unlock_email.body.to_s, @account.reload.unlock_token.token)
   end
 
+  test "regenerated token when success POST lockable_create_path " do
+    Aikotoba::Account::Service::Lock.lock!(account: @account)
+    @account.unlock_token.update!(token: "before_token", expired_at: 1.day.ago)
+    post aikotoba.lockable_create_path, params: {account: {email: @account.email}}
+    @account.unlock_token.reload
+    assert @account.unlock_token.token.present?
+    assert @account.unlock_token.expired_at.future?
+    assert_not_equal @account.unlock_token.token, "before_token"
+  end
+
   test "failed POST lockable_create_path due to not exist account" do
     assert_emails 0 do
       post aikotoba.lockable_create_path, params: {account: {email: "not_found@example.com"}}
@@ -54,7 +64,7 @@ class Aikotoba::LockableTest < ActionDispatch::IntegrationTest
     assert_equal I18n.t(".aikotoba.messages.unlocking.failed"), flash[:alert]
   end
 
-  test "success GET lockable_unlock_path" do
+  test "success GET lockable_unlock_path by active token" do
     @account.update!(failed_attempts: 3)
     Aikotoba::Account::Service::Lock.lock!(account: @account)
     get aikotoba.lockable_unlock_path(token: @account.reload.unlock_token.token)
@@ -63,6 +73,18 @@ class Aikotoba::LockableTest < ActionDispatch::IntegrationTest
     assert_equal @account.reload.locked?, false
     assert_nil @account.reload.unlock_token
     assert_equal @account.reload.failed_attempts, 0
+  end
+
+  test "failed GET lockable_unlock_path by expired token" do
+    Aikotoba::Account::Service::Lock.lock!(account: @account)
+    @account.unlock_token.update!(expired_at: 1.hour.ago)
+    get aikotoba.lockable_unlock_path(token: @account.unlock_token.token)
+    assert_equal status, 404
+  end
+
+  test "failed GET lockable_unlock_path by not exists token" do
+    get aikotoba.lockable_unlock_path(token: "not_exists_token")
+    assert_equal status, 404
   end
 
   test "faild GET lockable_unlock_path by nil token" do

@@ -37,6 +37,18 @@ class Aikotoba::ConfirmableTest < ActionDispatch::IntegrationTest
     assert_includes(confirm_email.body.to_s, @account.confirmation_token.reload.token)
   end
 
+  test "regenerated token when success POST confirmable_create_path " do
+    @account.build_confirmation_token.save!
+    @account.confirmation_token.update!(token: "before_token", expired_at: 1.day.ago)
+    post aikotoba.confirmable_create_path, params: {account: {email: @account.email}}
+    assert_redirected_to Aikotoba.sign_up_path
+    assert_equal I18n.t(".aikotoba.messages.confirmation.sent"), flash[:notice]
+    @account.confirmation_token.reload
+    assert @account.confirmation_token.token.present?
+    assert @account.confirmation_token.expired_at.future?
+    assert_not_equal @account.confirmation_token.token, "before_token"
+  end
+
   test "failed POST confirmable_create_path by not exist account" do
     assert_emails 0 do
       post aikotoba.confirmable_create_path, params: {account: {email: "not_found@example.com"}}
@@ -54,7 +66,7 @@ class Aikotoba::ConfirmableTest < ActionDispatch::IntegrationTest
     assert_equal I18n.t(".aikotoba.messages.confirmation.failed"), flash[:alert]
   end
 
-  test "success GET confirmable_confirm_path by unconfirmed account" do
+  test "success GET confirmable_confirm_path by active token" do
     get aikotoba.confirmable_confirm_path(token: @account.confirmation_token.token)
     assert_redirected_to Aikotoba.sign_in_path
     assert_equal I18n.t(".aikotoba.messages.confirmation.success"), flash[:notice]
@@ -62,9 +74,14 @@ class Aikotoba::ConfirmableTest < ActionDispatch::IntegrationTest
     assert_nil @account.reload.confirmation_token
   end
 
-  test "failed GET confirmable_confirm_path by confirmed account" do
-    @account.confirm!
-    get aikotoba.confirmable_confirm_path(token: @account.confirmation_token)
+  test "failed GET confirmable_confirm_path by not exists token" do
+    get aikotoba.confirmable_confirm_path(token: "not_exists_token")
+    assert_equal status, 404
+  end
+
+  test "failed GET confirmable_confirm_path by expired token" do
+    @account.confirmation_token.update!(expired_at: 1.hour.ago)
+    get aikotoba.confirmable_confirm_path(token: @account.confirmation_token.token)
     assert_equal status, 404
   end
 

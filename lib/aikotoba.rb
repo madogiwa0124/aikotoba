@@ -22,13 +22,16 @@ module Aikotoba
   # for confirmable
   mattr_accessor(:enable_confirm) { false }
   mattr_accessor(:confirm_path) { "/confirm" }
+  mattr_accessor(:confirmation_token_expiry) { 5.days }
 
   # for lockable
   mattr_accessor(:enable_lock) { false }
   mattr_accessor(:unlock_path) { "/unlock" }
   mattr_accessor(:max_failed_attempts) { 10 }
+  mattr_accessor(:unlock_token_expiry) { 5.days }
 
   # for recoverable
   mattr_accessor(:enable_recover) { false }
   mattr_accessor(:recover_path) { "/recover" }
+  mattr_accessor(:recovery_token_expiry) { 5.days }
 end

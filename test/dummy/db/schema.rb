@@ -15,6 +15,7 @@ ActiveRecord::Schema.define(version: 2021_12_04_121532) do
   create_table "aikotoba_account_confirmation_tokens", force: :cascade do |t|
     t.integer "aikotoba_account_id", null: false
     t.string "token", null: false
+    t.datetime "expired_at", null: false
     t.datetime "created_at", precision: 6, null: false
     t.datetime "updated_at", precision: 6, null: false
     t.index ["aikotoba_account_id"], name: "index_account_confirmation_tokens_on_account_id", unique: true
@@ -24,6 +25,7 @@ ActiveRecord::Schema.define(version: 2021_12_04_121532) do
   create_table "aikotoba_account_recovery_tokens", force: :cascade do |t|
     t.integer "aikotoba_account_id", null: false
     t.string "token", null: false
+    t.datetime "expired_at", null: false
     t.datetime "created_at", precision: 6, null: false
     t.datetime "updated_at", precision: 6, null: false
     t.index ["aikotoba_account_id"], name: "index_account_recovery_tokens_on_account_id", unique: true
@@ -33,6 +35,7 @@ ActiveRecord::Schema.define(version: 2021_12_04_121532) do
   create_table "aikotoba_account_unlock_tokens", force: :cascade do |t|
     t.integer "aikotoba_account_id", null: false
     t.string "token", null: false
+    t.datetime "expired_at", null: false
     t.datetime "created_at", precision: 6, null: false
     t.datetime "updated_at", precision: 6, null: false
     t.index ["aikotoba_account_id"], name: "index_account_unlock_tokens_on_account_id", unique: true

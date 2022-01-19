@@ -35,6 +35,16 @@ class Aikotoba::RecoverableTest < ActionDispatch::IntegrationTest
     assert_includes(recover_email.body.to_s, @account.reload.recovery_token.token)
   end
 
+  test "regenerated token when success POST recoverable_create_path " do
+    @account.build_recovery_token.save!
+    @account.recovery_token.update!(token: "before_token", expired_at: 1.day.ago)
+    post aikotoba.recoverable_create_path, params: {account: {email: @account.email}}
+    @account.recovery_token.reload
+    assert @account.recovery_token.token.present?
+    assert @account.recovery_token.expired_at.future?
+    assert_not_equal @account.recovery_token.token, "before_token"
+  end
+
   test "failed POST recoverable_create_path by not exist account" do
     assert_emails 0 do
       post aikotoba.recoverable_create_path, params: {account: {email: "not_found@example.com"}}
@@ -43,11 +53,18 @@ class Aikotoba::RecoverableTest < ActionDispatch::IntegrationTest
     assert_equal I18n.t(".aikotoba.messages.recovery.sent_failed"), flash[:alert]
   end
 
-  test "success GET recoverable_edit_path" do
+  test "success GET recoverable_edit_path by active token" do
     @account.build_recovery_token.save!
     get aikotoba.recoverable_edit_path(token: @account.recovery_token.token)
     assert_equal 200, status
     assert_select "h1", I18n.t(".aikotoba.recoveries.edit")
+  end
+
+  test "failed GET recoverable_edit_path by expired token" do
+    @account.build_recovery_token.save!
+    @account.recovery_token.update!(expired_at: 1.hour.ago)
+    get aikotoba.lockable_unlock_path(token: @account.recovery_token.token)
+    assert_equal status, 404
   end
 
   test "failed GET recoverable_edit_path by not found token" do

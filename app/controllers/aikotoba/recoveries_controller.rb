@@ -58,7 +58,7 @@ module Aikotoba
     end
 
     def find_by_has_token_account!(params)
-      Account::RecoveryToken.find_by!(token: params[:token]).account
+      Account::RecoveryToken.active.find_by!(token: params[:token]).account
     end
 
     def send_recovery_token!(account)

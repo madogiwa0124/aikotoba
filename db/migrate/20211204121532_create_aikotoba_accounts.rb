@@ -18,6 +18,7 @@ class CreateAikotobaAccounts < ActiveRecord::Migration[6.1]
         index: {unique: true, name: "index_account_confirmation_tokens_on_account_id"}
       )
       t.string :token, null: false, index: {unique: true}
+      t.datetime :expired_at, null: false
 
       t.timestamps
     end
@@ -29,6 +30,7 @@ class CreateAikotobaAccounts < ActiveRecord::Migration[6.1]
         index: {unique: true, name: "index_account_unlock_tokens_on_account_id"}
       )
       t.string :token, null: false, index: {unique: true}
+      t.datetime :expired_at, null: false
 
       t.timestamps
     end
@@ -40,6 +42,7 @@ class CreateAikotobaAccounts < ActiveRecord::Migration[6.1]
         index: {unique: true, name: "index_account_recovery_tokens_on_account_id"}
       )
       t.string :token, null: false, index: {unique: true}
+      t.datetime :expired_at, null: false
 
       t.timestamps
     end
