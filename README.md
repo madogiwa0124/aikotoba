@@ -15,8 +15,8 @@ Aikotoba is a Rails engine that makes it easy to implement simple email and pass
 
 **Features**
 
-- Registrable : Register an account using your email address and password.
 - Authenticatable : Authenticate account using email and password.
+- Registrable(optional) : Register an account using your email address and password.
 - Confirmable(optional) : After registration, send an email with a token to confirm account.
 - Lockable(optional) : Lock account if make a mistake with password more than a certain number of times.
 - Recoverable(optional) : Recover account by resetting password.
@@ -74,15 +74,6 @@ end
 
 ## Features
 
-### Registrable
-
-Register an account using email and password. The password is stored as a hash in [Argon2](https://github.com/technion/ruby-argon2).
-
-| HTTP Verb | Path     | Overview              |
-| --------- | -------- | --------------------- |
-| GET       | /sign_up | Display sign up page. |
-| POST      | /sign_up | Create an account.    |
-
 ### Authenticatable
 
 Authenticate an account using email and password.
@@ -97,6 +88,23 @@ Aikotoba enable helper methods for authentication. The method name can be change
 
 - `authenticate_user!` : Redirects to the specified path if the user is not logged in. The redirect path can be changed by configuration.
 - `current_user` : Returns the logged in instance of `Aikotoba::Account`.
+
+### Registrable
+
+To enable it, set `Aikotoba.enable_confirm` to `true`. (It is enabled by default.)
+
+```ruby
+Aikotoba.enable_register = true
+```
+
+Register an account using email and password.
+
+| HTTP Verb | Path     | Overview              |
+| --------- | -------- | --------------------- |
+| GET       | /sign_up | Display sign up page. |
+| POST      | /sign_up | Create an account.    |
+
+The password is stored as a hash in [Argon2](https://github.com/technion/ruby-argon2).
 
 ### Confirmable
 
@@ -160,12 +168,14 @@ Aikotoba.prevent_timing_atack = true
 Aikotoba.password_pepper = "aikotoba-default-pepper"
 Aikotoba.password_minimum_length = 10
 Aikotoba.sign_in_path = "/sign_in"
-Aikotoba.sign_up_path = "/sign_up"
 Aikotoba.sign_out_path = "/sign_out"
 Aikotoba.after_sign_in_path = "/"
-Aikotoba.after_sign_up_path = "/sign_in"
 Aikotoba.after_sign_out_path = "/sign_in"
 Aikotoba.appeal_sign_in_path = "/sign_in"
+
+# for registerable
+Aikotoba.enable_register = true
+Aikotoba.sign_up_path = "/sign_up"
 
 # for confirmable
 Aikotoba.enable_confirm = false
@@ -189,6 +199,16 @@ Aikotoba.recovery_token_expiry = 5.days
 ### Customize Message
 
 All Messages are managed by `i18n` and can be freely overridden.
+
+### Manually create an `Aikotoba::Account` for authentication.
+
+By running the following script, you can hash and store passwords.
+
+```ruby
+Aikotoba::Account.create!(email: "sample@example.com", password: "password")
+Aikotoba::Account.authenticate_by(attributes: {email: "sample@example.com", password: "password"})
+# => created account instance.
+```
 
 ### Create other model with `Aikotoba::Account`.
 

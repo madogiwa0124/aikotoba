@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
-class Aikotoba::ConfirmableConstraint
+class Aikotoba::RegisterableConstraint
   def self.matches?(_request)
-    Aikotoba.enable_confirm
+    Aikotoba.enable_register
   end
 end

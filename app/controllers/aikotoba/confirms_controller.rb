@@ -65,7 +65,7 @@ module Aikotoba
     end
 
     def success_send_confirmation_token_path
-      Aikotoba.sign_up_path
+      Aikotoba.sign_in_path
     end
 
     def confirmed_message

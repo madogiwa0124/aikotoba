@@ -26,21 +26,6 @@ module Aikotoba
       end
     end
 
-    concerning :Registrable do
-      class_methods do
-        def build_by(attributes:)
-          email, password = attributes.values_at(:email, :password)
-          new(email: email, password: password)
-        end
-      end
-
-      def password=(value)
-        new_password = Password.new(value: value)
-        write_attribute(:password, new_password.value)
-        write_attribute(:password_digest, new_password.digest)
-      end
-    end
-
     concerning :Authenticatable do
       included do
         scope :authenticatable, -> {
@@ -68,6 +53,21 @@ module Aikotoba
 
       def authentication_success!
         update!(failed_attempts: 0)
+      end
+    end
+
+    concerning :Registrable do
+      class_methods do
+        def build_by(attributes:)
+          email, password = attributes.values_at(:email, :password)
+          new(email: email, password: password)
+        end
+      end
+
+      def password=(value)
+        new_password = Password.new(value: value)
+        write_attribute(:password, new_password.value)
+        write_attribute(:password_digest, new_password.digest)
       end
     end
 

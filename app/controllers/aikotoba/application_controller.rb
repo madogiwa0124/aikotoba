@@ -4,7 +4,7 @@ module Aikotoba
   class ApplicationController < ::ApplicationController
     include EnabledFeatureCheckable
 
-    helper_method :enable_confirm?, :enable_lock?, :enable_recover?
+    helper_method :enable_confirm?, :enable_lock?, :enable_recover?, :enable_register?
 
     def aikotoba_controller?
       true

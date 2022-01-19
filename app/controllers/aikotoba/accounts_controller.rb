@@ -35,7 +35,7 @@ module Aikotoba
     end
 
     def after_sign_up_path
-      Aikotoba.after_sign_up_path
+      Aikotoba.sign_in_path
     end
 
     def successed_message

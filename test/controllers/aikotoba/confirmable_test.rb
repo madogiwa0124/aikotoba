@@ -28,7 +28,7 @@ class Aikotoba::ConfirmableTest < ActionDispatch::IntegrationTest
     assert_emails 1 do
       post aikotoba.confirmable_create_path, params: {account: {email: @account.email}}
     end
-    assert_redirected_to Aikotoba.sign_up_path
+    assert_redirected_to Aikotoba.sign_in_path
     assert_equal I18n.t(".aikotoba.messages.confirmation.sent"), flash[:notice]
     confirm_email = ActionMailer::Base.deliveries.last
     assert_equal I18n.t(".aikotoba.mailers.confirm.subject"), confirm_email.subject
@@ -41,7 +41,7 @@ class Aikotoba::ConfirmableTest < ActionDispatch::IntegrationTest
     @account.build_confirmation_token.save!
     @account.confirmation_token.update!(token: "before_token", expired_at: 1.day.ago)
     post aikotoba.confirmable_create_path, params: {account: {email: @account.email}}
-    assert_redirected_to Aikotoba.sign_up_path
+    assert_redirected_to Aikotoba.sign_in_path
     assert_equal I18n.t(".aikotoba.messages.confirmation.sent"), flash[:notice]
     @account.confirmation_token.reload
     assert @account.confirmation_token.token.present?
@@ -91,9 +91,10 @@ class Aikotoba::ConfirmableTest < ActionDispatch::IntegrationTest
     end
   end
 
-  test "success POST sign_up_path with comfirm token send" do
-    post aikotoba.sign_up_path, params: {account: {email: "bar@example.com", password: "password"}}
-    assert_redirected_to Aikotoba.after_sign_up_path
+  test "success POST registerable_create_path with comfirm token send" do
+    Aikotoba.enable_register = true
+    post aikotoba.registerable_create_path, params: {account: {email: "bar@example.com", password: "password"}}
+    assert_redirected_to Aikotoba.sign_in_path
     assert_equal I18n.t(".aikotoba.messages.registration.success"), flash[:notice]
     account = @controller.instance_variable_get(:@account)
     confirm_email = ActionMailer::Base.deliveries.last
@@ -101,6 +102,7 @@ class Aikotoba::ConfirmableTest < ActionDispatch::IntegrationTest
     assert_equal account.email, confirm_email.to[0]
     assert_match(/Confirm URL:/, confirm_email.body.to_s)
     assert_includes(confirm_email.body.to_s, account.confirmation_token.reload.token)
+    Aikotoba.enable_register = false
   end
 
   test "success POST sign_in_path by comfirmed account" do

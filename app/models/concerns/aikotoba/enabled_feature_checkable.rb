@@ -5,6 +5,10 @@ module Aikotoba
     extend ActiveSupport::Concern
 
     module ClassMethods
+      def enable_register?
+        Aikotoba.enable_register
+      end
+
       def enable_lock?
         Aikotoba.enable_lock
       end
@@ -16,6 +20,10 @@ module Aikotoba
       def enable_recover?
         Aikotoba.enable_recover
       end
+    end
+
+    def enable_register?
+      self.class.enable_register?
     end
 
     def enable_lock?
