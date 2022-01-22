@@ -4,12 +4,12 @@ require "aikotoba/version"
 require "aikotoba/engine"
 
 module Aikotoba
-  mattr_accessor(:authenticate_account_method) { "current_user" }
+  mattr_accessor(:authenticate_account_method) { "current_account" }
   mattr_accessor(:email_format) { /\A[^\s]+@[^\s]+\z/ }
   mattr_accessor(:password_pepper) { "aikotoba-default-pepper" }
   mattr_accessor(:password_stretch) { 2 }
   mattr_accessor(:password_format) { /.{8,72}+\z/ }
-  mattr_accessor(:session_key) { "aikotoba-user-id" }
+  mattr_accessor(:session_key) { "aikotoba-account-id" }
   mattr_accessor(:sign_in_path) { "/sign_in" }
   mattr_accessor(:sign_out_path) { "/sign_out" }
   mattr_accessor(:after_sign_in_path) { "/" }

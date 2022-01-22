@@ -1,7 +1,11 @@
 <h1>Sensitive Page</h1>
 <p class="message"><%= notice %></p>
-<p>id: <%= @user.id %></p>
-<p>password_digest: <%= @user.password_digest %></p>
+<p>id: <%= @account.id %></p>
+<p>password_digest: <%= @account.password_digest %></p>
+<%# NOTE: Set to true if you want to test the behavior of creating related models with accounts#create. %>
+<% if false %>
+<p>nickname: <%= @account.user.nickname %>
+<% end %>
 
 <%= form_with method: :delete, url: aikotoba.destroy_session_path do |f| %>
   <%= f.submit 'Sign out' %>

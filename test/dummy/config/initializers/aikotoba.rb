@@ -1,6 +1,6 @@
 require 'aikotoba'
 
-Aikotoba.authenticate_account_method = "current_user"
+Aikotoba.authenticate_account_method = "current_account"
 Aikotoba.prevent_timing_atack = false
 Aikotoba.password_pepper = "aikotoba-default-pepper"
 Aikotoba.password_stretch = 3

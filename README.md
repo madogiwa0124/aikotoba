@@ -55,24 +55,24 @@ include `Aikotoba::Authenticatable` to the controller(ex. `ApplicationController
 
 ```ruby
 class ApplicationController < ActionController::Base
-  include Aikotoba::Authenticatable # enabled authenticatable methods (ex. `current_user`)
+  include Aikotoba::Authenticatable # enabled authenticatable methods (ex. `current_account`)
 
   # NOTE: You can also implement the authorization process as follows
-  def authenticate_user!
-    return if current_user
+  def authenticate_account!
+    return if current_account
     redirect_to aikotoba.new_session_path, flash: {alert: "Oops. You need to Signed up or Signed in." }
   end
 end
 ```
 
-Aikotoba enable helper methods for authentication(ex. `current_user`).
+Aikotoba enable helper methods for authentication(ex. `current_account`).
 
 ```ruby
 class SensitiveController < ApplicationController
-  before_action :authenticate_user!
+  before_action :authenticate_account!
 
   def index
-    @records = current_user.sensitive_records
+    @records = current_account.sensitive_records
   end
 end
 ```
@@ -91,7 +91,7 @@ Authenticate an account using email and password.
 
 Aikotoba enable helper methods for authentication. The method name can be changed by configuration.
 
-- `current_user` : Returns the logged in instance of `Aikotoba::Account`.
+- `current_account` : Returns the logged in instance of `Aikotoba::Account`.
 
 ### Registrable
 
@@ -166,7 +166,7 @@ The following configuration parameters are supported. You can override it. (ex. 
 ```ruby
 require 'aikotoba'
 
-Aikotoba.authenticate_account_method = "current_user"
+Aikotoba.authenticate_account_method = "current_account"
 Aikotoba.email_format = /\A[^\s]+@[^\s]+\z/
 Aikotoba.prevent_timing_atack = true
 Aikotoba.password_pepper = "aikotoba-default-pepper"
@@ -193,7 +193,7 @@ Aikotoba.unlock_token_expiry = 5.days
 
 # for Recoverable
 Aikotoba.recoverable = false
-Aikotoba.recover_path = "/unlock"
+Aikotoba.recover_path = "/recover"
 Aikotoba.recovery_token_expiry = 5.days
 ```
 
@@ -231,11 +231,11 @@ Rails.application.config.to_prepare do
 end
 
 class Profile < ApplicationRecord
-  has_one :user, class_name: 'Aikotoba::Account'
+  has_one :account, class_name: 'Aikotoba::Account'
 end
 
-current_user.profile #=> Profile instance
-profile.user #=> Aikotoba::Account instance
+current_account.profile #=> Profile instance
+profile.account #=> Aikotoba::Account instance
 ```
 
 ### Do something on before, after, failure.

@@ -1,7 +1,7 @@
 class SensitivesController < ApplicationController
-  before_action :authenticate_user!
+  before_action :authenticate_account!
 
   def index
-    @user = current_user
+    @account = current_account
   end
 end
