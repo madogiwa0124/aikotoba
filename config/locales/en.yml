@@ -30,7 +30,6 @@ en:
       authentication:
         success: Signed in successfully.
         failed: Oops. Signed in failed.
-        required: Oops. You need to Signed up or Signed in.
         sign_out: Signed out.
       registration:
         success: Signed up successfully.

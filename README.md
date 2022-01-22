@@ -51,16 +51,21 @@ end
 
 Aikotoba enabled routes for registration(`/sign_up`) and authentication(`/sign_in`).
 
-include `Aikotoba::Authorizable` and `Aikotoba::Authenticatable` to the controller(ex. `ApplicationController`) use authentication.
+include `Aikotoba::Authenticatable` to the controller(ex. `ApplicationController`) use authentication.
 
 ```ruby
 class ApplicationController < ActionController::Base
-  include Aikotoba::Authorizable # enabled authorizable methods (ex. `authenticate_user!`)
   include Aikotoba::Authenticatable # enabled authenticatable methods (ex. `current_user`)
+
+  # NOTE: You can also implement the authorization process as follows
+  def authenticate_user!
+    return if current_user
+    redirect_to aikotoba.new_session_path, flash: {alert: "Oops. You need to Signed up or Signed in." }
+  end
 end
 ```
 
-Aikotoba enable helper methods for authentication(ex. `authenticate_user!`, `current_user`).
+Aikotoba enable helper methods for authentication(ex. `current_user`).
 
 ```ruby
 class SensitiveController < ApplicationController
@@ -86,7 +91,6 @@ Authenticate an account using email and password.
 
 Aikotoba enable helper methods for authentication. The method name can be changed by configuration.
 
-- `authenticate_user!` : Redirects to the specified path if the user is not logged in. The redirect path can be changed by configuration.
 - `current_user` : Returns the logged in instance of `Aikotoba::Account`.
 
 ### Registrable
@@ -163,7 +167,6 @@ The following configuration parameters are supported. You can override it. (ex. 
 require 'aikotoba'
 
 Aikotoba.authenticate_account_method = "current_user"
-Aikotoba.authorize_account_method = "authenticate_user!"
 Aikotoba.email_format = /\A[^\s]+@[^\s]+\z/
 Aikotoba.prevent_timing_atack = true
 Aikotoba.password_pepper = "aikotoba-default-pepper"
@@ -172,7 +175,6 @@ Aikotoba.sign_in_path = "/sign_in"
 Aikotoba.sign_out_path = "/sign_out"
 Aikotoba.after_sign_in_path = "/"
 Aikotoba.after_sign_out_path = "/sign_in"
-Aikotoba.appeal_sign_in_path = "/sign_in"
 
 # for registerable
 Aikotoba.registerable = true

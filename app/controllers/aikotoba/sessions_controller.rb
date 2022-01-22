@@ -3,9 +3,6 @@
 module Aikotoba
   class SessionsController < ApplicationController
     include Authenticatable
-    include Authorizable
-
-    before_action :aikotoba_authorize, only: :destroy
 
     def new
       @account = build_account({email: "", password: ""})
@@ -27,7 +24,7 @@ module Aikotoba
     end
 
     def destroy
-      aikotoba_sign_out
+      aikotoba_sign_out if aikotoba_current_account
       redirect_to after_sign_out_path, notice: signed_out_message
     end
 

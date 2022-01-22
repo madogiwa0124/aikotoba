@@ -5,7 +5,6 @@ require "aikotoba/engine"
 
 module Aikotoba
   mattr_accessor(:authenticate_account_method) { "current_user" }
-  mattr_accessor(:authorize_account_method) { "authenticate_user!" }
   mattr_accessor(:email_format) { /\A[^\s]+@[^\s]+\z/ }
   mattr_accessor(:password_pepper) { "aikotoba-default-pepper" }
   mattr_accessor(:password_stretch) { 2 }
@@ -15,7 +14,6 @@ module Aikotoba
   mattr_accessor(:sign_out_path) { "/sign_out" }
   mattr_accessor(:after_sign_in_path) { "/" }
   mattr_accessor(:after_sign_out_path) { "/sign_in" }
-  mattr_accessor(:appeal_sign_in_path) { "/sign_in" }
 
   # for registerable
   mattr_accessor(:registerable) { true }

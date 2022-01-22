@@ -1,7 +1,6 @@
 require 'aikotoba'
 
 Aikotoba.authenticate_account_method = "current_user"
-Aikotoba.authorize_account_method = "authenticate_user!"
 Aikotoba.prevent_timing_atack = false
 Aikotoba.password_pepper = "aikotoba-default-pepper"
 Aikotoba.password_stretch = 3
@@ -10,7 +9,6 @@ Aikotoba.sign_up_path = "/sign_up"
 Aikotoba.sign_out_path = "/sign_out"
 Aikotoba.after_sign_in_path = "/sensitives"
 Aikotoba.after_sign_out_path = "/sign_in"
-Aikotoba.appeal_sign_in_path = "/sign_in"
 
 # Aikotoba.confirmable = true
 # Aikotoba.lockable= true
