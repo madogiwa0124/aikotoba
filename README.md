@@ -164,9 +164,10 @@ require 'aikotoba'
 
 Aikotoba.authenticate_account_method = "current_user"
 Aikotoba.authorize_account_method = "authenticate_user!"
+Aikotoba.email_format = /\A[^\s]+@[^\s]+\z/
 Aikotoba.prevent_timing_atack = true
 Aikotoba.password_pepper = "aikotoba-default-pepper"
-Aikotoba.password_minimum_length = 10
+Aikotoba.password_format = /.{8,72}+\z/
 Aikotoba.sign_in_path = "/sign_in"
 Aikotoba.sign_out_path = "/sign_out"
 Aikotoba.after_sign_in_path = "/"

@@ -35,6 +35,7 @@ en:
       registration:
         success: Signed up successfully.
         failed: Oops. Signed up failed.
+        invalid_password: is invalid.
       confirmation:
         sent: Confirm url has been sent to your email address.
         success: Confirmed you email successfully.

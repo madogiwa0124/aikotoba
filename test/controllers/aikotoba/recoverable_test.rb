@@ -94,7 +94,7 @@ class Aikotoba::RecoverableTest < ActionDispatch::IntegrationTest
     patch aikotoba.recoverable_update_path(token: @account.recovery_token.token, account: {password: "short"})
     assert_equal I18n.t(".aikotoba.messages.recovery.failed"), flash[:alert]
     messages = @controller.instance_variable_get(:@account).errors.full_messages
-    assert_includes messages, "Password is too short (minimum is 8 characters)"
+    assert_includes messages, "Password is invalid."
   end
 
   test "failed PATCH recoverable_update_path by not found token" do

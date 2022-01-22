@@ -3,20 +3,22 @@
 module Aikotoba
   class Account < ApplicationRecord
     include EnabledFeatureCheckable
-
-    PASSWORD_MINIMUM_LENGTH = Aikotoba.password_minimum_length
-    EMAIL_REGEXP = /\A[^\s]+@[^\s]+\z/
+    # NOTE: (RFC5321) Path: The maximum total length of a reverse-path or forward-path is 256 octets.
+    # https://datatracker.ietf.org/doc/html/rfc5321#section-4.5.3.1.3
+    EMAIL_MAXIMUM_LENGTH = 256
+    EMAIL_REGEXP = Aikotoba.email_format
 
     belongs_to :authenticate_target, polymorphic: true, optional: true
 
     attribute :password, :string
     attribute :max_failed_attempts, :integer, default: -> { Aikotoba.max_failed_attempts }
-    validates :email, presence: true, uniqueness: true, format: EMAIL_REGEXP
-    validates :password, presence: true, on: [:create, :recover]
-    validates :password, length: {minimum: PASSWORD_MINIMUM_LENGTH}, allow_blank: true, on: [:create, :recover]
+
+    validates :email, presence: true, uniqueness: true, format: EMAIL_REGEXP, length: {maximum: EMAIL_MAXIMUM_LENGTH}
+    validates :password, presence: true, format: {with: Password::FORMAT, message: Password::INVALID_FORMAT_MESSAGE}, on: [:create, :recover]
     validates :password_digest, presence: true
     validates :confirmed, inclusion: [true, false]
-    validates :failed_attempts, presence: true, numericality: true
+    validates :failed_attempts, presence: true, numericality: {only_integer: true, greater_than_or_equal_to: 0}
+    validates :max_failed_attempts, numericality: {only_integer: true, greater_than: 0}
     validates :locked, inclusion: [true, false]
 
     after_initialize do

@@ -4,6 +4,9 @@ require "argon2"
 
 module Aikotoba
   class Account::Password
+    FORMAT = Aikotoba.password_format
+    INVALID_FORMAT_MESSAGE = I18n.t(".aikotoba.messages.registration.invalid_password")
+
     def initialize(
       value:,
       stretch: Aikotoba.password_stretch,
