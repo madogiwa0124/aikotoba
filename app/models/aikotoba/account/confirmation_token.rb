@@ -8,9 +8,10 @@ module Aikotoba
 
     scope :active, ->(now: Time.current) { where("expired_at >= ?", now) }
 
-    after_initialize do |token|
-      token.token ||= SecureRandom.urlsafe_base64(32)
-      token.expired_at ||= Aikotoba.confirmation_token_expiry.since
+    after_initialize do |record|
+      token = Account::Value::Token.new(extipry: Aikotoba.confirmation_token_expiry)
+      record.token ||= token.value
+      record.expired_at ||= token.expired_at
     end
 
     def notify
