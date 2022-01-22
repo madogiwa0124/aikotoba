@@ -8,7 +8,7 @@
     <% end %>
   </div>
   <h1><%= I18n.t(".aikotoba.unlocks.new") %></h1>
-  <%= form_with model: @account, method: :post, url: lockable_create_path do |f| %>
+  <%= form_with model: @account, method: :post, url: aikotoba.create_unlock_token_path do |f| %>
     <p>
       <%= f.label :email %>
       <%= f.email_field :email, required: true %>
@@ -16,6 +16,6 @@
     <%= f.submit I18n.t(".aikotoba.unlocks.new") %>
   <% end %>
   <p>
-    <%= link_to I18n.t(".aikotoba.sessions.new"), sign_in_path %>
+    <%= link_to I18n.t(".aikotoba.sessions.new"), aikotoba.new_session_path %>
   </p>
 </div>

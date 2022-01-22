@@ -5,12 +5,12 @@ module Aikotoba
     module AuthenticationHelper
       module Request
         def aikotoba_sign_out
-          delete Aikotoba.sign_out_path
+          delete aikotoba.destroy_session_path
           follow_redirect!
         end
 
         def aikotoba_sign_in(account)
-          post Aikotoba.sign_in_path, params: {account: {email: account.email, password: account.password}}
+          post aikotoba.new_session_path, params: {account: {email: account.email, password: account.password}}
           follow_redirect!
         end
       end
@@ -18,7 +18,7 @@ module Aikotoba
       module System
         def aikotoba_sign_out
           if page.driver.is_a?(Capybara::RackTest::Driver)
-            disable_forgery_protection { page.driver.send(:delete, Aikotoba.sign_out_path) }
+            disable_forgery_protection { page.driver.send(:delete, aikotoba.destroy_session_path) }
           else
             raise NotImplementedError, "Sorry. Only RackTest::Driver is supported as a test helper for Aikotoba's authentication."
           end
@@ -27,7 +27,7 @@ module Aikotoba
         def aikotoba_sign_in(account)
           if page.driver.is_a?(Capybara::RackTest::Driver)
             disable_forgery_protection do
-              page.driver.send(:post, Aikotoba.sign_in_path, account: {email: account.email, password: account.password})
+              page.driver.send(:post, aikotoba.new_session_path, account: {email: account.email, password: account.password})
             end
           else
             raise NotImplementedError, "Sorry. Only RackTest::Driver is supported as a test helper for Aikotoba's authentication."

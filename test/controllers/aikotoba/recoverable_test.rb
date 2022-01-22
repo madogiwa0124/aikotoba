@@ -16,17 +16,17 @@ class Aikotoba::RecoverableTest < ActionDispatch::IntegrationTest
     Aikotoba.recoverable = false
   end
 
-  test "success GET recoverable_new_path" do
-    get aikotoba.recoverable_new_path
+  test "success GET new_recovery_token_path" do
+    get aikotoba.new_recovery_token_path
     assert_equal 200, status
     assert_select "h1", I18n.t(".aikotoba.recoveries.new")
   end
 
-  test "success POST recoverable_create_path" do
+  test "success POST create_recovery_token_path" do
     assert_emails 1 do
-      post aikotoba.recoverable_create_path, params: {account: {email: @account.email}}
+      post aikotoba.create_recovery_token_path, params: {account: {email: @account.email}}
     end
-    assert_redirected_to Aikotoba.sign_in_path
+    assert_redirected_to aikotoba.new_session_path
     assert_equal I18n.t(".aikotoba.messages.recovery.sent"), flash[:notice]
     recover_email = ActionMailer::Base.deliveries.last
     assert_equal I18n.t(".aikotoba.mailers.recover.subject"), recover_email.subject
@@ -35,86 +35,86 @@ class Aikotoba::RecoverableTest < ActionDispatch::IntegrationTest
     assert_includes(recover_email.body.to_s, @account.reload.recovery_token.token)
   end
 
-  test "regenerated token when success POST recoverable_create_path " do
+  test "regenerated token when success POST create_recovery_token_path " do
     @account.build_recovery_token.save!
     @account.recovery_token.update!(token: "before_token", expired_at: 1.day.ago)
-    post aikotoba.recoverable_create_path, params: {account: {email: @account.email}}
+    post aikotoba.create_recovery_token_path, params: {account: {email: @account.email}}
     @account.recovery_token.reload
     assert @account.recovery_token.token.present?
     assert @account.recovery_token.expired_at.future?
     assert_not_equal @account.recovery_token.token, "before_token"
   end
 
-  test "failed POST recoverable_create_path by not exist account" do
+  test "failed POST create_recovery_token_path by not exist account" do
     assert_emails 0 do
-      post aikotoba.recoverable_create_path, params: {account: {email: "not_found@example.com"}}
+      post aikotoba.create_recovery_token_path, params: {account: {email: "not_found@example.com"}}
     end
     assert_equal status, 422
     assert_equal I18n.t(".aikotoba.messages.recovery.sent_failed"), flash[:alert]
   end
 
-  test "success GET recoverable_edit_path by active token" do
+  test "success GET edit_account_password_path by active token" do
     @account.build_recovery_token.save!
-    get aikotoba.recoverable_edit_path(token: @account.recovery_token.token)
+    get aikotoba.edit_account_password_path(token: @account.recovery_token.token)
     assert_equal 200, status
     assert_select "h1", I18n.t(".aikotoba.recoveries.edit")
   end
 
-  test "failed GET recoverable_edit_path by expired token" do
+  test "failed GET edit_account_password_path by expired token" do
     @account.build_recovery_token.save!
     @account.recovery_token.update!(expired_at: 1.hour.ago)
-    get aikotoba.lockable_unlock_path(token: @account.recovery_token.token)
+    get aikotoba.update_account_password_path(token: @account.recovery_token.token)
     assert_equal status, 404
   end
 
-  test "failed GET recoverable_edit_path by not found token" do
+  test "failed GET edit_account_password_path by not found token" do
     @account.build_recovery_token.save!
-    get aikotoba.recoverable_edit_path(token: "not found token")
+    get aikotoba.edit_account_password_path(token: "not found token")
     assert_equal status, 404
   end
 
-  test "failed GET recoverable_edit_path by nil token" do
+  test "failed GET edit_account_password_path by nil token" do
     assert_raises(ActionController::UrlGenerationError) do
-      get aikotoba.recoverable_edit_path(token: nil)
+      get aikotoba.edit_account_password_path(token: nil)
     end
   end
 
-  test "success PATCH recoverable_update_path by valid password" do
+  test "success PATCH update_account_password_path by valid password" do
     @account.build_recovery_token.save!
-    patch aikotoba.recoverable_update_path(token: @account.recovery_token.token, account: {password: "updated_password"})
-    assert_redirected_to Aikotoba.sign_in_path
+    patch aikotoba.update_account_password_path(token: @account.recovery_token.token, account: {password: "updated_password"})
+    assert_redirected_to aikotoba.new_session_path
     assert_equal I18n.t(".aikotoba.messages.recovery.success"), flash[:notice]
     assert_nil @account.reload.recovery_token
     updated_account = ::Aikotoba::Account.authenticate_by(attributes: {email: @account.email, password: "updated_password"})
     assert_equal updated_account.id, @account.id
   end
 
-  test "faild PATCH recoverable_update_path by invalid password" do
+  test "faild PATCH update_account_password_path by invalid password" do
     @account.build_recovery_token.save!
-    patch aikotoba.recoverable_update_path(token: @account.recovery_token.token, account: {password: "short"})
+    patch aikotoba.update_account_password_path(token: @account.recovery_token.token, account: {password: "short"})
     assert_equal I18n.t(".aikotoba.messages.recovery.failed"), flash[:alert]
     messages = @controller.instance_variable_get(:@account).errors.full_messages
     assert_includes messages, "Password is invalid."
   end
 
-  test "failed PATCH recoverable_update_path by not found token" do
+  test "failed PATCH update_account_password_path by not found token" do
     @account.build_recovery_token.save!
-    patch aikotoba.recoverable_update_path(token: "not found token", account: {password: "password"})
+    patch aikotoba.update_account_password_path(token: "not found token", account: {password: "password"})
     assert_equal 404, status
   end
 
-  test "failed PATCH recoverable_edit_path by nil token" do
+  test "failed PATCH edit_account_password_path by nil token" do
     assert_raises(ActionController::UrlGenerationError) do
-      patch aikotoba.recoverable_update_path(token: nil, account: {password: "password"})
+      patch aikotoba.update_account_password_path(token: nil, account: {password: "password"})
     end
   end
 
   test "Recoverable path to 404 when Aikotoba.recoverable is false" do
     Aikotoba.recoverable = false
     @account.build_recovery_token.save!
-    get aikotoba.recoverable_new_path
+    get aikotoba.new_recovery_token_path
     assert_equal 404, status
-    get aikotoba.recoverable_edit_path(token: @account.recovery_token.token)
+    get aikotoba.edit_account_password_path(token: @account.recovery_token.token)
     assert_equal 404, status
   end
 end

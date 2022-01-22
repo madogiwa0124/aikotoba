@@ -13,23 +13,23 @@ class Aikotoba::AccountsControllerTest < ActionDispatch::IntegrationTest
     Aikotoba.registerable = false
   end
 
-  test "success GET registerable_new_path" do
-    get aikotoba.registerable_new_path
+  test "success GET new_account_path" do
+    get aikotoba.new_account_path
     assert_equal 200, status
     assert_select "h1", I18n.t(".aikotoba.accounts.new")
   end
 
-  test "success POST registerable_create_path when valid account attributes" do
+  test "success POST create_account_path when valid account attributes" do
     email, password = ["email@example.com", "password"]
-    post aikotoba.registerable_create_path, params: {account: {email: email, password: password}}
-    assert_redirected_to Aikotoba.sign_in_path
+    post aikotoba.create_account_path, params: {account: {email: email, password: password}}
+    assert_redirected_to aikotoba.new_session_path
     message = I18n.t(".aikotoba.messages.registration.success")
     assert_equal message, flash[:notice]
   end
 
-  test "failed POST registerable_create_path when invalid account attributes" do
+  test "failed POST create_account_path when invalid account attributes" do
     email, password = ["", "pass"]
-    post aikotoba.registerable_create_path, params: {account: {email: email, password: password}}
+    post aikotoba.create_account_path, params: {account: {email: email, password: password}}
     assert_equal I18n.t(".aikotoba.messages.registration.failed"), flash[:alert]
     assert_equal status, 422
     messages = @controller.instance_variable_get(:@account).errors.full_messages
@@ -39,9 +39,9 @@ class Aikotoba::AccountsControllerTest < ActionDispatch::IntegrationTest
 
   test "Registerable path to 404 when Aikotoba.registerable is false" do
     Aikotoba.registerable = false
-    get aikotoba.registerable_new_path
+    get aikotoba.new_account_path
     assert_equal 404, status
-    post aikotoba.registerable_create_path, params: {account: {email: "test@example.com", password: "password"}}
+    post aikotoba.create_account_path, params: {account: {email: "test@example.com", password: "password"}}
     assert_equal 404, status
   end
 end

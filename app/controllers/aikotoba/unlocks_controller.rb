@@ -61,11 +61,11 @@ module Aikotoba
     end
 
     def after_unlocked_path
-      Aikotoba.sign_in_path
+      aikotoba.new_session_path
     end
 
     def success_send_unlock_token_path
-      Aikotoba.sign_in_path
+      aikotoba.new_session_path
     end
 
     def unlocked_message

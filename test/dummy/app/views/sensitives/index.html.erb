@@ -3,6 +3,6 @@
 <p>id: <%= @user.id %></p>
 <p>password_digest: <%= @user.password_digest %></p>
 
-<%= form_with method: :delete, url: aikotoba.sign_out_path do |f| %>
+<%= form_with method: :delete, url: aikotoba.destroy_session_path do |f| %>
   <%= f.submit 'Sign out' %>
 <% end %>

@@ -70,11 +70,11 @@ module Aikotoba
     end
 
     def success_recovered_path
-      Aikotoba.sign_in_path
+      aikotoba.new_session_path
     end
 
     def success_send_recovery_token_path
-      Aikotoba.sign_in_path
+      aikotoba.new_session_path
     end
 
     def failed_message
