@@ -3,7 +3,7 @@
 require "test_helper"
 require "minitest/autorun"
 
-class Aikotoba::AccountsControllerTest < ActionDispatch::IntegrationTest
+class Aikotoba::RegisterableTest < ActionDispatch::IntegrationTest
   def setup
     Aikotoba.registerable = true
     ActionController::Base.allow_forgery_protection = false

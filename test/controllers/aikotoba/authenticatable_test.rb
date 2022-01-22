@@ -2,7 +2,7 @@
 
 require "test_helper"
 
-class Aikotoba::SessionsControllerTest < ActionDispatch::IntegrationTest
+class Aikotoba::AuthenticatableTest < ActionDispatch::IntegrationTest
   def setup
     ActionController::Base.allow_forgery_protection = false
     Aikotoba.confirmable = false
