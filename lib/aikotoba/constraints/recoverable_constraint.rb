@@ -2,6 +2,6 @@
 
 class Aikotoba::RecoverableConstraint
   def self.matches?(_request)
-    Aikotoba.enable_recover
+    Aikotoba.recoverable
   end
 end

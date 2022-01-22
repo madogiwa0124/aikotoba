@@ -12,9 +12,9 @@ Aikotoba.after_sign_in_path = "/sensitives"
 Aikotoba.after_sign_out_path = "/sign_in"
 Aikotoba.appeal_sign_in_path = "/sign_in"
 
-# Aikotoba.enable_confirm = true
-# Aikotoba.enable_lock= true
-# Aikotoba.enable_recover = true
+# Aikotoba.confirmable = true
+# Aikotoba.lockable= true
+# Aikotoba.recoverable = true
 
 Rails.application.config.to_prepare do
   Aikotoba::AccountsController.class_eval do

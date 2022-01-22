@@ -91,10 +91,10 @@ Aikotoba enable helper methods for authentication. The method name can be change
 
 ### Registrable
 
-To enable it, set `Aikotoba.enable_confirm` to `true`. (It is enabled by default.)
+To enable it, set `Aikotoba.registerable` to `true`. (It is enabled by default.)
 
 ```ruby
-Aikotoba.enable_register = true
+Aikotoba.registerable = true
 ```
 
 Register an account using email and password.
@@ -108,10 +108,10 @@ The password is stored as a hash in [Argon2](https://github.com/technion/ruby-ar
 
 ### Confirmable
 
-To enable it, set `Aikotoba.enable_confirm` to `true`.
+To enable it, set `Aikotoba.confirmable` to `true`.
 
 ```ruby
-Aikotoba.enable_confirm = true
+Aikotoba.confirmable = true
 ```
 
 Aikotoba enable routes for confirmation account. Also, when account registers, a confirmation email is sent to the email address. Only accounts that are confirmed will be authenticated.
@@ -124,10 +124,10 @@ Aikotoba enable routes for confirmation account. Also, when account registers, a
 
 ### Lockable
 
-To enable it, set `Aikotoba.enable_lock` to `true`.
+To enable it, set `Aikotoba.lockable` to `true`.
 
 ```ruby
-Aikotoba.enable_lock = true
+Aikotoba.lockable = true
 ```
 
 Aikotoba enables a route to unlock an account. Also, if the authentication fails a certain number of times, the account will be locked. Only accounts that are not locked will be authenticated.
@@ -140,10 +140,10 @@ Aikotoba enables a route to unlock an account. Also, if the authentication fails
 
 ### Recoverable
 
-To enable it, set `Aikotoba.enable_recover` to `true`.
+To enable it, set `Aikotoba.recoverable` to `true`.
 
 ```ruby
-Aikotoba.enable_recover = true
+Aikotoba.recoverable = true
 ```
 
 Aikotoba enables a route to recover an account by password reset.
@@ -175,22 +175,22 @@ Aikotoba.after_sign_out_path = "/sign_in"
 Aikotoba.appeal_sign_in_path = "/sign_in"
 
 # for registerable
-Aikotoba.enable_register = true
+Aikotoba.registerable = true
 Aikotoba.sign_up_path = "/sign_up"
 
 # for confirmable
-Aikotoba.enable_confirm = false
+Aikotoba.confirmable = false
 Aikotoba.confirm_path = "/confirm"
 Aikotoba.confirmation_token_expiry = 5.days
 
 # for lockable
-Aikotoba.enable_lock = false
+Aikotoba.lockable = false
 Aikotoba.unlock_path = "/unlock"
 Aikotoba.max_failed_attempts = 10
 Aikotoba.unlock_token_expiry = 5.days
 
 # for Recoverable
-Aikotoba.enable_recover = false
+Aikotoba.recoverable = false
 Aikotoba.recover_path = "/unlock"
 Aikotoba.recovery_token_expiry = 5.days
 ```

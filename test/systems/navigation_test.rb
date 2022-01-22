@@ -14,7 +14,7 @@ class NavigationTest < ActionDispatch::SystemTestCase
   end
 
   test "(Registerable) sign_up -> sign_in -> sign_out" do
-    Aikotoba.enable_register = true
+    Aikotoba.registerable = true
     visit Aikotoba.sign_up_path
     fill_in "Email", with: "sample2@example.com"
     fill_in "Password",	with: "password"
@@ -25,11 +25,11 @@ class NavigationTest < ActionDispatch::SystemTestCase
     click_on "Sign in"
     assert_selector ".message", text: "Signed in successfully."
     click_on "Sign out"
-    Aikotoba.enable_register = false
+    Aikotoba.registerable = false
   end
 
   test "(Confirmable) sign_up -> generate confirm token -> confirm -> sign_in -> sign_out" do
-    Aikotoba.enable_confirm = true
+    Aikotoba.confirmable = true
     Aikotoba::Account.create!(email: "sample3@example.com", password: "password")
     visit Aikotoba.sign_in_path
     fill_in "Email", with: "sample3@example.com"
@@ -50,11 +50,11 @@ class NavigationTest < ActionDispatch::SystemTestCase
     click_on "Sign in"
     assert_selector ".message", text: "Signed in successfully."
     click_on "Sign out"
-    Aikotoba.enable_confirm = false
+    Aikotoba.confirmable = false
   end
 
   test "(Lockable) sign_up -> sign_in -> locked -> generate unlock token -> unlock -> sign_in -> sign_out" do
-    Aikotoba.enable_lock = true
+    Aikotoba.lockable = true
     Aikotoba::Account.create!(email: "sample4@example.com", password: "password")
     visit Aikotoba.sign_in_path
     11.times do
@@ -80,11 +80,11 @@ class NavigationTest < ActionDispatch::SystemTestCase
     click_on "Sign in"
     assert_selector ".message", text: "Signed in successfully."
     click_on "Sign out"
-    Aikotoba.enable_lock = false
+    Aikotoba.lockable = false
   end
 
   test "(Recoverable) sign_up -> sign_in -> generate recover token -> password reset -> sign_in -> sign_out" do
-    Aikotoba.enable_recover = true
+    Aikotoba.recoverable = true
     Aikotoba::Account.create!(email: "sample5@example.com", password: "password")
     visit Aikotoba.sign_in_path
     click_on "Send password reset token"
@@ -102,14 +102,14 @@ class NavigationTest < ActionDispatch::SystemTestCase
     click_on "Sign in"
     assert_selector ".message", text: "Signed in successfully."
     click_on "Sign out"
-    Aikotoba.enable_recover = false
+    Aikotoba.recoverable = false
   end
 
   test "(ALL) sign_up -> confirm -> sigin_in -> lock -> unlcok -> sigin_in -> recover -> sign_in -> sign_out" do
-    Aikotoba.enable_register = true
-    Aikotoba.enable_confirm = true
-    Aikotoba.enable_recover = true
-    Aikotoba.enable_lock = true
+    Aikotoba.registerable = true
+    Aikotoba.confirmable = true
+    Aikotoba.recoverable = true
+    Aikotoba.lockable = true
     visit Aikotoba.sign_up_path
     fill_in "Email", with: "sample6@example.com"
     fill_in "Password",	with: "password"
@@ -157,9 +157,9 @@ class NavigationTest < ActionDispatch::SystemTestCase
     click_on "Sign in"
     assert_selector ".message", text: "Signed in successfully."
     click_on "Sign out"
-    Aikotoba.enable_register = false
-    Aikotoba.enable_confirm = false
-    Aikotoba.enable_recover = false
-    Aikotoba.enable_lock = false
+    Aikotoba.registerable = false
+    Aikotoba.confirmable = false
+    Aikotoba.recoverable = false
+    Aikotoba.lockable = false
   end
 end

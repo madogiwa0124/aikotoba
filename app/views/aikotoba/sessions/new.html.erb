@@ -19,22 +19,22 @@
     </p>
     <%= f.submit I18n.t(".aikotoba.sessions.new") %>
   <% end %>
-  <% if enable_register? %>
+  <% if registerable? %>
     <p>
       <%= link_to I18n.t(".aikotoba.accounts.new"), registerable_new_path %>
     </p>
   <% end %>
-  <% if enable_confirm? %>
+  <% if confirmable? %>
     <p>
       <%= link_to I18n.t(".aikotoba.confirms.new"), confirmable_new_path %>
     </p>
   <% end %>
-  <% if enable_lock? %>
+  <% if lockable? %>
     <p>
       <%= link_to I18n.t(".aikotoba.unlocks.new"), lockable_new_path %>
     </p>
   <% end %>
-  <% if enable_recover? %>
+  <% if recoverable? %>
     <p>
       <%= link_to I18n.t(".aikotoba.recoveries.new"), recoverable_new_path %>
     </p>

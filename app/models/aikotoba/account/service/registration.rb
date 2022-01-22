@@ -9,13 +9,13 @@ module Aikotoba
     def initialize
       @account_class = Account
       @confirm_service = Account::Service::Confirmation
-      @enable_confirm = @account_class.enable_confirm?
+      @confirmable = @account_class.confirmable?
     end
 
     def call!(account:)
       ActiveRecord::Base.transaction do
         account.save!
-        send_confirmation_token!(account) if @enable_confirm
+        send_confirmation_token!(account) if @confirmable
       end
     end
 

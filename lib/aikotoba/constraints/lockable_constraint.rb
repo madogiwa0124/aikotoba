@@ -2,6 +2,6 @@
 
 class Aikotoba::LockableConstraint
   def self.matches?(_request)
-    Aikotoba.enable_lock
+    Aikotoba.lockable
   end
 end

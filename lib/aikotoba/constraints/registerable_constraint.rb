@@ -2,6 +2,6 @@
 
 class Aikotoba::RegisterableConstraint
   def self.matches?(_request)
-    Aikotoba.enable_register
+    Aikotoba.registerable
   end
 end

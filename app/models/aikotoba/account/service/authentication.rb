@@ -9,7 +9,7 @@ module Aikotoba
     def initialize(email:, password:)
       @account_class = Account
       @lock_service = Account::Service::Lock
-      @enable_lock = @account_class.enable_lock?
+      @lockable = @account_class.lockable?
       @email = email
       @password = password
     end
@@ -32,7 +32,7 @@ module Aikotoba
 
     def failed_callback(account)
       account.authentication_failed!
-      lock_when_should_lock!(account) if @enable_lock
+      lock_when_should_lock!(account) if @lockable
     end
 
     def find_by_identifier

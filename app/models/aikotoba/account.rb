@@ -32,8 +32,8 @@ module Aikotoba
       included do
         scope :authenticatable, -> {
           result = all
-          result = result.confirmed if enable_confirm?
-          result = result.unlocked if enable_lock?
+          result = result.confirmed if confirmable?
+          result = result.unlocked if lockable?
           result
         }
       end

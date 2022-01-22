@@ -5,37 +5,37 @@ module Aikotoba
     extend ActiveSupport::Concern
 
     module ClassMethods
-      def enable_register?
-        Aikotoba.enable_register
+      def registerable?
+        Aikotoba.registerable
       end
 
-      def enable_lock?
-        Aikotoba.enable_lock
+      def lockable?
+        Aikotoba.lockable
       end
 
-      def enable_confirm?
-        Aikotoba.enable_confirm
+      def confirmable?
+        Aikotoba.confirmable
       end
 
-      def enable_recover?
-        Aikotoba.enable_recover
+      def recoverable?
+        Aikotoba.recoverable
       end
     end
 
-    def enable_register?
-      self.class.enable_register?
+    def registerable?
+      self.class.registerable?
     end
 
-    def enable_lock?
-      self.class.enable_lock?
+    def lockable?
+      self.class.lockable?
     end
 
-    def enable_confirm?
-      self.class.enable_confirm?
+    def confirmable?
+      self.class.confirmable?
     end
 
-    def enable_recover?
-      self.class.enable_recover?
+    def recoverable?
+      self.class.recoverable?
     end
   end
 end

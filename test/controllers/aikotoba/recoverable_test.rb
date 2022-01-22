@@ -5,7 +5,7 @@ require "minitest/autorun"
 
 class Aikotoba::RecoverableTest < ActionDispatch::IntegrationTest
   def setup
-    Aikotoba.enable_recover = true
+    Aikotoba.recoverable = true
     ActionController::Base.allow_forgery_protection = false
     email, password = ["email@example.com", "password"]
     @account = ::Aikotoba::Account.build_by(attributes: {email: email, password: password})
@@ -13,7 +13,7 @@ class Aikotoba::RecoverableTest < ActionDispatch::IntegrationTest
   end
 
   def teardown
-    Aikotoba.enable_recover = false
+    Aikotoba.recoverable = false
   end
 
   test "success GET recoverable_new_path" do
@@ -109,8 +109,8 @@ class Aikotoba::RecoverableTest < ActionDispatch::IntegrationTest
     end
   end
 
-  test "Recoverable path to 404 when Aikotoba.enable_recover is false" do
-    Aikotoba.enable_recover = false
+  test "Recoverable path to 404 when Aikotoba.recoverable is false" do
+    Aikotoba.recoverable = false
     @account.build_recovery_token.save!
     get aikotoba.recoverable_new_path
     assert_equal 404, status

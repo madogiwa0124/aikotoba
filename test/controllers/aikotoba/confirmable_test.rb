@@ -5,7 +5,7 @@ require "minitest/autorun"
 
 class Aikotoba::ConfirmableTest < ActionDispatch::IntegrationTest
   def setup
-    Aikotoba.enable_confirm = true
+    Aikotoba.confirmable = true
     ActionController::Base.allow_forgery_protection = false
     email, password = ["email@example.com", "password"]
     @account = ::Aikotoba::Account.build_by(attributes: {email: email, password: password})
@@ -15,7 +15,7 @@ class Aikotoba::ConfirmableTest < ActionDispatch::IntegrationTest
   end
 
   def teardown
-    Aikotoba.enable_confirm = false
+    Aikotoba.confirmable = false
   end
 
   test "success GET confirmable_new_path" do
@@ -92,7 +92,7 @@ class Aikotoba::ConfirmableTest < ActionDispatch::IntegrationTest
   end
 
   test "success POST registerable_create_path with comfirm token send" do
-    Aikotoba.enable_register = true
+    Aikotoba.registerable = true
     post aikotoba.registerable_create_path, params: {account: {email: "bar@example.com", password: "password"}}
     assert_redirected_to Aikotoba.sign_in_path
     assert_equal I18n.t(".aikotoba.messages.registration.success"), flash[:notice]
@@ -102,7 +102,7 @@ class Aikotoba::ConfirmableTest < ActionDispatch::IntegrationTest
     assert_equal account.email, confirm_email.to[0]
     assert_match(/Confirm URL:/, confirm_email.body.to_s)
     assert_includes(confirm_email.body.to_s, account.confirmation_token.reload.token)
-    Aikotoba.enable_register = false
+    Aikotoba.registerable = false
   end
 
   test "success POST sign_in_path by comfirmed account" do
@@ -118,8 +118,8 @@ class Aikotoba::ConfirmableTest < ActionDispatch::IntegrationTest
     assert_equal I18n.t(".aikotoba.messages.authentication.failed"), flash[:alert]
   end
 
-  test "Confirmable path to 404 when Aikotoba.enable_confirm is false" do
-    Aikotoba.enable_confirm = false
+  test "Confirmable path to 404 when Aikotoba.confirmable is false" do
+    Aikotoba.confirmable = false
     get aikotoba.confirmable_new_path
     assert_equal 404, status
     get aikotoba.confirmable_confirm_path(token: @account.confirmation_token)

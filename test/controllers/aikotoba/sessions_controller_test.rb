@@ -5,7 +5,7 @@ require "test_helper"
 class Aikotoba::SessionsControllerTest < ActionDispatch::IntegrationTest
   def setup
     ActionController::Base.allow_forgery_protection = false
-    Aikotoba.enable_confirm = false
+    Aikotoba.confirmable = false
     email, password = ["email@example.com", "password"]
     @account = ::Aikotoba::Account.build_by(attributes: {email: email, password: password})
     @account.save!

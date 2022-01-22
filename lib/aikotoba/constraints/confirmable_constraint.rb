@@ -2,6 +2,6 @@
 
 class Aikotoba::ConfirmableConstraint
   def self.matches?(_request)
-    Aikotoba.enable_confirm
+    Aikotoba.confirmable
   end
 end
