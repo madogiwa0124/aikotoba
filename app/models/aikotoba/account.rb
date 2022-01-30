@@ -14,7 +14,7 @@ module Aikotoba
     attribute :max_failed_attempts, :integer, default: -> { Aikotoba.max_failed_attempts }
 
     validates :email, presence: true, uniqueness: true, format: EMAIL_REGEXP, length: {maximum: EMAIL_MAXIMUM_LENGTH}
-    validates :password, presence: true, format: {with: Value::Password::FORMAT, message: Value::Password::INVALID_FORMAT_MESSAGE}, on: [:create, :recover]
+    validates :password, presence: true, length: {minimum: Value::Password::MINIMUM_LENGTH}, on: [:create, :recover]
     validates :password_digest, presence: true
     validates :confirmed, inclusion: [true, false]
     validates :failed_attempts, presence: true, numericality: {only_integer: true, greater_than_or_equal_to: 0}

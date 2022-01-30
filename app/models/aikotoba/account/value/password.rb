@@ -4,8 +4,7 @@ require "argon2"
 
 module Aikotoba
   class Account::Value::Password
-    FORMAT = Aikotoba.password_format
-    INVALID_FORMAT_MESSAGE = I18n.t(".aikotoba.messages.registration.invalid_password")
+    MINIMUM_LENGTH = Aikotoba.password_minimum_length
 
     def initialize(
       value:,

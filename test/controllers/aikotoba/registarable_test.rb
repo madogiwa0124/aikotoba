@@ -33,7 +33,7 @@ class Aikotoba::RegisterableTest < ActionDispatch::IntegrationTest
     assert_equal I18n.t(".aikotoba.messages.registration.failed"), flash[:alert]
     assert_equal status, 422
     messages = @controller.instance_variable_get(:@account).errors.full_messages
-    assert_includes messages, "Password is invalid."
+    assert_includes messages, "Password is too short (minimum is 8 characters)"
     assert_includes messages, "Email can't be blank"
   end
 
