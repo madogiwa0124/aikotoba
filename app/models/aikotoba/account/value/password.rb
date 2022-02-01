@@ -23,6 +23,7 @@ module Aikotoba
     end
 
     def digest
+      return "" if value.blank?
       generate_hash(password_with_pepper(value))
     end
 
@@ -30,6 +31,8 @@ module Aikotoba
 
     def verify_password?(password, digest)
       Argon2::Password.verify_password(password, digest)
+    rescue Argon2::ArgonHashFail # NOTE: If an invalid digest is passed, consider it a mismatch.
+      false
     end
 
     def password_with_pepper(password)
