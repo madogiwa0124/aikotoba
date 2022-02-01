@@ -1,7 +1,6 @@
 module Aikotoba
   module Authenticatable
     extend ActiveSupport::Concern
-    include Protection::TimingAtack
     include Protection::SessionFixationAttack
 
     def aikotoba_current_account
@@ -19,7 +18,6 @@ module Aikotoba
     end
 
     def aikotoba_authenticate_by_session
-      prevent_timing_atack
       Account.find_by(id: session[aikotoba_session_key])
     end
 
