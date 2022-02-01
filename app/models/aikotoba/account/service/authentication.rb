@@ -16,7 +16,8 @@ module Aikotoba
 
     def call!
       account = find_by_identifier
-      return unless account
+      return prevent_timing_atack && nil unless account
+
       authenticate(account).tap do |result|
         ActiveRecord::Base.transaction do
           result ? success_callback(account) : failed_callback(account)
@@ -25,6 +26,13 @@ module Aikotoba
     end
 
     private
+
+    # NOTE: Verify passwords even when accounts are not found to prevent timing attacks.
+    def prevent_timing_atack
+      account = @account_class.build_by(attributes: {email: @email, password: @password})
+      account.password_match?(@password)
+      true
+    end
 
     def success_callback(account)
       account.authentication_success!
