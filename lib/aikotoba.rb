@@ -4,7 +4,6 @@ require "aikotoba/version"
 require "aikotoba/engine"
 
 module Aikotoba
-  mattr_accessor(:authenticate_account_method) { "current_account" }
   mattr_accessor(:email_format) { /\A[^\s]+@[^\s]+\z/ }
   mattr_accessor(:password_pepper) { "aikotoba-default-pepper" }
   mattr_accessor(:password_minimum_length) { 8 }

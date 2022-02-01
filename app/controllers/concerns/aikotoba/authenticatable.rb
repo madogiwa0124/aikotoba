@@ -4,17 +4,6 @@ module Aikotoba
     include Protection::TimingAtack
     include Protection::SessionFixationAttack
 
-    included do
-      alias_method aikotoba_authenticate_account_method_name, :aikotoba_current_account
-      private_class_method :aikotoba_authenticate_account_method_name
-    end
-
-    module ClassMethods
-      def aikotoba_authenticate_account_method_name
-        Aikotoba.authenticate_account_method
-      end
-    end
-
     def aikotoba_current_account
       @aikotoba_current_account ||= aikotoba_authenticate_by_session
     end

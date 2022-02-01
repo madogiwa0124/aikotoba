@@ -55,24 +55,15 @@ include `Aikotoba::Authenticatable` to the controller(ex. `ApplicationController
 
 ```ruby
 class ApplicationController < ActionController::Base
-  include Aikotoba::Authenticatable # enabled authenticatable methods (ex. `current_account`)
+  include Aikotoba::Authenticatable
+
+  # NOTE: You can also implement the get authenticated account process as follows.
+  alias_method :current_account, :aikotoba_current_account
 
   # NOTE: You can also implement the authorization process as follows
   def authenticate_account!
     return if current_account
     redirect_to aikotoba.new_session_path, flash: {alert: "Oops. You need to Signed up or Signed in." }
-  end
-end
-```
-
-Aikotoba enable helper methods for authentication(ex. `current_account`).
-
-```ruby
-class SensitiveController < ApplicationController
-  before_action :authenticate_account!
-
-  def index
-    @records = current_account.sensitive_records
   end
 end
 ```
@@ -89,9 +80,9 @@ Authenticate an account using email and password.
 | POST      | /sign_in  | Create a login session by authenticating. |
 | DELETE    | /sign_out | Clear aikotoba login session.             |
 
-Aikotoba enable helper methods for authentication. The method name can be changed by configuration.
+Aikotoba enable helper methods for authentication. The method name can be changed by `alias_method`.
 
-- `current_account` : Returns the logged in instance of `Aikotoba::Account`.
+- `aikotoba_current_account` : Returns the logged in instance of `Aikotoba::Account`.
 
 ### Registrable
 
@@ -166,7 +157,6 @@ The following configuration parameters are supported. You can override it. (ex. 
 ```ruby
 require 'aikotoba'
 
-Aikotoba.authenticate_account_method = "current_account"
 Aikotoba.email_format = /\A[^\s]+@[^\s]+\z/
 Aikotoba.prevent_timing_atack = true
 Aikotoba.password_pepper = "aikotoba-default-pepper"
