@@ -3,7 +3,6 @@ require 'aikotoba'
 Aikotoba.authenticate_account_method = "current_account"
 Aikotoba.prevent_timing_atack = false
 Aikotoba.password_pepper = "aikotoba-default-pepper"
-Aikotoba.password_stretch = 3
 Aikotoba.sign_in_path = "/sign_in"
 Aikotoba.sign_up_path = "/sign_up"
 Aikotoba.sign_out_path = "/sign_out"
