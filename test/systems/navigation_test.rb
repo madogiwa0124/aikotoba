@@ -41,7 +41,7 @@ class NavigationTest < ActionDispatch::SystemTestCase
     click_on "Send confirm token"
     assert_selector ".message", text: "Confirm url has been sent to your email address."
     confirm_email = ActionMailer::Base.deliveries.last
-    confirm_path = confirm_email.body.to_s.split(" ")[2] # NOTE: get XXX from "Confirm URL: XXX"
+    confirm_path = confirm_email.body.to_s.split("\n")[0].split(" ")[2] # NOTE: get XXX from "Confirm URL: XXX"
     visit confirm_path
     assert_selector ".message", text: "Confirmed you email successfully."
     click_on "Sign in"
@@ -71,7 +71,7 @@ class NavigationTest < ActionDispatch::SystemTestCase
     click_on "Send unlock token"
     assert_selector ".message", text: "Unlock url has been sent to your email address."
     unlock_email = ActionMailer::Base.deliveries.last
-    unlock_path = unlock_email.body.to_s.split(" ")[2] # NOTE: get XXX from "Unlock URL: XXX"
+    unlock_path = unlock_email.body.to_s.split("\n")[0].split(" ")[2] # NOTE: get XXX from "Unlock URL: XXX"
     visit unlock_path
     assert_selector ".message", text: "Unlocked you account successfully."
     click_on "Sign in"
@@ -92,7 +92,7 @@ class NavigationTest < ActionDispatch::SystemTestCase
     click_on "Send password reset token"
     assert_selector ".message", text: "Password reset url has been sent to your email address."
     recover_email = ActionMailer::Base.deliveries.last
-    recover_path = recover_email.body.to_s.split(" ")[3] # NOTE: get XXX from "Password reset URL: XXX"
+    recover_path = recover_email.body.to_s.split("\n")[0].split(" ")[3] # NOTE: get XXX from "Password reset URL: XXX"
     visit recover_path
     fill_in "Password",	with: "updated_password"
     click_on "Password reset"
@@ -117,7 +117,7 @@ class NavigationTest < ActionDispatch::SystemTestCase
     assert_selector ".message", text: "Signed up successfully."
     # Confirmable
     confirm_email = ActionMailer::Base.deliveries.last
-    confirm_path = confirm_email.body.to_s.split(" ")[2] # NOTE: get XXX from "Confirm URL: XXX"
+    confirm_path = confirm_email.body.to_s.split("\n")[0].split(" ")[2] # NOTE: get XXX from "Confirm URL: XXX"
     visit confirm_path
     assert_selector ".message", text: "Confirmed you email successfully."
     click_on "Sign in"
@@ -133,7 +133,7 @@ class NavigationTest < ActionDispatch::SystemTestCase
       click_on "Sign in"
     end
     unlock_email = ActionMailer::Base.deliveries.last
-    unlock_path = unlock_email.body.to_s.split(" ")[2] # NOTE: get XXX from "Unlock URL: XXX"
+    unlock_path = unlock_email.body.to_s.split("\n")[0].split(" ")[2] # NOTE: get XXX from "Unlock URL: XXX"
     visit unlock_path
     assert_selector ".message", text: "Unlocked you account successfully."
     fill_in "Email", with: "sample6@example.com"
@@ -147,7 +147,7 @@ class NavigationTest < ActionDispatch::SystemTestCase
     click_on "Send password reset token"
     assert_selector ".message", text: "Password reset url has been sent to your email address."
     recover_email = ActionMailer::Base.deliveries.last
-    recover_path = recover_email.body.to_s.split(" ")[3] # NOTE: get XXX from "Password reset URL: XXX"
+    recover_path = recover_email.body.to_s.split("\n")[0].split(" ")[3] # NOTE: get XXX from "Password reset URL: XXX"
     visit recover_path
     fill_in "Password",	with: "updated_password"
     click_on "Password reset"

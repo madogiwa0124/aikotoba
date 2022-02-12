@@ -33,8 +33,10 @@ class Aikotoba::LockableTest < ActionDispatch::IntegrationTest
     unlock_email = ActionMailer::Base.deliveries.last
     assert_equal I18n.t(".aikotoba.mailers.unlock.subject"), unlock_email.subject
     assert_equal @account.email, unlock_email.to[0]
-    assert_match(/Unlock URL:/, unlock_email.body.to_s)
+    assert_match(/Unlock url:/, unlock_email.body.to_s)
+    assert_match(/The url expires at/, unlock_email.body.to_s)
     assert_includes(unlock_email.body.to_s, @account.reload.unlock_token.token)
+    assert_includes(unlock_email.body.to_s, I18n.l(@account.reload.unlock_token.expired_at, format: :long))
   end
 
   test "regenerated token when success POST create_unlock_token_path " do
@@ -111,7 +113,7 @@ class Aikotoba::LockableTest < ActionDispatch::IntegrationTest
     unlock_email = ActionMailer::Base.deliveries.last
     assert_equal I18n.t(".aikotoba.mailers.unlock.subject"), unlock_email.subject
     assert_equal @account.email, unlock_email.to[0]
-    assert_match(/Unlock URL:/, unlock_email.body.to_s)
+    assert_match(/Unlock url:/, unlock_email.body.to_s)
     assert_includes(unlock_email.body.to_s, @account.reload.unlock_token.token)
   end
 

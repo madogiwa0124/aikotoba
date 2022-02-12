@@ -31,8 +31,10 @@ class Aikotoba::RecoverableTest < ActionDispatch::IntegrationTest
     recover_email = ActionMailer::Base.deliveries.last
     assert_equal I18n.t(".aikotoba.mailers.recover.subject"), recover_email.subject
     assert_equal [@account.email], recover_email.to
-    assert_match(/Password reset URL:/, recover_email.body.to_s)
+    assert_match(/Password reset url:/, recover_email.body.to_s)
+    assert_match(/The url expires at/, recover_email.body.to_s)
     assert_includes(recover_email.body.to_s, @account.reload.recovery_token.token)
+    assert_includes(recover_email.body.to_s, I18n.l(@account.reload.recovery_token.expired_at, format: :long))
   end
 
   test "regenerated token when success POST create_recovery_token_path " do

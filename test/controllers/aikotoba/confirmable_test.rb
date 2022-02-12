@@ -33,8 +33,10 @@ class Aikotoba::ConfirmableTest < ActionDispatch::IntegrationTest
     confirm_email = ActionMailer::Base.deliveries.last
     assert_equal I18n.t(".aikotoba.mailers.confirm.subject"), confirm_email.subject
     assert_equal @account.email, confirm_email.to[0]
-    assert_match(/Confirm URL:/, confirm_email.body.to_s)
+    assert_match(/Confirm url:/, confirm_email.body.to_s)
+    assert_match(/The url expires at/, confirm_email.body.to_s)
     assert_includes(confirm_email.body.to_s, @account.confirmation_token.reload.token)
+    assert_includes(confirm_email.body.to_s, I18n.l(@account.confirmation_token.expired_at, format: :long))
   end
 
   test "regenerated token when success POST create_confirmation_token_path " do
@@ -100,7 +102,7 @@ class Aikotoba::ConfirmableTest < ActionDispatch::IntegrationTest
     confirm_email = ActionMailer::Base.deliveries.last
     assert_equal I18n.t(".aikotoba.mailers.confirm.subject"), confirm_email.subject
     assert_equal account.email, confirm_email.to[0]
-    assert_match(/Confirm URL:/, confirm_email.body.to_s)
+    assert_match(/Confirm url:/, confirm_email.body.to_s)
     assert_includes(confirm_email.body.to_s, account.confirmation_token.reload.token)
     Aikotoba.registerable = false
   end

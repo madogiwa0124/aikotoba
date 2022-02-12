@@ -173,18 +173,18 @@ Aikotoba.sign_up_path = "/sign_up"
 # for confirmable
 Aikotoba.confirmable = false
 Aikotoba.confirm_path = "/confirm"
-Aikotoba.confirmation_token_expiry = 5.days
+Aikotoba.confirmation_token_expiry = 1.day
 
 # for lockable
 Aikotoba.lockable = false
 Aikotoba.unlock_path = "/unlock"
 Aikotoba.max_failed_attempts = 10
-Aikotoba.unlock_token_expiry = 5.days
+Aikotoba.unlock_token_expiry = 1.day
 
 # for Recoverable
 Aikotoba.recoverable = false
 Aikotoba.recover_path = "/recover"
-Aikotoba.recovery_token_expiry = 5.days
+Aikotoba.recovery_token_expiry = 4.hours
 ```
 
 ## Tips

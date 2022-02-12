@@ -20,18 +20,18 @@ module Aikotoba
   # for confirmable
   mattr_accessor(:confirmable) { false }
   mattr_accessor(:confirm_path) { "/confirm" }
-  mattr_accessor(:confirmation_token_expiry) { 5.days }
+  mattr_accessor(:confirmation_token_expiry) { 1.day }
 
   # for lockable
   mattr_accessor(:lockable) { false }
   mattr_accessor(:unlock_path) { "/unlock" }
   mattr_accessor(:max_failed_attempts) { 10 }
-  mattr_accessor(:unlock_token_expiry) { 5.days }
+  mattr_accessor(:unlock_token_expiry) { 1.day }
 
   # for recoverable
   mattr_accessor(:recoverable) { false }
   mattr_accessor(:recover_path) { "/recover" }
-  mattr_accessor(:recovery_token_expiry) { 5.days }
+  mattr_accessor(:recovery_token_expiry) { 4.hours }
 
   # for security
   mattr_accessor(:prevent_timing_atack) { true }

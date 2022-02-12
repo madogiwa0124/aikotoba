@@ -11,6 +11,7 @@ Aikotoba.after_sign_out_path = "/sign_in"
 # Aikotoba.confirmable = true
 # Aikotoba.lockable= true
 # Aikotoba.recoverable = true
+# Aikotoba.max_failed_attempts = 2
 
 Rails.application.config.to_prepare do
   Aikotoba::AccountsController.class_eval do
