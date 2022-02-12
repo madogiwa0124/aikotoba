@@ -17,6 +17,13 @@ class Aikotoba::AuthenticatableTest < ActionDispatch::IntegrationTest
     assert_select "h1", I18n.t(".aikotoba.sessions.new")
   end
 
+  test "If GET new_session_path while logged in, it will be redirect to after_sign_in_path" do
+    post aikotoba.new_session_path, params: {account: {email: @account.email, password: @account.password}}
+    assert_redirected_to Aikotoba.after_sign_in_path
+    get aikotoba.new_session_path
+    assert_redirected_to Aikotoba.after_sign_in_path
+  end
+
   test "success POST new_session_path" do
     post aikotoba.new_session_path, params: {account: {email: @account.email, password: @account.password}}
     assert_redirected_to Aikotoba.after_sign_in_path

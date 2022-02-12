@@ -5,6 +5,7 @@ module Aikotoba
     include Authenticatable
 
     def new
+      return redirect_to after_sign_in_path if aikotoba_current_account
       @account = build_account({email: "", password: ""})
     end
 
