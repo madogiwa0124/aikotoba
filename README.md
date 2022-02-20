@@ -161,7 +161,7 @@ require 'aikotoba'
 Aikotoba.email_format = /\A[^\s]+@[^\s]+\z/
 Aikotoba.prevent_timing_atack = true
 Aikotoba.password_pepper = "aikotoba-default-pepper"
-Aikotoba.password_minimum_length = 8
+Aikotoba.password_length_range = 8..100
 Aikotoba.sign_in_path = "/sign_in"
 Aikotoba.sign_out_path = "/sign_out"
 Aikotoba.after_sign_in_path = "/"

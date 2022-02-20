@@ -4,7 +4,7 @@ require "argon2"
 
 module Aikotoba
   class Account::Value::Password
-    MINIMUM_LENGTH = Aikotoba.password_minimum_length
+    LENGTH_RENGE = Aikotoba.password_length_range
 
     def initialize(
       value:,

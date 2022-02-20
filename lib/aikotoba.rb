@@ -7,7 +7,7 @@ require "aikotoba/errors"
 module Aikotoba
   mattr_accessor(:email_format) { /\A[^\s]+@[^\s]+\z/ }
   mattr_accessor(:password_pepper) { "aikotoba-default-pepper" }
-  mattr_accessor(:password_minimum_length) { 8 }
+  mattr_accessor(:password_length_range) { 8..100 }
   mattr_accessor(:session_key) { "aikotoba-account-id" }
   mattr_accessor(:sign_in_path) { "/sign_in" }
   mattr_accessor(:sign_out_path) { "/sign_out" }
