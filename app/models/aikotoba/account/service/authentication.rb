@@ -29,9 +29,14 @@ module Aikotoba
 
     # NOTE: Verify passwords even when accounts are not found to prevent timing attacks.
     def prevent_timing_atack
+      return true unless aikotoba_prevent_timing_atack
       account = @account_class.build_by(attributes: {email: @email, password: @password})
       account.password_match?(@password)
       true
+    end
+
+    def aikotoba_prevent_timing_atack
+      Aikotoba.prevent_timing_atack
     end
 
     def success_callback(account)
