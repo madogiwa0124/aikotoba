@@ -10,7 +10,6 @@ module Aikotoba
 
     belongs_to :authenticate_target, polymorphic: true, optional: true
 
-    attribute :password, :string
     attribute :max_failed_attempts, :integer, default: -> { Aikotoba.max_failed_attempts }
 
     validates :email, presence: true, uniqueness: true, format: EMAIL_REGEXP, length: {maximum: EMAIL_MAXIMUM_LENGTH}
@@ -26,6 +25,14 @@ module Aikotoba
         target_type_name = authenticate_target_type.gsub("::", "").underscore
         define_singleton_method(target_type_name) { authenticate_target }
       end
+    end
+
+    attr_reader :password
+
+    def password=(value)
+      new_password = Value::Password.new(value: value)
+      @password = new_password.value
+      assign_attributes(password_digest: new_password.digest)
     end
 
     concerning :Authenticatable do
@@ -62,14 +69,8 @@ module Aikotoba
       class_methods do
         def build_by(attributes:)
           email, password = attributes.values_at(:email, :password)
-          new(email: email, password: password)
+          new(email: email).tap { |account| account.password = password }
         end
-      end
-
-      def password=(value)
-        new_password = Value::Password.new(value: value)
-        write_attribute(:password, new_password.value)
-        write_attribute(:password_digest, new_password.digest)
       end
     end
 
@@ -111,7 +112,7 @@ module Aikotoba
       end
 
       def recover!(new_password:)
-        assign_attributes(password: new_password)
+        self.password = new_password
         save!(context: :recover)
       end
     end
