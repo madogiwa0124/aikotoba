@@ -12,6 +12,7 @@ Aikotoba is a Rails engine that makes it easy to implement simple email and pass
 - Modern hashing algorithm.
 - Separate the authentication logic from User.
 - Implementation for multiple DB.
+- Encrypting tokens using Active Record Encryption.
 
 **Features**
 
@@ -244,6 +245,15 @@ Rails.application.config.to_prepare do
     end
   end
 end
+```
+
+### Using encrypted token
+
+Tokens can be encrypted using Active Record Encryption, introduced in Active Record 7 and later.
+To use it, enable Aikotoba.encipted_token in the initializer.
+
+```ruby
+Aikotoba.encypted_token = true
 ```
 
 ### Testing

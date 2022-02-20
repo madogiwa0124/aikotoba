@@ -2,6 +2,7 @@
 
 require "aikotoba/version"
 require "aikotoba/engine"
+require "aikotoba/errors"
 
 module Aikotoba
   mattr_accessor(:email_format) { /\A[^\s]+@[^\s]+\z/ }
@@ -12,6 +13,9 @@ module Aikotoba
   mattr_accessor(:sign_out_path) { "/sign_out" }
   mattr_accessor(:after_sign_in_path) { "/" }
   mattr_accessor(:after_sign_out_path) { "/sign_in" }
+
+  # for encrypt token
+  mattr_accessor(:encypted_token) { false }
 
   # for registerable
   mattr_accessor(:registerable) { true }
