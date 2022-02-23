@@ -4,7 +4,10 @@ module Aikotoba
     include Protection::SessionFixationAttack
 
     def aikotoba_current_account
-      @aikotoba_current_account ||= aikotoba_authenticate_by_session
+      unless defined?(@aikotoba_current_account)
+        @aikotoba_current_account ||= aikotoba_authenticate_by_session
+      end
+      @aikotoba_current_account
     end
 
     def aikotoba_sign_in(account)
