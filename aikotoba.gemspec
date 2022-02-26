@@ -9,7 +9,7 @@ Gem::Specification.new do |spec|
   spec.summary = "Aikotoba is a Rails engine that makes it easy to implement simple email and password authentication."
   spec.license = "MIT"
   spec.metadata["source_code_uri"] = "https://github.com/madogiwa0124/aikotoba"
-  spec.files = Dir["{app,config,lib}/**/*", "MIT-LICENSE", "Rakefile", "README.md"]
+  spec.files = Dir["{app,config,db,lib}/**/*", "MIT-LICENSE", "Rakefile", "README.md"]
 
   spec.add_dependency "rails", ">= 6.1.4"
   spec.add_dependency "argon2", "~> 2.1"
