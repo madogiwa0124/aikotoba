@@ -58,10 +58,11 @@ include `Aikotoba::Authenticatable` to the controller(ex. `ApplicationController
 class ApplicationController < ActionController::Base
   include Aikotoba::Authenticatable
 
-  # NOTE: You can also implement the get authenticated account process as follows.
+  # NOTE: You can implement the get authenticated account process as follows.
   alias_method :current_account, :aikotoba_current_account
+  helper_method :current_account
 
-  # NOTE: You can also implement the authorization process as follows
+  # NOTE: You can implement the authorization process as follows
   def authenticate_account!
     return if current_account
     redirect_to aikotoba.new_session_path, flash: {alert: "Oops. You need to Signed up or Signed in." }
@@ -255,6 +256,33 @@ To use it, enable Aikotoba.encipted_token in the initializer.
 
 ```ruby
 Aikotoba.encypted_token = true
+```
+
+### How to identify the controller provided.
+
+The controller provided by Aikotoba is designed to inherit from `Aikotoba::ApplicationController`.
+
+Therefore, when implementing authorization based on login status, you can disable only the controllers provided by Aikotoba as follows.
+
+```ruby
+class ApplicationController < ApplicationController
+  include Aikotoba::Authenticatable
+
+  alias_method :current_account, :aikotoba_current_account
+
+  before_action :authenticate_account!, unless: :aikotoba_controller?
+
+  def authenticate_account!
+    return if current_account
+    redirect_to aikotoba.new_session_path, flash: {alert: "Oops. You need to Signed up or Signed in." }
+  end
+
+  private
+
+  def aikotoba_controller?
+    is_a?(::Aikotoba::ApplicationController)
+  end
+end
 ```
 
 ### Testing
