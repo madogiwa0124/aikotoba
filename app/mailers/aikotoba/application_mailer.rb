@@ -1,5 +1,5 @@
 module Aikotoba
-  class ApplicationMailer < ActionMailer::Base
-    default from: "from@example.com"
+  class ApplicationMailer < Aikotoba.parent_mailer.constantize
+    default from: Aikotoba.mailer_sender
   end
 end

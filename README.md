@@ -160,6 +160,8 @@ The following configuration parameters are supported. You can override it. (ex. 
 require 'aikotoba'
 
 Aikotoba.parent_controller = "ApplicationController"
+Aikotoba.parent_mailer = "ActionMailer::Base"
+Aikotoba.mailer_sender = "from@example.com"
 Aikotoba.email_format = /\A[^\s]+@[^\s]+\z/
 Aikotoba.prevent_timing_atack = true
 Aikotoba.password_pepper = "aikotoba-default-pepper"
