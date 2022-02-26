@@ -158,6 +158,7 @@ The following configuration parameters are supported. You can override it. (ex. 
 ```ruby
 require 'aikotoba'
 
+Aikotoba.parent_controller = "ApplicationController"
 Aikotoba.email_format = /\A[^\s]+@[^\s]+\z/
 Aikotoba.prevent_timing_atack = true
 Aikotoba.password_pepper = "aikotoba-default-pepper"

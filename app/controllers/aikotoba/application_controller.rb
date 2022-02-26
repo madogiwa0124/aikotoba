@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module Aikotoba
-  class ApplicationController < ::ApplicationController
+  class ApplicationController < Aikotoba.parent_controller.constantize
     include EnabledFeatureCheckable
 
     helper_method :confirmable?, :lockable?, :recoverable?, :registerable?

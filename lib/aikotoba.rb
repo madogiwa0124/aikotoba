@@ -5,6 +5,7 @@ require "aikotoba/engine"
 require "aikotoba/errors"
 
 module Aikotoba
+  mattr_accessor(:parent_controller) { "ApplicationController" }
   mattr_accessor(:email_format) { /\A[^\s]+@[^\s]+\z/ }
   mattr_accessor(:password_pepper) { "aikotoba-default-pepper" }
   mattr_accessor(:password_length_range) { 8..100 }
