@@ -1,12 +1,5 @@
 <div class="aikotoba-confirmation-new">
-  <div class="message">
-    <% if notice %>
-      <p><%= notice %></p>
-    <% end %>
-    <% if alert %>
-      <p><%= alert %></p>
-    <% end %>
-  </div>
+  <%= render "aikotoba/common/message" %>
   <h1><%= I18n.t(".aikotoba.confirms.new") %></h1>
   <%= form_with model: @account, method: :post, url: aikotoba.create_confirmation_token_path do |f| %>
     <p>

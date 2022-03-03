@@ -1,12 +1,5 @@
 <div class="aikotoba-recoveries-edit">
-  <div class="message">
-    <% if notice %>
-      <p><%= notice %></p>
-    <% end %>
-    <% if alert %>
-      <p><%= alert %></p>
-    <% end %>
-  </div>
+  <%= render "aikotoba/common/message" %>
   <h1><%= I18n.t(".aikotoba.recoveries.edit") %></h1>
   <%= form_with model: @account, method: :patch, url: aikotoba.update_account_password_path(token: @account.recovery_token.token) do |f| %>
     <%= render "aikotoba/common/errors", resource: @account %>
