@@ -226,7 +226,7 @@ Rails.application.config.to_prepare do
 end
 
 class Profile < ApplicationRecord
-  has_one :account, class_name: 'Aikotoba::Account'
+  has_one :account, class_name: 'Aikotoba::Account', as: :authenticate_target
 end
 
 current_account.profile #=> Profile instance
