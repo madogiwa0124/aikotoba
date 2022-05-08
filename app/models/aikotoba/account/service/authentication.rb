@@ -6,12 +6,17 @@ module Aikotoba
       new(email: email, password: password).call!
     end
 
-    def initialize(email:, password:, account_class: Account, lock_service: Account::Service::Lock, lockable: Account.lockable?)
+    def initialize(email:, password:,
+      account_class: Account,
+      lock_service: Account::Service::Lock,
+      lockable: Account.lockable?,
+      prevent_timing_atack: Aikotoba.prevent_timing_atack)
       @account_class = account_class
       @lock_service = lock_service
       @lockable = lockable
       @email = email
       @password = password
+      @aikotoba_prevent_timing_atack = prevent_timing_atack
     end
 
     def call!
@@ -29,14 +34,10 @@ module Aikotoba
 
     # NOTE: Verify passwords even when accounts are not found to prevent timing attacks.
     def prevent_timing_atack
-      return true unless aikotoba_prevent_timing_atack
+      return true unless @aikotoba_prevent_timing_atack
       account = @account_class.build_by(attributes: {email: @email, password: @password})
       account.password_match?(@password)
       true
-    end
-
-    def aikotoba_prevent_timing_atack
-      Aikotoba.prevent_timing_atack
     end
 
     def success_callback(account)
