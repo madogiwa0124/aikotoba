@@ -6,10 +6,10 @@ module Aikotoba
       new.call!(account: account)
     end
 
-    def initialize
-      @account_class = Account
-      @confirm_service = Account::Service::Confirmation
-      @confirmable = @account_class.confirmable?
+    def initialize(account_class: Account, confirm_service: Account::Service::Confirmation, confirmable: Account.confirmable?)
+      @account_class = account_class
+      @confirm_service = confirm_service
+      @confirmable = confirmable
     end
 
     def call!(account:)

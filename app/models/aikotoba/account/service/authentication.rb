@@ -6,10 +6,10 @@ module Aikotoba
       new(email: email, password: password).call!
     end
 
-    def initialize(email:, password:)
-      @account_class = Account
-      @lock_service = Account::Service::Lock
-      @lockable = @account_class.lockable?
+    def initialize(email:, password:, account_class: Account, lock_service: Account::Service::Lock, lockable: Account.lockable?)
+      @account_class = account_class
+      @lock_service = lock_service
+      @lockable = lockable
       @email = email
       @password = password
     end
