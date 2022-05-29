@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module Aikotoba
-  class Account::Value::Token
+  class Account::Token
     def initialize(extipry:)
       @value = build_token
       @expired_at = extipry.since

@@ -13,7 +13,7 @@ module Aikotoba
     attribute :max_failed_attempts, :integer, default: -> { Aikotoba.max_failed_attempts }
 
     validates :email, presence: true, uniqueness: true, format: EMAIL_REGEXP, length: {maximum: EMAIL_MAXIMUM_LENGTH}
-    validates :password, presence: true, length: {in: Value::Password::LENGTH_RENGE}, on: [:create, :recover]
+    validates :password, presence: true, length: {in: Password::LENGTH_RENGE}, on: [:create, :recover]
     validates :password_digest, presence: true
     validates :confirmed, inclusion: [true, false]
     validates :failed_attempts, presence: true, numericality: {only_integer: true, greater_than_or_equal_to: 0}
@@ -30,7 +30,7 @@ module Aikotoba
     attr_reader :password
 
     def password=(value)
-      new_password = Value::Password.new(value: value)
+      new_password = Password.new(value: value)
       @password = new_password.value
       assign_attributes(password_digest: new_password.digest)
     end
@@ -53,7 +53,7 @@ module Aikotoba
       end
 
       def password_match?(password)
-        Value::Password.new(value: password).match?(digest: password_digest)
+        Password.new(value: password).match?(digest: password_digest)
       end
 
       def authentication_failed!

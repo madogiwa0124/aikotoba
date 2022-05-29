@@ -10,7 +10,7 @@ module Aikotoba
     scope :active, ->(now: Time.current) { where("expired_at >= ?", now) }
 
     after_initialize do |record|
-      token = Account::Value::Token.new(extipry: Aikotoba.recovery_token_expiry)
+      token = Account::Token.new(extipry: Aikotoba.recovery_token_expiry)
       record.token ||= token.value
       record.expired_at ||= token.expired_at
     end

@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module Aikotoba
-  class Account::Value::Password
+  class Account::Password
     LENGTH_RENGE = Aikotoba.password_length_range
 
     def initialize(
