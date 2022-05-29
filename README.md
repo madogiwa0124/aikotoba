@@ -1,4 +1,5 @@
 [![CI](https://github.com/madogiwa0124/aikotoba/actions/workflows/ci.yml/badge.svg)](https://github.com/madogiwa0124/aikotoba/actions/workflows/ci.yml)
+[![Gem Version](https://badge.fury.io/rb/aikotoba.svg)](https://badge.fury.io/rb/aikotoba)
 
 # Aikotoba
 
