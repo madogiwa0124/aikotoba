@@ -2,10 +2,6 @@
 
 module Aikotoba
   class ConfirmsController < ApplicationController
-    include Protection::TimingAtack
-
-    before_action :prevent_timing_atack, only: [:update]
-
     def new
       @account = build_account({email: "", password: ""})
     end

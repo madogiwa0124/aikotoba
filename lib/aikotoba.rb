@@ -39,7 +39,4 @@ module Aikotoba
   mattr_accessor(:recoverable) { false }
   mattr_accessor(:recover_path) { "/recover" }
   mattr_accessor(:recovery_token_expiry) { 4.hours }
-
-  # for security
-  mattr_accessor(:prevent_timing_atack) { true }
 end
