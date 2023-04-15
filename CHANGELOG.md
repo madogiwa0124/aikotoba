@@ -1,5 +1,12 @@
 # CHANGELOG
 
+## :gift: Unreleased.
+
+- Set the autocomplete attribute to improve accessibility.
+  - https://github.com/madogiwa0124/aikotoba/commit/0ae56da81f86070f9875c747cdd76314274b3f7e
+- Removed the prevent_timing_atack option.
+  - https://github.com/madogiwa0124/aikotoba/commit/500471e7e8c0d5f35d9c4340d7c21636b8def6dd
+
 ## :gift: 2022/05/29 `v0.1.1` released.
 
 - Dependent classes and values can be injected with initialize.
