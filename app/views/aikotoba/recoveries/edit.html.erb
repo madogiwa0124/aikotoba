@@ -5,7 +5,7 @@
     <%= render "aikotoba/common/errors", resource: @account %>
     <p>
       <%= f.label :password %>
-      <%= f.password_field :password, required: true  %>
+      <%= f.password_field :password, required: true, autocomplete: 'new-password' %>
     </p>
     <%= f.submit I18n.t(".aikotoba.recoveries.edit") %>
   <% end %>

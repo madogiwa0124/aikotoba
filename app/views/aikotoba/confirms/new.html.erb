@@ -4,7 +4,7 @@
   <%= form_with model: @account, method: :post, url: aikotoba.create_confirmation_token_path do |f| %>
     <p>
       <%= f.label :email %>
-      <%= f.email_field :email, required: true %>
+      <%= f.email_field :email, required: true, autocomplete: :email %>
     </p>
     <%= f.submit I18n.t(".aikotoba.confirms.new") %>
   <% end %>

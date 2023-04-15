@@ -4,11 +4,11 @@
   <%= form_with model: @account, method: :post, url: aikotoba.new_session_path do |f| %>
     <p>
       <%= f.label :email %>
-      <%= f.email_field :email, required: true %>
+      <%= f.email_field :email, required: true, autocomplete: :email %>
     </p>
     <p>
       <%= f.label :password %>
-      <%= f.password_field :password, required: true  %>
+      <%= f.password_field :password, required: true, autocomplete: 'current-password' %>
     </p>
     <%= f.submit I18n.t(".aikotoba.sessions.new") %>
   <% end %>
