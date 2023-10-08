@@ -11,9 +11,12 @@ development:
     <<: *default
     database: db/development.sqlite3
 test:
-  primary:
-    <<: *default
-    database: db/test.sqlite3
-  replica:
-    <<: *default
-    database: db/test.sqlite3
+  # NOTE: use multiple databases
+  # primary:
+  #   <<: *default
+  #   database: db/test.sqlite3
+  # replica:
+  #   <<: *default
+  #   database: db/test.sqlite3
+  <<: *default
+  database: db/test.sqlite3
