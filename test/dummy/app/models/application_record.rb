@@ -1,4 +1,7 @@
 class ApplicationRecord < ActiveRecord::Base
   self.abstract_class = true
-  connects_to database: { writing: :primary, reading: :replica }
+  if Rails.env.development?
+    # NOTE: use multiple databases
+    connects_to database: { writing: :primary, reading: :replica }
+  end
 end

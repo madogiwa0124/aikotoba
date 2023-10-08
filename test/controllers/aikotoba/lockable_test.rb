@@ -43,7 +43,7 @@ class Aikotoba::LockableTest < ActionDispatch::IntegrationTest
     Aikotoba::Account::Service::Lock.lock!(account: @account)
     @account.unlock_token.update!(token: "before_token", expired_at: 1.day.ago)
     post aikotoba.create_unlock_token_path, params: {account: {email: @account.email}}
-    @account.unlock_token.reload
+    @account.reload
     assert @account.unlock_token.token.present?
     assert @account.unlock_token.expired_at.future?
     assert_not_equal @account.unlock_token.token, "before_token"

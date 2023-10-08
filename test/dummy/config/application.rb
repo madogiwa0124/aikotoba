@@ -29,9 +29,12 @@ module Dummy
     config.action_mailer.perform_caching = false
     config.action_mailer.delivery_method = Rails.env.test? ? :test : :letter_opener_web
     config.action_mailer.default_url_options = {host: "localhost", port: 3000}
-    config.active_record.database_selector = { delay: 2.seconds }
-    config.active_record.database_resolver = ActiveRecord::Middleware::DatabaseSelector::Resolver
-    config.active_record.database_resolver_context = ActiveRecord::Middleware::DatabaseSelector::Resolver::Session
+    # NOTE: use multiple databases
+    if Rails.env.development?
+      config.active_record.database_selector = { delay: 5.seconds }
+      config.active_record.database_resolver = ActiveRecord::Middleware::DatabaseSelector::Resolver
+      config.active_record.database_resolver_context = ActiveRecord::Middleware::DatabaseSelector::Resolver::Session
+    end
     if ActiveRecord::VERSION::MAJOR >= 7
       config.active_record.encryption.primary_key = "foo"
       config.active_record.encryption.deterministic_key = "bar"
