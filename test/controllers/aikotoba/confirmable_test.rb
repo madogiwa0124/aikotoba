@@ -35,7 +35,7 @@ class Aikotoba::ConfirmableTest < ActionDispatch::IntegrationTest
     assert_equal @account.email, confirm_email.to[0]
     assert_match(/Confirm url:/, confirm_email.body.to_s)
     assert_match(/The url expires at/, confirm_email.body.to_s)
-    assert_includes(confirm_email.body.to_s, @account.confirmation_token.reload.token)
+    assert_includes(confirm_email.body.to_s, @account.reload.confirmation_token.token)
     assert_includes(confirm_email.body.to_s, I18n.l(@account.confirmation_token.expired_at, format: :long))
   end
 
@@ -45,7 +45,7 @@ class Aikotoba::ConfirmableTest < ActionDispatch::IntegrationTest
     post aikotoba.create_confirmation_token_path, params: {account: {email: @account.email}}
     assert_redirected_to aikotoba.new_session_path
     assert_equal I18n.t(".aikotoba.messages.confirmation.sent"), flash[:notice]
-    @account.confirmation_token.reload
+    @account.reload
     assert @account.confirmation_token.token.present?
     assert @account.confirmation_token.expired_at.future?
     assert_not_equal @account.confirmation_token.token, "before_token"
@@ -103,7 +103,7 @@ class Aikotoba::ConfirmableTest < ActionDispatch::IntegrationTest
     assert_equal I18n.t(".aikotoba.mailers.confirm.subject"), confirm_email.subject
     assert_equal account.email, confirm_email.to[0]
     assert_match(/Confirm url:/, confirm_email.body.to_s)
-    assert_includes(confirm_email.body.to_s, account.confirmation_token.reload.token)
+    assert_includes(confirm_email.body.to_s, account.reload.confirmation_token.token)
     Aikotoba.registerable = false
   end
 
