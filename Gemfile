@@ -12,7 +12,7 @@ end
 group :development, :test do
   gem "net-smtp"
   gem "webrick"
-  gem "sqlite3"
+  gem "sqlite3", "~> 1.4"
   gem "sprockets-rails"
   gem "standard", require: false
 end

@@ -288,6 +288,7 @@ GEM
 
 PLATFORMS
   arm64-darwin-21
+  arm64-darwin-23
   x86_64-darwin-18
   x86_64-linux
 
@@ -299,10 +300,10 @@ DEPENDENCIES
   net-smtp
   simplecov
   sprockets-rails
-  sqlite3
+  sqlite3 (~> 1.4)
   standard
   webdrivers
   webrick
 
 BUNDLED WITH
-   2.4.10
+   2.5.9
