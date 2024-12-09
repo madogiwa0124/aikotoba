@@ -251,9 +251,9 @@ GEM
       actionpack (>= 6.1)
       activesupport (>= 6.1)
       sprockets (>= 3.0.0)
-    sqlite3 (1.7.3-arm64-darwin)
-    sqlite3 (1.7.3-x86_64-darwin)
-    sqlite3 (1.7.3-x86_64-linux)
+    sqlite3 (2.4.1-arm64-darwin)
+    sqlite3 (2.4.1-x86_64-darwin)
+    sqlite3 (2.4.1-x86_64-linux-gnu)
     standard (1.41.1)
       language_server-protocol (~> 3.17.0.2)
       lint_roller (~> 1.0)
@@ -299,7 +299,7 @@ DEPENDENCIES
   net-smtp
   simplecov
   sprockets-rails
-  sqlite3 (~> 1.4)
+  sqlite3 (~> 2.4)
   standard
   webdrivers
   webrick
