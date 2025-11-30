@@ -49,12 +49,37 @@ module Aikotoba
       class_methods do
         def authenticate_by(attributes:)
           email, password = attributes.values_at(:email, :password)
-          Authentication.call!(email: email, password: password)
+          account = find_by_identifier(email)
+          return prevent_timing_atack(email, password) unless account
+
+          account.authenticate(password).tap do |result|
+            ActiveRecord::Base.transaction do
+              if result
+                account.authentication_success!
+              else
+                account.authentication_failed!
+                Lock.lock!(account: account, notify: true) if lockable? && account.should_lock?
+              end
+            end
+          end
+        end
+
+        private
+
+        def find_by_identifier(email)
+          authenticatable.find_by(email: email)
+        end
+
+        # NOTE: Verify passwords even when accounts are not found to prevent timing attacks.
+        def prevent_timing_atack(email, password)
+          account = build_by(attributes: {email: email, password: password})
+          account.password_match?(password)
+          nil
         end
       end
 
-      def password_match?(password)
-        Password.new(value: password).match?(digest: password_digest)
+      def authenticate(input_password)
+        password_match?(input_password) ? self : nil
       end
 
       def authentication_failed!
@@ -63,6 +88,10 @@ module Aikotoba
 
       def authentication_success!
         update!(failed_attempts: 0)
+      end
+
+      def password_match?(input_password)
+        Password.new(value: input_password).match?(digest: password_digest)
       end
     end
 
@@ -73,12 +102,19 @@ module Aikotoba
           new(email: email).tap { |account| account.password = password }
         end
       end
+
+      def register!
+        ActiveRecord::Base.transaction do
+          save!
+          Confirmation.create_token!(account: self, notify: true) if confirmable?
+        end
+      end
     end
 
     concerning :Confirmable do
       included do
-        has_one :confirmation_token, 
-          dependent: :destroy, 
+        has_one :confirmation_token,
+          dependent: :destroy,
           foreign_key: "aikotoba_account_id"
         scope :confirmed, -> { where(confirmed: true) }
         scope :unconfirmed, -> { where(confirmed: false) }
@@ -91,9 +127,9 @@ module Aikotoba
 
     concerning :Lockable do
       included do
-        has_one :unlock_token, 
-                dependent: :destroy, 
-                foreign_key: "aikotoba_account_id"
+        has_one :unlock_token,
+          dependent: :destroy,
+          foreign_key: "aikotoba_account_id"
         scope :locked, -> { where(locked: true) }
         scope :unlocked, -> { where(locked: false) }
       end
@@ -113,9 +149,9 @@ module Aikotoba
 
     concerning :Recoverable do
       included do
-        has_one :recovery_token, 
-        dependent: :destroy, 
-        foreign_key: "aikotoba_account_id"
+        has_one :recovery_token,
+          dependent: :destroy,
+          foreign_key: "aikotoba_account_id"
       end
 
       def recover!(new_password:)

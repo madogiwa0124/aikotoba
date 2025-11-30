@@ -31,7 +31,7 @@ module Aikotoba
     end
 
     def save_with_callbacks!(account)
-      Account::Registration.call!(account: account)
+      account.register!
     end
 
     def after_sign_up_path
