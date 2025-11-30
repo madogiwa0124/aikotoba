@@ -58,11 +58,11 @@ module Aikotoba
     end
 
     def send_recovery_token!(account)
-      Account::Service::Recovery.create_token!(account: account, notify: true)
+      Account::Recovery.create_token!(account: account, notify: true)
     end
 
     def recover_account!(account, new_password)
-      Account::Service::Recovery.recover!(account: account, new_password: new_password)
+      Account::Recovery.recover!(account: account, new_password: new_password)
     end
 
     def success_recovered_path

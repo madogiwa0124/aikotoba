@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module Aikotoba
-  class Account::Service::Lock
+  class Account::Lock
     def self.lock!(account:, notify: false)
       new(account: account).lock!(notify: notify)
     end

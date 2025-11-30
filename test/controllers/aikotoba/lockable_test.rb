@@ -24,7 +24,7 @@ class Aikotoba::LockableTest < ActionDispatch::IntegrationTest
   end
 
   test "success POST create_unlock_token_path" do
-    Aikotoba::Account::Service::Lock.lock!(account: @account)
+    Aikotoba::Account::Lock.lock!(account: @account)
     assert_emails 1 do
       post aikotoba.create_unlock_token_path, params: {account: {email: @account.email}}
     end
@@ -40,7 +40,7 @@ class Aikotoba::LockableTest < ActionDispatch::IntegrationTest
   end
 
   test "regenerated token when success POST create_unlock_token_path " do
-    Aikotoba::Account::Service::Lock.lock!(account: @account)
+    Aikotoba::Account::Lock.lock!(account: @account)
     @account.unlock_token.update!(token: "before_token", expired_at: 1.day.ago)
     post aikotoba.create_unlock_token_path, params: {account: {email: @account.email}}
     @account.reload
@@ -58,7 +58,7 @@ class Aikotoba::LockableTest < ActionDispatch::IntegrationTest
   end
 
   test "failed POST create_unlock_token_path due to not locked account" do
-    Aikotoba::Account::Service::Lock.lock!(account: @account)
+    Aikotoba::Account::Lock.lock!(account: @account)
     assert_emails 0 do
       post aikotoba.create_unlock_token_path, params: {account: {email: "not_found@example.com"}}
     end
@@ -68,7 +68,7 @@ class Aikotoba::LockableTest < ActionDispatch::IntegrationTest
 
   test "success GET unlock_account_path by active token" do
     @account.update!(failed_attempts: 3)
-    Aikotoba::Account::Service::Lock.lock!(account: @account)
+    Aikotoba::Account::Lock.lock!(account: @account)
     get aikotoba.unlock_account_path(token: @account.reload.unlock_token.token)
     assert_redirected_to aikotoba.new_session_path
     assert_equal I18n.t(".aikotoba.messages.unlocking.success"), flash[:notice]
@@ -78,7 +78,7 @@ class Aikotoba::LockableTest < ActionDispatch::IntegrationTest
   end
 
   test "failed GET unlock_account_path by expired token" do
-    Aikotoba::Account::Service::Lock.lock!(account: @account)
+    Aikotoba::Account::Lock.lock!(account: @account)
     @account.unlock_token.update!(expired_at: 1.hour.ago)
     get aikotoba.unlock_account_path(token: @account.unlock_token.token)
     assert_equal status, 404
@@ -96,7 +96,7 @@ class Aikotoba::LockableTest < ActionDispatch::IntegrationTest
   end
 
   test "account locked with sent unlock mail when failed POST new_session_path exceed max failed attempts." do
-    Aikotoba::Account::Service::Lock.unlock!(account: @account)
+    Aikotoba::Account::Lock.unlock!(account: @account)
     post aikotoba.new_session_path, params: {account: {email: @account.email, password: "wrong password"}}
     post aikotoba.new_session_path, params: {account: {email: @account.email, password: "wrong password"}}
     assert_equal @account.reload.locked?, false
@@ -118,21 +118,21 @@ class Aikotoba::LockableTest < ActionDispatch::IntegrationTest
   end
 
   test "failed POST new_session_path by locked accout." do
-    Aikotoba::Account::Service::Lock.lock!(account: @account)
+    Aikotoba::Account::Lock.lock!(account: @account)
     post aikotoba.new_session_path, params: {account: {email: @account.email, password: "password"}}
     assert_equal status, 422
     assert_equal I18n.t(".aikotoba.messages.authentication.failed"), flash[:alert]
   end
 
   test "succes POST new_session_path by unlocked accout." do
-    Aikotoba::Account::Service::Lock.unlock!(account: @account)
+    Aikotoba::Account::Lock.unlock!(account: @account)
     post aikotoba.new_session_path, params: {account: {email: @account.email, password: "password"}}
     assert_redirected_to Aikotoba.after_sign_in_path
     assert_equal I18n.t(".aikotoba.messages.authentication.success"), flash[:notice]
   end
 
   test "reset lock status when succes POST new_session_path." do
-    Aikotoba::Account::Service::Lock.unlock!(account: @account)
+    Aikotoba::Account::Lock.unlock!(account: @account)
     post aikotoba.new_session_path, params: {account: {email: @account.email, password: "wrong password"}}
     assert_equal @account.reload.failed_attempts, 1
     post aikotoba.new_session_path, params: {account: {email: @account.email, password: "password"}}

@@ -42,7 +42,7 @@ module Aikotoba
     end
 
     def send_token_account!(account)
-      Account::Service::Confirmation.create_token!(account: account, notify: true)
+      Account::Confirmation.create_token!(account: account, notify: true)
     end
 
     def find_by_has_token_account!(params)
@@ -52,7 +52,7 @@ module Aikotoba
     def confirm_account!(account)
       # NOTE: Confirmation is done using URL tokens, so it is done in the writing role.
       ActiveRecord::Base.connected_to(role: :writing) do
-        Account::Service::Confirmation.confirm!(account: account)
+        Account::Confirmation.confirm!(account: account)
       end
     end
 

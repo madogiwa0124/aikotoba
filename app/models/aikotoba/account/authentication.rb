@@ -1,14 +1,14 @@
 # frozen_string_literal: true
 
 module Aikotoba
-  class Account::Service::Authentication
+  class Account::Authentication
     def self.call!(email:, password:)
       new(email: email, password: password).call!
     end
 
     def initialize(email:, password:,
       account_class: Account,
-      lock_service: Account::Service::Lock,
+      lock_service: Account::Lock,
       lockable: Account.lockable?)
       @account_class = account_class
       @lock_service = lock_service

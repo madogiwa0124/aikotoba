@@ -42,7 +42,7 @@ module Aikotoba
     end
 
     def send_token_account!(account)
-      Account::Service::Lock.create_unlock_token!(account: account, notify: true)
+      Account::Lock.create_unlock_token!(account: account, notify: true)
     end
 
     def find_by_has_token_account!(params)
@@ -52,7 +52,7 @@ module Aikotoba
     def unlock_account!(account)
       # NOTE: Unlocking is done using URL tokens, so it is done in the writing role.
       ActiveRecord::Base.connected_to(role: :writing) do
-        Account::Service::Lock.unlock!(account: account)
+        Account::Lock.unlock!(account: account)
       end
     end
 

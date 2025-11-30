@@ -49,7 +49,7 @@ module Aikotoba
       class_methods do
         def authenticate_by(attributes:)
           email, password = attributes.values_at(:email, :password)
-          Service::Authentication.call!(email: email, password: password)
+          Authentication.call!(email: email, password: password)
         end
       end
 
@@ -77,7 +77,9 @@ module Aikotoba
 
     concerning :Confirmable do
       included do
-        has_one :confirmation_token, dependent: :destroy, foreign_key: "aikotoba_account_id"
+        has_one :confirmation_token, 
+          dependent: :destroy, 
+          foreign_key: "aikotoba_account_id"
         scope :confirmed, -> { where(confirmed: true) }
         scope :unconfirmed, -> { where(confirmed: false) }
       end
@@ -89,7 +91,9 @@ module Aikotoba
 
     concerning :Lockable do
       included do
-        has_one :unlock_token, dependent: :destroy, foreign_key: "aikotoba_account_id"
+        has_one :unlock_token, 
+                dependent: :destroy, 
+                foreign_key: "aikotoba_account_id"
         scope :locked, -> { where(locked: true) }
         scope :unlocked, -> { where(locked: false) }
       end
@@ -109,7 +113,9 @@ module Aikotoba
 
     concerning :Recoverable do
       included do
-        has_one :recovery_token, dependent: :destroy, foreign_key: "aikotoba_account_id"
+        has_one :recovery_token, 
+        dependent: :destroy, 
+        foreign_key: "aikotoba_account_id"
       end
 
       def recover!(new_password:)

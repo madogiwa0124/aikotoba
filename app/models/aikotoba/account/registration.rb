@@ -1,12 +1,12 @@
 # frozen_string_literal: true
 
 module Aikotoba
-  class Account::Service::Registration
+  class Account::Registration
     def self.call!(account:)
       new.call!(account: account)
     end
 
-    def initialize(account_class: Account, confirm_service: Account::Service::Confirmation, confirmable: Account.confirmable?)
+    def initialize(account_class: Account, confirm_service: Account::Confirmation, confirmable: Account.confirmable?)
       @account_class = account_class
       @confirm_service = confirm_service
       @confirmable = confirmable
