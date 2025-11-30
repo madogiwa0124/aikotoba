@@ -2,6 +2,7 @@ require "test_helper"
 
 class HelperTest < ActionDispatch::SystemTestCase
   include Aikotoba::Test::AuthenticationHelper::System
+
   driven_by :rack_test
 
   def setup

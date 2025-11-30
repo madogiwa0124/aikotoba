@@ -3,6 +3,7 @@
 module Aikotoba
   class Account::ConfirmationToken < ApplicationRecord
     include TokenEncryptable
+
     belongs_to :account, class_name: "Aikotoba::Account", foreign_key: "aikotoba_account_id"
     validates :token, presence: true
     validates :expired_at, presence: true

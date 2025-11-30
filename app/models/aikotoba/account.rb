@@ -3,6 +3,7 @@
 module Aikotoba
   class Account < ApplicationRecord
     include EnabledFeatureCheckable
+
     # NOTE: (RFC5321) Path: The maximum total length of a reverse-path or forward-path is 256 octets.
     # https://datatracker.ietf.org/doc/html/rfc5321#section-4.5.3.1.3
     EMAIL_MAXIMUM_LENGTH = 256
