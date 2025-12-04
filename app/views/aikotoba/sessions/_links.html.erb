@@ -1,20 +1,20 @@
 <% if registerable? %>
   <p>
-    <%= link_to I18n.t(".aikotoba.accounts.new"), aikotoba.new_account_path %>
+    <%= link_to I18n.t(".aikotoba.accounts.new"), aikotoba_scoped_path(:new_account_path) %>
   </p>
 <% end %>
 <% if confirmable? %>
   <p>
-    <%= link_to I18n.t(".aikotoba.confirms.new"), aikotoba.new_confirmation_token_path %>
+    <%= link_to I18n.t(".aikotoba.confirms.new"), aikotoba_scoped_path(:new_confirmation_token_path) %>
   </p>
 <% end %>
 <% if lockable? %>
   <p>
-    <%= link_to I18n.t(".aikotoba.unlocks.new"), aikotoba.new_unlock_token_path %>
+    <%= link_to I18n.t(".aikotoba.unlocks.new"), aikotoba_scoped_path(:new_unlock_token_path) %>
   </p>
 <% end %>
 <% if recoverable? %>
   <p>
-    <%= link_to I18n.t(".aikotoba.recoveries.new"), aikotoba.new_recovery_token_path %>
+    <%= link_to I18n.t(".aikotoba.recoveries.new"), aikotoba_scoped_path(:new_recovery_token_path) %>
   </p>
 <% end %>

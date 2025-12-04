@@ -57,11 +57,11 @@ module Aikotoba
     end
 
     def after_unlocked_path
-      aikotoba.new_session_path
+      aikotoba_scoped_path(:new_session_path)
     end
 
     def success_send_unlock_token_path
-      aikotoba.new_session_path
+      aikotoba_scoped_path(:new_session_path)
     end
 
     def unlocked_message

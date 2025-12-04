@@ -110,7 +110,7 @@ class Aikotoba::ConfirmableTest < ActionDispatch::IntegrationTest
   test "success POST new_session_path by comfirmed account" do
     get aikotoba.confirm_account_path(token: @account.confirmation_token.token)
     post aikotoba.new_session_path, params: {account: {email: @account.email, password: @account.password}}
-    assert_redirected_to Aikotoba.after_sign_in_path
+    assert_redirected_to Aikotoba.default_scope[:after_sign_in_path]
     assert_equal I18n.t(".aikotoba.messages.authentication.success"), flash[:notice]
   end
 

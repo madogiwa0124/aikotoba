@@ -1,7 +1,7 @@
 <div class="aikotoba-confirmation-new">
   <%= render "aikotoba/common/message" %>
   <h1><%= I18n.t(".aikotoba.confirms.new") %></h1>
-  <%= form_with model: @account, method: :post, url: aikotoba.create_confirmation_token_path do |f| %>
+  <%= form_with model: @account, method: :post, url: aikotoba_scoped_path(:create_confirmation_token_path) do |f| %>
     <p>
       <%= f.label :email %>
       <%= f.email_field :email, required: true, autocomplete: :email %>
@@ -9,6 +9,6 @@
     <%= f.submit I18n.t(".aikotoba.confirms.new") %>
   <% end %>
   <p>
-    <%= link_to I18n.t(".aikotoba.sessions.new"), aikotoba.new_session_path %>
+    <%= link_to I18n.t(".aikotoba.sessions.new"), aikotoba_scoped_path(:new_session_path) %>
   </p>
 </div>

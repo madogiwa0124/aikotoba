@@ -5,38 +5,76 @@ require "aikotoba/engine"
 require "aikotoba/errors"
 
 module Aikotoba
+  DEPRECATOR = ActiveSupport::Deprecation.new("1.0", "Aikotoba")
+
   mattr_accessor(:parent_controller) { "ApplicationController" }
   mattr_accessor(:parent_mailer) { "ActionMailer::Base" }
   mattr_accessor(:mailer_sender) { "from@example.com" }
   mattr_accessor(:email_format) { /\A[^\s]+@[^\s]+\z/ }
   mattr_accessor(:password_pepper) { "aikotoba-default-pepper" }
   mattr_accessor(:password_length_range) { 8..100 }
-  mattr_accessor(:session_key) { "aikotoba-account-id" }
-  mattr_accessor(:sign_in_path) { "/sign_in" }
-  mattr_accessor(:sign_out_path) { "/sign_out" }
-  mattr_accessor(:after_sign_in_path) { "/" }
-  mattr_accessor(:after_sign_out_path) { "/sign_in" }
+
+  # for Registerable
+  mattr_accessor(:registerable) { true }
+
+  # for Confirmable
+  mattr_accessor(:confirmable) { false }
+  mattr_accessor(:confirmation_token_expiry) { 1.day }
+
+  # for Lockable
+  mattr_accessor(:lockable) { false }
+  mattr_accessor(:max_failed_attempts) { 10 }
+  mattr_accessor(:unlock_token_expiry) { 1.day }
+
+  # for Recoverable
+  mattr_accessor(:recoverable) { false }
+  mattr_accessor(:recovery_token_expiry) { 4.hours }
 
   # for encrypt token
   mattr_accessor(:encypted_token) { false }
 
-  # for registerable
-  mattr_accessor(:registerable) { true }
-  mattr_accessor(:sign_up_path) { "/sign_up" }
+  mattr_accessor(:scopes) {
+    HashWithIndifferentAccess.new({
+      default: {
+        authenticate_for: nil,
+        root_path: "/",
+        session_key: "aikotoba-account-id",
+        sign_in_path: "/sign_in",
+        sign_out_path: "/sign_out",
+        after_sign_in_path: "/",
+        after_sign_out_path: "/sign_in",
+        sign_up_path: "/sign_up",
+        confirm_path: "/confirm",
+        unlock_path: "/unlock",
+        recover_path: "/recover"
+      }
+    })
+  }
 
-  # for confirmable
-  mattr_accessor(:confirmable) { false }
-  mattr_accessor(:confirm_path) { "/confirm" }
-  mattr_accessor(:confirmation_token_expiry) { 1.day }
+  def self.default_scope
+    scopes[:default]
+  end
 
-  # for lockable
-  mattr_accessor(:lockable) { false }
-  mattr_accessor(:unlock_path) { "/unlock" }
-  mattr_accessor(:max_failed_attempts) { 10 }
-  mattr_accessor(:unlock_token_expiry) { 1.day }
+  # NOTE: Merge configuration into default scope (does not replace, merges with existing keys)
+  #       Example: Aikotoba.default_scope = { sign_in_path: "/custom" }
+  def self.default_scope=(hash)
+    default_scope.merge!(hash)
+  end
 
-  # for recoverable
-  mattr_accessor(:recoverable) { false }
-  mattr_accessor(:recover_path) { "/recover" }
-  mattr_accessor(:recovery_token_expiry) { 4.hours }
+  def self.add_scope(name, config = {})
+    scopes[name] = default_scope.merge(config)
+  end
+
+  # TODO: Deprecated for compatibility, will be removed in the future
+  default_scope.each do |key, value|
+    define_singleton_method(key) do
+      DEPRECATOR.warn("Aikotoba.#{key} is deprecated. Please use Aikotoba.default_scope[:#{key}] instead.")
+      default_scope[key]
+    end
+
+    define_singleton_method("#{key}=") do |new_value|
+      DEPRECATOR.warn("Aikotoba.#{key}= is deprecated. Please use Aikotoba.default_scope[:#{key}]= instead.")
+      default_scope[key] = new_value
+    end
+  end
 end

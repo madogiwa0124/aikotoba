@@ -66,11 +66,11 @@ module Aikotoba
     end
 
     def success_recovered_path
-      aikotoba.new_session_path
+      aikotoba_scoped_path(:new_session_path)
     end
 
     def success_send_recovery_token_path
-      aikotoba.new_session_path
+      aikotoba_scoped_path(:new_session_path)
     end
 
     def failed_message
