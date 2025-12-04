@@ -153,6 +153,49 @@ Aikotoba enables a route to recover an account by password reset.
 | GET       | /recover/:token | Display page for recover account by password reset. |
 | PATCH     | /recover/:token | Recover account by password reset.                  |
 
+### Multiple Scopes
+
+Aikotoba supports multiple scopes.
+
+You can add a scope by `Aikotoba.add_scope` method. For example, the following code adds an `admin` scope. Unspecified values will be copied from the `default` scope.
+
+```ruby
+Aikotoba.add_scope(:admin, {
+  session_key: "aikotoba-admin-account-id",
+  root_path: "/admin",
+  sign_in_path: "/admin/sign_in",
+  sign_up_path: "/admin/sign_up",
+  after_sign_in_path: "/admin/sensitives",
+  after_sign_out_path: "/admin/sign_in",
+  sign_out_path: "/admin/sign_out",
+  confirm_path: "/admin/confirm",
+  unlock_path: "/admin/unlock",
+  recover_path: "/admin/recover"
+})
+```
+
+As shown below, you can perform separate authentication with `/sign_in` and `/admin/sign_in`.
+
+```sh
+$ bin/rails routes
+Routes for Aikotoba::Engine:
+                         Prefix Verb   URI Pattern                     Controller#Action
+                    new_session GET    /sign_in(.:format)              aikotoba/sessions#new
+              admin_new_session GET    /admin/sign_in(.:format)        aikotoba/sessions#new
+```
+
+The scope is determined dynamically by the root path. For example, when accessing `/admin/sign_in`, the `admin` scope is selected.
+
+To automatically switch scopes and get paths, use the `Aikotoba::Scopable#aikotoba_scoped_path` helper method.
+
+```ruby
+include Aikotoba::Scopable
+
+aikotoba_scoped_path(:new_session)
+#=> "/sign_in" (if current scope is :default)
+#=> "/admin/sign_in" (if current scope is :admin)
+```
+
 ## Configuration
 
 The following configuration parameters are supported. You can override it. (ex. `initializers/aikotoba.rb`)
@@ -160,36 +203,123 @@ The following configuration parameters are supported. You can override it. (ex. 
 ```ruby
 require 'aikotoba'
 
+# ============================================
+# Global settings
+# ============================================
+
 Aikotoba.parent_controller = "ApplicationController"
 Aikotoba.parent_mailer = "ActionMailer::Base"
 Aikotoba.mailer_sender = "from@example.com"
 Aikotoba.email_format = /\A[^\s]+@[^\s]+\z/
 Aikotoba.password_pepper = "aikotoba-default-pepper"
 Aikotoba.password_length_range = 8..100
-Aikotoba.sign_in_path = "/sign_in"
-Aikotoba.sign_out_path = "/sign_out"
-Aikotoba.after_sign_in_path = "/"
-Aikotoba.after_sign_out_path = "/sign_in"
+
 
 # for registerable
 Aikotoba.registerable = true
-Aikotoba.sign_up_path = "/sign_up"
 
 # for confirmable
 Aikotoba.confirmable = false
-Aikotoba.confirm_path = "/confirm"
 Aikotoba.confirmation_token_expiry = 1.day
 
 # for lockable
 Aikotoba.lockable = false
-Aikotoba.unlock_path = "/unlock"
 Aikotoba.max_failed_attempts = 10
 Aikotoba.unlock_token_expiry = 1.day
 
 # for Recoverable
 Aikotoba.recoverable = false
-Aikotoba.recover_path = "/recover"
 Aikotoba.recovery_token_expiry = 4.hours
+
+# ============================================
+# Scope settings
+# ============================================
+
+# for Default Scope
+# You can override only the necessary keys.
+Aikotoba.default_scope = {
+  authenticate_for: nil,  # No restriction for default scope
+  session_key: "aikotoba-account-id",
+  root_path: "/",
+  sign_in_path: "/sign_in",
+  sign_out_path: "/sign_out",
+  sign_up_path: "/sign_up",
+  confirm_path: "/confirm",
+  unlock_path: "/unlock",
+  recover_path: "/recover",
+  after_sign_in_path: "/sensitives",
+  after_sign_out_path: "/sign_in"
+}
+
+# for Additional Scopes
+Aikotoba.add_scope(:admin, {
+  authenticate_for: "Admin",  # Restrict authentication to Admin accounts
+  session_key: "aikotoba-admin-account-id",
+  root_path: "/admin",
+  sign_in_path: "/admin/sign_in",
+  sign_out_path: "/admin/sign_out",
+  sign_up_path: "/admin/sign_up",
+  confirm_path: "/admin/confirm",
+  unlock_path: "/admin/unlock",
+  recover_path: "/admin/recover",
+  after_sign_in_path: "/admin/sensitives",
+  after_sign_out_path: "/admin/sign_in"
+})
+```
+
+### Scope Configuration Details
+
+`Aikotoba.default_scope=` **merges** the provided hash into the existing default scope (does not replace):
+
+```ruby
+# Single key update
+Aikotoba.default_scope[:sign_in_path] = "/custom"
+
+# Multiple keys update (recommended for bulk changes)
+Aikotoba.default_scope = {
+  sign_in_path: "/custom_sign_in",
+  after_sign_in_path: "/dashboard"
+}
+# Other keys (root_path, session_key, etc.) remain unchanged
+```
+
+Both approaches are valid. Use direct key assignment for single changes, or use `default_scope=` for updating multiple keys at once.
+
+#### Filtering by authenticate target type
+
+You can restrict authentication to specific target types by setting `authenticate_for`:
+
+```ruby
+Aikotoba.add_scope(:admin, {
+  authenticate_for: "Admin",  # Only Admin accounts can sign in to this scope
+  root_path: "/admin",
+  sign_in_path: "/admin/sign_in",
+  # ...
+})
+```
+
+When `authenticate_for` is set, only accounts with matching `authenticate_target_type` will authenticate successfully in that scope.
+This is useful for separating authentication between different user types (e.g., Admin vs User).
+
+**Note:** The account type is determined by the model associated via `authenticate_target`. Set up your associations in `after_create_account_process`:
+
+```ruby
+Rails.application.config.to_prepare do
+  Aikotoba::AccountsController.class_eval do
+    def after_create_account_process
+      if aikotoba_scope.admin?
+        admin = Admin.new(nickname: "admin_foo")
+        @account.authenticate_target = admin
+        admin.save!
+      else
+        user = User.new(nickname: "foo")
+        @account.authenticate_target = user
+        user.save!
+      end
+      @account.save!
+    end
+  end
+end
 ```
 
 ## Tips
@@ -218,9 +348,17 @@ require 'aikotoba'
 Rails.application.config.to_prepare do
   Aikotoba::AccountsController.class_eval do
     def after_create_account_process
-      profile = Profile.new(nickname: "foo")
-      profile.save!
-      @account.update!(authenticate_target: profile)
+      # You can get the scope name by `aikotoba_scope` method.
+      if aikotoba_scope.admin?
+        admin = Admin.new(nickname: "admin_foo")
+        @account.authenticate_target = admin
+        admin.save!
+      else
+        user = User.new(nickname: "foo")
+        @account.authenticate_target = user
+        user.save!
+      end
+      @account.save!
     end
   end
 end
@@ -229,8 +367,20 @@ class Profile < ApplicationRecord
   has_one :account, class_name: 'Aikotoba::Account', as: :authenticate_target
 end
 
+class Admin < ApplicationRecord
+  has_one :account, class_name: 'Aikotoba::Account', as: :authenticate_target
+end
+```
+
+Then, you can get the associated model from `Aikotoba::Account` instance.
+
+```ruby
+
 current_account.profile #=> Profile instance
 profile.account #=> Aikotoba::Account instance
+
+current_account.admin #=> Admin instance
+admin.account #=> Aikotoba::Account instance
 ```
 
 ### Do something on before, after, failure.

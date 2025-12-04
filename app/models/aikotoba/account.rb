@@ -38,8 +38,11 @@ module Aikotoba
 
     concerning :Authenticatable do
       included do
-        scope :authenticatable, -> {
+        scope :authenticatable, ->(target_type_name: nil) {
           result = all
+          # NOTE: To ensure that authentication works even if a Class is passed to authenticate_for,
+          #       convert it to a string for searching.
+          result = result.where(authenticate_target_type: target_type_name.to_s) if target_type_name.present?
           result = result.confirmed if confirmable?
           result = result.unlocked if lockable?
           result
@@ -47,9 +50,9 @@ module Aikotoba
       end
 
       class_methods do
-        def authenticate_by(attributes:)
+        def authenticate_by(attributes:, target_type_name: nil)
           email, password = attributes.values_at(:email, :password)
-          account = find_by_identifier(email)
+          account = find_by_identifier(email, target_type_name: target_type_name)
           return prevent_timing_atack(email, password) unless account
 
           account.authenticate(password).tap do |result|
@@ -66,8 +69,8 @@ module Aikotoba
 
         private
 
-        def find_by_identifier(email)
-          authenticatable.find_by(email: email)
+        def find_by_identifier(email, target_type_name: nil)
+          authenticatable(target_type_name: target_type_name).find_by(email: email)
         end
 
         # NOTE: Verify passwords even when accounts are not found to prevent timing attacks.

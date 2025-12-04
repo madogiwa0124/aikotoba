@@ -127,7 +127,7 @@ class Aikotoba::LockableTest < ActionDispatch::IntegrationTest
   test "succes POST new_session_path by unlocked accout." do
     Aikotoba::Account::Lock.unlock!(account: @account)
     post aikotoba.new_session_path, params: {account: {email: @account.email, password: "password"}}
-    assert_redirected_to Aikotoba.after_sign_in_path
+    assert_redirected_to Aikotoba.default_scope[:after_sign_in_path]
     assert_equal I18n.t(".aikotoba.messages.authentication.success"), flash[:notice]
   end
 
@@ -136,7 +136,7 @@ class Aikotoba::LockableTest < ActionDispatch::IntegrationTest
     post aikotoba.new_session_path, params: {account: {email: @account.email, password: "wrong password"}}
     assert_equal @account.reload.failed_attempts, 1
     post aikotoba.new_session_path, params: {account: {email: @account.email, password: "password"}}
-    assert_redirected_to Aikotoba.after_sign_in_path
+    assert_redirected_to Aikotoba.default_scope[:after_sign_in_path]
     assert_equal I18n.t(".aikotoba.messages.authentication.success"), flash[:notice]
     assert_equal @account.reload.failed_attempts, 0
   end

@@ -1,7 +1,7 @@
 <div class="aikotoba-recoveries-edit">
   <%= render "aikotoba/common/message" %>
   <h1><%= I18n.t(".aikotoba.recoveries.edit") %></h1>
-  <%= form_with model: @account, method: :patch, url: aikotoba.update_account_password_path(token: @account.recovery_token.token) do |f| %>
+  <%= form_with model: @account, method: :patch, url: aikotoba_scoped_path(:update_account_password_path, token: @account.recovery_token.token) do |f| %>
     <%= render "aikotoba/common/errors", resource: @account %>
     <p>
       <%= f.label :password %>
@@ -10,6 +10,6 @@
     <%= f.submit I18n.t(".aikotoba.recoveries.edit") %>
   <% end %>
   <p>
-    <%= link_to I18n.t(".aikotoba.sessions.new"), aikotoba.new_session_path %>
+    <%= link_to I18n.t(".aikotoba.sessions.new"), aikotoba_scoped_path(:new_session_path) %>
   </p>
 </div>

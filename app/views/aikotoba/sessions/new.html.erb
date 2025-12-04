@@ -1,7 +1,7 @@
 <div class="aikotoba-sessions-new">
   <%= render "aikotoba/common/message" %>
   <h1><%= I18n.t(".aikotoba.sessions.new") %></h1>
-  <%= form_with model: @account, method: :post, url: aikotoba.new_session_path do |f| %>
+  <%= form_with model: @account, method: :post, url: aikotoba_scoped_path(:create_session_path) do |f| %>
     <p>
       <%= f.label :email %>
       <%= f.email_field :email, required: true, autocomplete: :email %>

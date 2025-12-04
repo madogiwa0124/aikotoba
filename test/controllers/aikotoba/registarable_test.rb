@@ -43,5 +43,6 @@ class Aikotoba::RegisterableTest < ActionDispatch::IntegrationTest
     assert_equal 404, status
     post aikotoba.create_account_path, params: {account: {email: "test@example.com", password: "password"}}
     assert_equal 404, status
+    Aikotoba.registerable = true
   end
 end

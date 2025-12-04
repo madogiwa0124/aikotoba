@@ -35,7 +35,7 @@ module Aikotoba
     end
 
     def after_sign_up_path
-      aikotoba.new_session_path
+      aikotoba_scoped_path(:new_session_path)
     end
 
     def successed_message

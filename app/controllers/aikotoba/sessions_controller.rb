@@ -40,15 +40,15 @@ module Aikotoba
     end
 
     def authenticate_account(params)
-      Account.authenticate_by(attributes: params)
+      Account.authenticate_by(attributes: params, target_type_name: aikotoba_authenticate_target)
     end
 
     def after_sign_in_path
-      Aikotoba.after_sign_in_path
+      aikotoba_scope_config[:after_sign_in_path]
     end
 
     def after_sign_out_path
-      Aikotoba.after_sign_out_path
+      aikotoba_scope_config[:after_sign_out_path]
     end
 
     def successed_message
