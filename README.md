@@ -407,7 +407,7 @@ Tokens can be encrypted using Active Record Encryption, introduced in Active Rec
 To use it, enable Aikotoba.encipted_token in the initializer.
 
 ```ruby
-Aikotoba.encypted_token = true
+Aikotoba.encrypted_token = true
 ```
 
 ### How to identify the controller provided.

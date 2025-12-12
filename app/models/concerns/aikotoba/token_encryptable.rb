@@ -16,7 +16,7 @@ module Aikotoba
 
     module ClassMethods
       def enabled_aikotoba_enctypted_token?
-        Aikotoba.encypted_token
+        Aikotoba.encrypted_token
       end
 
       def available_active_record_encryption?

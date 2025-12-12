@@ -2,9 +2,9 @@
 
 module Aikotoba
   class Account::Token
-    def initialize(extipry:)
+    def initialize(expiry:)
       @value = build_token
-      @expired_at = extipry.since
+      @expired_at = expiry.since
     end
 
     attr_reader :value, :expired_at

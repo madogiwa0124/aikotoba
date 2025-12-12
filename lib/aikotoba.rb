@@ -31,7 +31,7 @@ module Aikotoba
   mattr_accessor(:recovery_token_expiry) { 4.hours }
 
   # for encrypt token
-  mattr_accessor(:encypted_token) { false }
+  mattr_accessor(:encrypted_token) { false }
 
   mattr_accessor(:scopes) {
     HashWithIndifferentAccess.new({
