@@ -44,13 +44,13 @@ class Aikotoba::ScopableTest < ActionDispatch::IntegrationTest
     assert_redirected_to "/sensitives"
     follow_redirect!
     assert_response :success
-    assert_not_nil session[Aikotoba.scopes[:default][:session_key]]
+    assert cookies[Aikotoba.scopes[:default][:session_key]].present?
   end
 
   test "admin scope: after_sign_in_path and session key are from admin scope" do
     post aikotoba.admin_create_session_path, params: {account: {email: @admin_account.email, password: @admin_account.password}}
     assert_redirected_to "/admin/sensitives"
     # Do not follow the redirect to avoid hitting admin-only page
-    assert_not_nil session[Aikotoba.scopes[:admin][:session_key]]
+    assert cookies[Aikotoba.scopes[:admin][:session_key]].present?
   end
 end
