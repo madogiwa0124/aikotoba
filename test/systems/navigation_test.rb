@@ -409,7 +409,7 @@ class NavigationTest < ActionDispatch::SystemTestCase
     click_on "Sign out"
   end
 
-  test "namespace isolation: signed out from one namespace does all sessions sign out" do
+  test "namespace isolation: signed out from one namespace does only sign out that namespace" do
     # Create accounts for both namespaces
     Aikotoba::Account.create!(email: "isolation_default@example.com", password: "password")
     admin = Admin.create(nickname: "admin_foo")
@@ -430,9 +430,8 @@ class NavigationTest < ActionDispatch::SystemTestCase
     visit "/sensitives"
     click_on "Sign out"
     assert_equal current_path, "/sign_in"
-    # Verify admin namespace is also signed out
+    # Verify admin namespace is also still signed in
     visit "/admin/sensitives"
-    assert_equal current_path, "/admin/sign_in"
-    assert_selector "h1", text: "Sign in" # Should see sign in form
+    assert_equal current_path, "/admin/sensitives"
   end
 end

@@ -11,6 +11,17 @@ class CreateAikotobaAccounts < ActiveRecord::Migration[6.1]
       t.timestamps
     end
 
+    create_table :aikotoba_account_sessions do |t|
+      t.belongs_to :aikotoba_account, null: false, foreign_key: true
+      t.string :token, null: false, index: {unique: true}
+      t.string :origin, null: false, default: "browser"
+      t.string :ip_address
+      t.string :user_agent
+      t.datetime :expired_at, null: false
+
+      t.timestamps
+    end
+
     create_table :aikotoba_account_confirmation_tokens do |t|
       t.belongs_to(
         :aikotoba_account,

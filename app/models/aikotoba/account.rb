@@ -38,6 +38,11 @@ module Aikotoba
 
     concerning :Authenticatable do
       included do
+        has_many :sessions,
+          class_name: "Aikotoba::Account::Session",
+          dependent: :destroy,
+          foreign_key: "aikotoba_account_id"
+
         scope :authenticatable, ->(target_type_name: nil) {
           result = all
           # NOTE: To ensure that authentication works even if a Class is passed to authenticate_for,

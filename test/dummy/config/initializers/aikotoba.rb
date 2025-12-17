@@ -10,7 +10,7 @@ Aikotoba.default_scope = {after_sign_in_path: "/sensitives"}
 
 Aikotoba.add_scope(:admin, {
   authenticate_for: "Admin",
-  session_key: "aikotoba-admin-account-id",
+  session_key: "aikotoba_admin_session_token",
   root_path: "/admin",
   sign_in_path: "/admin/sign_in",
   sign_out_path: "/admin/sign_out",

@@ -13,6 +13,8 @@ module Aikotoba
   mattr_accessor(:email_format) { /\A[^\s]+@[^\s]+\z/ }
   mattr_accessor(:password_pepper) { "aikotoba-default-pepper" }
   mattr_accessor(:password_length_range) { 8..100 }
+  mattr_accessor(:session_expiry) { 7.days }
+  mattr_accessor(:keep_legacy_login_session) { false }
 
   # for Registerable
   mattr_accessor(:registerable) { true }
@@ -38,7 +40,7 @@ module Aikotoba
       default: {
         authenticate_for: nil,
         root_path: "/",
-        session_key: "aikotoba-account-id",
+        session_key: "aikotoba_session_token",
         sign_in_path: "/sign_in",
         sign_out_path: "/sign_out",
         after_sign_in_path: "/",

@@ -161,7 +161,7 @@ You can add a scope by `Aikotoba.add_scope` method. For example, the following c
 
 ```ruby
 Aikotoba.add_scope(:admin, {
-  session_key: "aikotoba-admin-account-id",
+  session_key: "aikotoba_admin_session_token",
   root_path: "/admin",
   sign_in_path: "/admin/sign_in",
   sign_up_path: "/admin/sign_up",
@@ -213,6 +213,7 @@ Aikotoba.mailer_sender = "from@example.com"
 Aikotoba.email_format = /\A[^\s]+@[^\s]+\z/
 Aikotoba.password_pepper = "aikotoba-default-pepper"
 Aikotoba.password_length_range = 8..100
+Aikotoba.session_expiry = 7.days
 
 
 # for registerable
@@ -239,7 +240,7 @@ Aikotoba.recovery_token_expiry = 4.hours
 # You can override only the necessary keys.
 Aikotoba.default_scope = {
   authenticate_for: nil,  # No restriction for default scope
-  session_key: "aikotoba-account-id",
+  session_key: "aikotoba_session_token",
   root_path: "/",
   sign_in_path: "/sign_in",
   sign_out_path: "/sign_out",
@@ -254,7 +255,7 @@ Aikotoba.default_scope = {
 # for Additional Scopes
 Aikotoba.add_scope(:admin, {
   authenticate_for: "Admin",  # Restrict authentication to Admin accounts
-  session_key: "aikotoba-admin-account-id",
+  session_key: "aikotoba_admin_session_token",
   root_path: "/admin",
   sign_in_path: "/admin/sign_in",
   sign_out_path: "/admin/sign_out",
