@@ -3,4 +3,9 @@
   "[ruby]": {
     "editor.defaultFormatter": "testdouble.vscode-standard-ruby"
   },
+  "github.copilot.chat.commitMessageGeneration.instructions": [
+    {
+      "file": ".github/prompts/commit-message-generation.prompt.md",
+    }
+  ],
 }
