@@ -15,6 +15,8 @@ group :development, :test do
   gem "sqlite3", ">= 2.1"
   gem "sprockets-rails"
   gem "standard", require: false
+  # TODO: Upgrade to minitest v6 when Rails' minitest v6 support stabilizes
+  gem "minitest", "~> 5.0"
 end
 
 group :test do
