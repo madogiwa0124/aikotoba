@@ -13,13 +13,20 @@ module Aikotoba
 
     attribute :max_failed_attempts, :integer, default: -> { Aikotoba.max_failed_attempts }
 
-    validates :email, presence: true, uniqueness: true, format: EMAIL_REGEXP, length: {maximum: EMAIL_MAXIMUM_LENGTH}
+    validates :email, presence: true, uniqueness: {case_sensitive: false}, format: EMAIL_REGEXP, length: {maximum: EMAIL_MAXIMUM_LENGTH}
     validates :password, presence: true, length: {in: Password::LENGTH_RENGE}, on: [:create, :recover]
     validates :password_digest, presence: true
     validates :confirmed, inclusion: [true, false]
     validates :failed_attempts, presence: true, numericality: {only_integer: true, greater_than_or_equal_to: 0}
     validates :max_failed_attempts, numericality: {only_integer: true, greater_than: 0}
     validates :locked, inclusion: [true, false]
+
+    # NOTE: (RFC5321) Per the RFC, the local part of an email address is case-sensitive,
+    #       but in practice it is usually ignored, so we normalize to lowercase.
+    # > exploiting the case sensitivity of mailbox local-parts impedes interoperability and
+    # > is discouraged.  Mailbox domains follow normal DNS rules and are hence not case sensitive
+    # > https://datatracker.ietf.org/doc/html/rfc5321#section-2.4
+    normalizes :email, with: ->(value) { value.strip.downcase }
 
     after_initialize do
       if authenticate_target
