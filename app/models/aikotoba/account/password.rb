@@ -2,7 +2,7 @@
 
 module Aikotoba
   class Account::Password
-    LENGTH_RENGE = Aikotoba.password_length_range
+    LENGTH_RANGE = Aikotoba.password_length_range
 
     def initialize(
       value:,
