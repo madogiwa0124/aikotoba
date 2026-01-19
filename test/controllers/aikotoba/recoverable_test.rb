@@ -51,8 +51,8 @@ class Aikotoba::RecoverableTest < ActionDispatch::IntegrationTest
     assert_emails 0 do
       post aikotoba.create_recovery_token_path, params: {account: {email: "not_found@example.com"}}
     end
-    assert_equal status, 422
-    assert_equal I18n.t(".aikotoba.messages.recovery.sent_failed"), flash[:alert]
+    assert_redirected_to aikotoba.new_session_path
+    assert_equal I18n.t(".aikotoba.messages.recovery.sent"), flash[:notice]
   end
 
   test "success GET edit_account_password_path by active token" do

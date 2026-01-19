@@ -42,7 +42,7 @@ class NavigationTest < ActionDispatch::SystemTestCase
     assert_equal current_path, "/confirm"
     fill_in "Email", with: "default3@example.com"
     click_on "Send confirm token"
-    assert_selector ".message", text: "Confirm url has been sent to your email address."
+    assert_selector ".message", text: "Confirm url has been sent to your email address (if user with that email address exists)."
     confirm_email = ActionMailer::Base.deliveries.last
     confirm_path = confirm_email.body.to_s.split("\n")[0].split(" ")[2] # NOTE: get XXX from "Confirm URL: XXX"
     visit confirm_path
@@ -73,7 +73,7 @@ class NavigationTest < ActionDispatch::SystemTestCase
     assert_equal current_path, "/unlock"
     fill_in "Email", with: "default4@example.com"
     click_on "Send unlock token"
-    assert_selector ".message", text: "Unlock url has been sent to your email address."
+    assert_selector ".message", text: "Unlock url has been sent to your email address (if user with that email address exists)."
     unlock_email = ActionMailer::Base.deliveries.last
     unlock_path = unlock_email.body.to_s.split("\n")[0].split(" ")[2] # NOTE: get XXX from "Unlock URL: XXX"
     visit unlock_path
@@ -95,7 +95,7 @@ class NavigationTest < ActionDispatch::SystemTestCase
     assert_equal current_path, "/recover"
     fill_in "Email", with: "default5@example.com"
     click_on "Send password reset token"
-    assert_selector ".message", text: "Password reset url has been sent to your email address."
+    assert_selector ".message", text: "Password reset url has been sent to your email address (if user with that email address exists)."
     recover_email = ActionMailer::Base.deliveries.last
     recover_path = recover_email.body.to_s.split("\n")[0].split(" ")[3] # NOTE: get XXX from "Password reset URL: XXX"
     visit recover_path
@@ -160,7 +160,7 @@ class NavigationTest < ActionDispatch::SystemTestCase
     click_on "Send password reset token"
     fill_in "Email", with: "all_default@example.com"
     click_on "Send password reset token"
-    assert_selector ".message", text: "Password reset url has been sent to your email address."
+    assert_selector ".message", text: "Password reset url has been sent to your email address (if user with that email address exists)."
     recover_email = ActionMailer::Base.deliveries.last
     recover_path = recover_email.body.to_s.split("\n")[0].split(" ")[3]
     visit recover_path
@@ -221,7 +221,7 @@ class NavigationTest < ActionDispatch::SystemTestCase
     assert_equal current_path, "/admin/confirm"
     fill_in "Email", with: "admin3@example.com"
     click_on "Send confirm token"
-    assert_selector ".message", text: "Confirm url has been sent to your email address."
+    assert_selector ".message", text: "Confirm url has been sent to your email address (if user with that email address exists)."
     confirm_email = ActionMailer::Base.deliveries.last
     confirm_path = confirm_email.body.to_s.split("\n")[0].split(" ")[2] # NOTE: get XXX from "Confirm URL: XXX"
     visit confirm_path
@@ -253,7 +253,7 @@ class NavigationTest < ActionDispatch::SystemTestCase
     assert_equal current_path, "/admin/unlock"
     fill_in "Email", with: "admin4@example.com"
     click_on "Send unlock token"
-    assert_selector ".message", text: "Unlock url has been sent to your email address."
+    assert_selector ".message", text: "Unlock url has been sent to your email address (if user with that email address exists)."
     unlock_email = ActionMailer::Base.deliveries.last
     unlock_path = unlock_email.body.to_s.split("\n")[0].split(" ")[2] # NOTE: get XXX from "Unlock URL: XXX"
     visit unlock_path
@@ -276,7 +276,7 @@ class NavigationTest < ActionDispatch::SystemTestCase
     assert_equal current_path, "/admin/recover"
     fill_in "Email", with: "admin5@example.com"
     click_on "Send password reset token"
-    assert_selector ".message", text: "Password reset url has been sent to your email address."
+    assert_selector ".message", text: "Password reset url has been sent to your email address (if user with that email address exists)."
     recover_email = ActionMailer::Base.deliveries.last
     recover_path = recover_email.body.to_s.split("\n")[0].split(" ")[3] # NOTE: get XXX from "Password reset URL: XXX"
     visit recover_path
@@ -344,7 +344,7 @@ class NavigationTest < ActionDispatch::SystemTestCase
     click_on "Send password reset token"
     fill_in "Email", with: "all_admin@example.com"
     click_on "Send password reset token"
-    assert_selector ".message", text: "Password reset url has been sent to your email address."
+    assert_selector ".message", text: "Password reset url has been sent to your email address (if user with that email address exists)."
     recover_email = ActionMailer::Base.deliveries.last
     recover_path = recover_email.body.to_s.split("\n")[0].split(" ")[3]
     visit recover_path

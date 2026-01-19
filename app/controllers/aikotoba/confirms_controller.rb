@@ -11,12 +11,11 @@ module Aikotoba
       before_send_confirmation_token_process
       send_token_account!(account)
       after_send_confirmation_token_process
-      redirect_to success_send_confirmation_token_path, flash: {notice: success_send_confirmation_token_message}
     rescue ActiveRecord::RecordNotFound => e
       failed_send_confirmation_token_process(e)
-      @account = build_account({email: "", password: ""})
-      flash[:alert] = failed_send_confirmation_token_message
-      render :new, status: :unprocessable_entity
+    ensure
+      # NOTE: Always show success message to avoid account enumeration.
+      redirect_to success_send_confirmation_token_path, flash: {notice: success_send_confirmation_token_message}
     end
 
     def update
@@ -70,10 +69,6 @@ module Aikotoba
 
     def success_send_confirmation_token_message
       I18n.t(".aikotoba.messages.confirmation.sent")
-    end
-
-    def failed_send_confirmation_token_message
-      I18n.t(".aikotoba.messages.confirmation.failed")
     end
 
     # NOTE: Methods to override if you want to do something before send confirm token.

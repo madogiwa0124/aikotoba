@@ -11,12 +11,11 @@ module Aikotoba
       before_send_recovery_token_process
       send_recovery_token!(account)
       after_send_recovery_token_process
-      redirect_to success_send_recovery_token_path, flash: {notice: success_send_recovery_token_message}
     rescue ActiveRecord::RecordNotFound => e
       failed_send_recovery_token_process(e)
-      @account = build_account({email: "", password: ""})
-      flash[:alert] = failed_send_recovery_token_message
-      render :new, status: :unprocessable_entity
+    ensure
+      # NOTE: Always show success message to avoid account enumeration.
+      redirect_to success_send_recovery_token_path, flash: {notice: success_send_recovery_token_message}
     end
 
     def edit
@@ -83,10 +82,6 @@ module Aikotoba
 
     def success_send_recovery_token_message
       I18n.t(".aikotoba.messages.recovery.sent")
-    end
-
-    def failed_send_recovery_token_message
-      I18n.t(".aikotoba.messages.recovery.sent_failed")
     end
 
     # NOTE: Methods to override if you want to do something before send recover token.
