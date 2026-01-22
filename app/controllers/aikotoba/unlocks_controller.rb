@@ -2,6 +2,15 @@
 
 module Aikotoba
   class UnlocksController < ApplicationController
+    include Protection::RateLimiting
+
+    def self.unlock_rate_limit_options
+      Aikotoba.unlock_rate_limit_options
+    end
+    private_class_method :unlock_rate_limit_options
+
+    rate_limit(**unlock_rate_limit_options)
+
     def new
       @account = build_account({email: "", password: ""})
     end
@@ -11,12 +20,11 @@ module Aikotoba
       before_send_unlock_token_process
       send_token_account!(account)
       after_send_unlock_token_process
-      redirect_to success_send_unlock_token_path, flash: {notice: success_send_unlock_token_message}
     rescue ActiveRecord::RecordNotFound => e
       failed_send_unlock_token_process(e)
-      @account = build_account({email: "", password: ""})
-      flash[:alert] = failed_send_unlock_token_message
-      render :new, status: :unprocessable_entity
+    ensure
+      # NOTE: Always show success message to avoid account enumeration.
+      redirect_to success_send_unlock_token_path, flash: {notice: success_send_unlock_token_message}
     end
 
     def update
@@ -70,10 +78,6 @@ module Aikotoba
 
     def success_send_unlock_token_message
       I18n.t(".aikotoba.messages.unlocking.sent")
-    end
-
-    def failed_send_unlock_token_message
-      I18n.t(".aikotoba.messages.unlocking.failed")
     end
 
     # NOTE: Methods to override if you want to do something before send unlock token.

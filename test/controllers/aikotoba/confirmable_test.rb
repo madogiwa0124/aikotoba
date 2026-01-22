@@ -55,8 +55,8 @@ class Aikotoba::ConfirmableTest < ActionDispatch::IntegrationTest
     assert_emails 0 do
       post aikotoba.create_confirmation_token_path, params: {account: {email: "not_found@example.com"}}
     end
-    assert_equal status, 422
-    assert_equal I18n.t(".aikotoba.messages.confirmation.failed"), flash[:alert]
+    assert_redirected_to aikotoba.new_session_path
+    assert_equal I18n.t(".aikotoba.messages.confirmation.sent"), flash[:notice]
   end
 
   test "failed POST create_confirmation_token_path by confirmed account" do
@@ -64,8 +64,8 @@ class Aikotoba::ConfirmableTest < ActionDispatch::IntegrationTest
     assert_emails 0 do
       post aikotoba.create_confirmation_token_path, params: {account: {email: @account.email}}
     end
-    assert_equal status, 422
-    assert_equal I18n.t(".aikotoba.messages.confirmation.failed"), flash[:alert]
+    assert_redirected_to aikotoba.new_session_path
+    assert_equal I18n.t(".aikotoba.messages.confirmation.sent"), flash[:notice]
   end
 
   test "success GET confirm_account_path by active token" do

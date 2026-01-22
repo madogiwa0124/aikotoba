@@ -153,6 +153,31 @@ Aikotoba enables a route to recover an account by password reset.
 | GET       | /recover/:token | Display page for recover account by password reset. |
 | PATCH     | /recover/:token | Recover account by password reset.                  |
 
+### Rate Limiting (Rails 8+ only)
+
+Aikotoba provides built-in rate limiting for email-sending endpoints to prevent email bombing attacks. This feature requires **Rails 8.0 or later**.
+
+Rate limiting is available for:
+
+- **Confirmation token requests** (`/confirm` POST endpoint)
+- **Unlock token requests** (`/unlock` POST endpoint)
+- **Password recovery token requests** (`/recover` POST endpoint)
+
+By default, rate limiting is disabled (empty configuration). To enable it, configure the respective options:
+
+```ruby
+Aikotoba.confirmation_rate_limit_options = {
+  to: 10,
+  within: 1.hour,
+  by: -> { request.params.dig(:account, :email).presence || request.remote_ip },
+  only: :create
+}
+```
+
+When rate limiting is triggered, requests that exceed the limit will receive a 429 (Too Many Requests) response.
+
+For detailed configuration examples and options, see the [Configuration](#configuration) section below.
+
 ### Multiple Scopes
 
 Aikotoba supports multiple scopes.
@@ -231,6 +256,59 @@ Aikotoba.unlock_token_expiry = 1.day
 # for Recoverable
 Aikotoba.recoverable = false
 Aikotoba.recovery_token_expiry = 4.hours
+
+# ============================================
+# Rate Limiting (Rails 8+ required)
+# ============================================
+# Rate limiting protects email-sending endpoints (confirm, unlock, recover) from email bombing attacks.
+# Default (empty hash): no rate limiting
+
+# Requires Rails 8.0+ to use the built-in rate_limit feature.
+#
+# Configuration format: { to: <max_requests>, within: <time_duration>, by: <identifier_proc>, only: <action> }
+#
+# SECURITY RECOMMENDATION:
+# Use .dig() with fallback to prevent nil errors and ensure rate limiting always works:
+#   by: -> { request.params.dig(:account, :email).presence || request.remote_ip }
+#
+# This ensures:
+# - Invalid or missing email params don't bypass rate limiting
+# - Fallback to IP address when email is not provided
+# - Protection against email enumeration attacks
+#
+# Examples:
+
+# Limit confirmation token requests to 10 per hour, per email address (with IP fallback)
+Aikotoba.confirmation_rate_limit_options = {
+  to: 10,
+  within: 1.hour,
+  by: -> { request.params.dig(:account, :email).presence || request.remote_ip },
+  only: :create
+}
+
+# Limit unlock token requests to 5 per hour, per email address (stricter for security)
+Aikotoba.unlock_rate_limit_options = {
+  to: 5,
+  within: 1.hour,
+  by: -> { request.params.dig(:account, :email).presence || request.remote_ip },
+  only: :create
+}
+
+# Limit recovery token requests to 3 per hour, per email address (most strict for password recovery)
+Aikotoba.recovery_rate_limit_options = {
+  to: 3,
+  within: 1.hour,
+  by: -> { request.params.dig(:account, :email).presence || request.remote_ip },
+  only: :create
+}
+
+# Rate limiting by IP address only (simpler, but less precise)
+# Aikotoba.confirmation_rate_limit_options = {
+#   to: 20,
+#   within: 1.hour,
+#   by: -> { request.remote_ip },
+#   only: :create
+# }
 
 # ============================================
 # Scope settings
