@@ -22,15 +22,18 @@ module Aikotoba
   # for Confirmable
   mattr_accessor(:confirmable) { false }
   mattr_accessor(:confirmation_token_expiry) { 1.day }
+  mattr_accessor(:confirmation_rate_limit_options) { {} }
 
   # for Lockable
   mattr_accessor(:lockable) { false }
   mattr_accessor(:max_failed_attempts) { 10 }
   mattr_accessor(:unlock_token_expiry) { 1.day }
+  mattr_accessor(:unlock_rate_limit_options) { {} }
 
   # for Recoverable
   mattr_accessor(:recoverable) { false }
   mattr_accessor(:recovery_token_expiry) { 4.hours }
+  mattr_accessor(:recovery_rate_limit_options) { {} }
 
   # for encrypt token
   mattr_accessor(:encrypted_token) { false }

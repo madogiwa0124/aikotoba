@@ -2,6 +2,15 @@
 
 module Aikotoba
   class RecoveriesController < ApplicationController
+    include Protection::RateLimiting
+
+    def self.recovery_rate_limit_options
+      Aikotoba.recovery_rate_limit_options
+    end
+    private_class_method :recovery_rate_limit_options
+
+    rate_limit(**recovery_rate_limit_options)
+
     def new
       @account = build_account({email: "", password: ""})
     end

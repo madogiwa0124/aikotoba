@@ -2,6 +2,15 @@
 
 module Aikotoba
   class UnlocksController < ApplicationController
+    include Protection::RateLimiting
+
+    def self.unlock_rate_limit_options
+      Aikotoba.unlock_rate_limit_options
+    end
+    private_class_method :unlock_rate_limit_options
+
+    rate_limit(**unlock_rate_limit_options)
+
     def new
       @account = build_account({email: "", password: ""})
     end

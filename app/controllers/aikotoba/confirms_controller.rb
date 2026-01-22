@@ -2,6 +2,15 @@
 
 module Aikotoba
   class ConfirmsController < ApplicationController
+    include Protection::RateLimiting
+
+    def self.confirmation_rate_limit_options
+      Aikotoba.confirmation_rate_limit_options
+    end
+    private_class_method :confirmation_rate_limit_options
+
+    rate_limit(**confirmation_rate_limit_options)
+
     def new
       @account = build_account({email: "", password: ""})
     end
