@@ -57,5 +57,16 @@ class CreateAikotobaAccounts < ActiveRecord::Migration[6.1]
 
       t.timestamps
     end
+
+    create_table :aikotoba_account_refresh_tokens do |t|
+      t.belongs_to :aikotoba_account_session,
+        null: false,
+        foreign_key: true,
+        index: {unique: true, name: "idx_aikotoba_refresh_tokens_on_session_id"}
+      t.string :token, null: false, index: {unique: true}
+      t.datetime :expired_at, null: false
+
+      t.timestamps
+    end
   end
 end

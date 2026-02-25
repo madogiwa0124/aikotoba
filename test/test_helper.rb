@@ -24,3 +24,5 @@ end
 require "capybara/rails"
 Capybara.server = :webrick, {Silent: true} # To clean up your test output
 require "aikotoba/test/authentication_helper"
+require "committee/rails"
+require "support/api_committee_helper"

@@ -22,6 +22,7 @@ Aikotoba is a Rails engine that makes it easy to implement simple email and pass
 - Confirmable(optional) : After registration, send an email with a token to confirm account.
 - Lockable(optional) : Lock account if make a mistake with password more than a certain number of times.
 - Recoverable(optional) : Recover account by resetting password.
+- API Token Authenticatable(optional) : (experimental) Authenticate account using Bearer token for API clients.
 
 [For more information](#features)
 
@@ -153,6 +154,97 @@ Aikotoba enables a route to recover an account by password reset.
 | GET       | /recover/:token | Display page for recover account by password reset. |
 | PATCH     | /recover/:token | Recover account by password reset.                  |
 
+### (Experimental) API Token Authenticatable
+
+To enable it, set `Aikotoba.api_authenticatable` to `true`.
+
+```ruby
+Aikotoba.api_authenticatable = true
+```
+
+Aikotoba provides stateless token-based authentication for API clients.
+
+| HTTP Verb | Path                  | Overview                                      |
+| --------- | --------------------- | --------------------------------------------- |
+| POST      | /api/sessions         | Sign in and receive access/refresh tokens.    |
+| POST      | /api/sessions/refresh | Rotate tokens using a valid refresh token.    |
+| DELETE    | /api/sessions/current | Revoke the current session (sign out).        |
+
+**OpenAPI spec:** An OpenAPI 3.0.3 spec for these endpoints is provided at [`app/controllers/aikotoba/api/spec.yml`](app/controllers/aikotoba/api/spec.yml).
+
+**Token response format:** Both sign-in and token refresh return the same JSON structure. `access_token` is a short-lived Bearer token (default 15 minutes) used to authenticate subsequent API requests. `token_type` is always `"Bearer"`. `expires_in` is the remaining lifetime of the access token in seconds. `refresh_token` is a long-lived token (default 30 days) used only to obtain a new token pair via the refresh endpoint.
+
+```json
+{
+  "access_token": "<token>",
+  "token_type": "Bearer",
+  "expires_in": 900,
+  "refresh_token": "<token>"
+}
+```
+
+**Refresh Token Rotation:** Every refresh issues a brand-new access token and refresh token; the previous refresh token is immediately invalidated. If an expired refresh token is submitted, the associated session is also revoked to protect against token theft.
+
+**Error response format ([RFC 9457](https://www.rfc-editor.org/rfc/rfc9457.html)):** All error default responses follow the Problem Details format. The `title` field contains a short, human-readable summary of the problem type, `status` mirrors the HTTP status code, and `detail` provides a more specific explanation of what went wrong. The response is served with `Content-Type: application/problem+json`.
+
+```json
+{
+  "title": "Unauthorized",
+  "status": 401,
+  "detail": "Authentication required. Please provide a valid access token."
+}
+
+// Resource not found example:
+{
+  "title": "Not Found",
+  "status": 404,
+  "detail": "The requested resource could not be found."
+}
+
+// Internal server error example:
+{
+  "title": "Internal Server Error",
+  "status": 500,
+  "detail": "An unexpected error occurred on the server. Please try again later."
+}
+```
+
+To customize error responses, override the error handling methods in `Aikotoba::Api::ApplicationController` or the respective controllers.
+
+Include `Aikotoba::Api::Authenticatable` in your API base controller to get the `aikotoba_api_current_account` helper and automatic Bearer token parsing:
+
+```ruby
+class Api::ApplicationController < ActionController::API
+  include Aikotoba::Api::Authenticatable
+
+  alias_method :current_api_account, :aikotoba_api_current_account
+
+  def authenticate_api_account!
+    return if current_api_account
+
+    render json: { error: "Unauthorized" }, status: :unauthorized
+  end
+end
+```
+
+Protect any API endpoint by calling `authenticate_api_account!` before the action:
+
+```ruby
+class Api::ProfilesController < Api::ApplicationController
+  before_action :authenticate_api_account!
+
+  def show
+    render json: { id: current_api_account.id }
+  end
+end
+```
+
+The access token must be sent in the `Authorization` header:
+
+```
+Authorization: Bearer <access_token>
+```
+
 ### Rate Limiting (Rails 8+ only)
 
 Aikotoba provides built-in rate limiting for email-sending endpoints to prevent email bombing attacks. This feature requires **Rails 8.0 or later**.
@@ -195,7 +287,10 @@ Aikotoba.add_scope(:admin, {
   sign_out_path: "/admin/sign_out",
   confirm_path: "/admin/confirm",
   unlock_path: "/admin/unlock",
-  recover_path: "/admin/recover"
+  recover_path: "/admin/recover",
+  api_sign_in_path: "/admin/api/sessions",
+  api_refresh_path: "/admin/api/sessions/refresh",
+  api_sign_out_path: "/admin/api/sessions/current"
 })
 ```
 
@@ -241,6 +336,12 @@ Aikotoba.email_format = /\A[^\s]+@[^\s]+\z/
 Aikotoba.password_pepper = "aikotoba-default-pepper"
 Aikotoba.password_length_range = 8..100
 Aikotoba.session_expiry = 7.days
+
+# for API Token Authentication
+Aikotoba.api_authenticatable = false
+Aikotoba.api_parent_controller = "ApplicationController"
+Aikotoba.api_access_token_expiry = 15.minutes
+Aikotoba.api_refresh_token_expiry = 30.days
 
 
 # for registerable
@@ -329,7 +430,10 @@ Aikotoba.default_scope = {
   unlock_path: "/unlock",
   recover_path: "/recover",
   after_sign_in_path: "/sensitives",
-  after_sign_out_path: "/sign_in"
+  after_sign_out_path: "/sign_in",
+  api_sign_in_path: "/api/sessions",
+  api_refresh_path: "/api/sessions/refresh",
+  api_sign_out_path: "/api/sessions/current"
 }
 
 # for Additional Scopes
@@ -344,7 +448,11 @@ Aikotoba.add_scope(:admin, {
   unlock_path: "/admin/unlock",
   recover_path: "/admin/recover",
   after_sign_in_path: "/admin/sensitives",
-  after_sign_out_path: "/admin/sign_in"
+  after_sign_out_path: "/admin/sign_in",
+  # API Token Authentication paths for admin scope
+  api_sign_in_path: "/admin/api/sessions",
+  api_refresh_path: "/admin/api/sessions/refresh",
+  api_sign_out_path: "/admin/api/sessions/current"
 })
 ```
 

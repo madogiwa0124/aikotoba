@@ -16,6 +16,12 @@ module Aikotoba
   mattr_accessor(:session_expiry) { 7.days }
   mattr_accessor(:keep_legacy_login_session) { false }
 
+  # for API Token Authentication
+  mattr_accessor(:api_authenticatable) { false }
+  mattr_accessor(:api_parent_controller) { "ApplicationController" }
+  mattr_accessor(:api_access_token_expiry) { 15.minutes }
+  mattr_accessor(:api_refresh_token_expiry) { 30.days }
+
   # for Registerable
   mattr_accessor(:registerable) { true }
 
@@ -51,7 +57,10 @@ module Aikotoba
         sign_up_path: "/sign_up",
         confirm_path: "/confirm",
         unlock_path: "/unlock",
-        recover_path: "/recover"
+        recover_path: "/recover",
+        api_sign_in_path: "/api/sessions",
+        api_refresh_path: "/api/sessions/refresh",
+        api_sign_out_path: "/api/sessions/current"
       }
     })
   }
