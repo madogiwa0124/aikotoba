@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    aikotoba (0.1.1)
+    aikotoba (0.2.0)
       argon2 (~> 2.1)
       rails (>= 6.1.4)
 
