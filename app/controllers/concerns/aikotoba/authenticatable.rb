@@ -92,10 +92,6 @@ module Aikotoba
       aikotoba_scope_config[:session_key]
     end
 
-    def aikotoba_scope_name
-      aikotoba_scope_config[:name] || "default"
-    end
-
     def aikotoba_session_meta_from_request
       {
         ip_address: request.remote_ip,
