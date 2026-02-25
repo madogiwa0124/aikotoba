@@ -216,6 +216,8 @@ To automatically switch scopes and get paths, use the `Aikotoba::Scopable#aikoto
 ```ruby
 include Aikotoba::Scopable
 
+helper_method :aikotoba_scoped_path
+
 aikotoba_scoped_path(:new_session)
 #=> "/sign_in" (if current scope is :default)
 #=> "/admin/sign_in" (if current scope is :admin)

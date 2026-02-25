@@ -2,10 +2,6 @@ module Aikotoba
   module Scopable
     extend ActiveSupport::Concern
 
-    included do
-      helper_method :aikotoba_scoped_path, :aikotoba_scope
-    end
-
     def aikotoba_scope_config
       Aikotoba.scopes[aikotoba_scope]
     end
