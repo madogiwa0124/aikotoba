@@ -23,6 +23,7 @@ group :test do
   gem "capybara", require: false
   gem "webdrivers"
   gem "simplecov", require: false
+  gem "committee-rails"
 end
 
 # To use a debugger

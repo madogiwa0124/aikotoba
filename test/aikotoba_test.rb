@@ -78,7 +78,7 @@ class AikotobaTest < ActiveSupport::TestCase
     expected_keys = %i[
       root_path authenticate_for session_key sign_in_path sign_out_path
       after_sign_in_path after_sign_out_path sign_up_path
-      confirm_path unlock_path recover_path
+      confirm_path unlock_path recover_path api_sign_in_path api_refresh_path api_sign_out_path
     ]
     expected_keys.each do |key|
       assert Aikotoba.default_scope.key?(key), "Missing key: #{key}"

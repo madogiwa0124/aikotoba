@@ -1,0 +1,148 @@
+openapi: "3.0.3"
+info:
+  title: Aikotoba API
+  version: "0.2.0"
+tags:
+  - name: Aikotoba
+    description: Aikotoba API
+paths:
+  /api/sessions:
+    post:
+      operationId: aikotobaSignIn
+      summary: Sign in
+      tags:
+        - Aikotoba
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - account
+              additionalProperties: false
+              properties:
+                account:
+                  type: object
+                  required:
+                    - email
+                    - password
+                  additionalProperties: false
+                  properties:
+                    email:
+                      type: string
+                      format: email
+                    password:
+                      type: string
+                      format: password
+      responses:
+        "200":
+          description: Successful sign in
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TokenResponse"
+        "400":
+          description: Bad request
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetail"
+        "401":
+          description: Unauthorized
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetail"
+  /api/sessions/current:
+    delete:
+      operationId: aikotobaSignOut
+      summary: Sign out
+      tags:
+        - Aikotoba
+      security:
+        - BearerAuth: []
+        - {}
+      responses:
+        "204":
+          description: Signed out
+  /api/sessions/refresh:
+    post:
+      operationId: aikotobaRefreshToken
+      summary: Refresh token
+      tags:
+        - Aikotoba
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - refresh_token
+              additionalProperties: false
+              properties:
+                refresh_token:
+                  type: string
+      responses:
+        "200":
+          description: Successful token refresh
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TokenResponse"
+        "400":
+          description: Bad request
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetail"
+        "401":
+          description: Unauthorized
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetail"
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+  schemas:
+    TokenResponse:
+      type: object
+      required:
+        - access_token
+        - token_type
+        - expires_in
+        - refresh_token
+      additionalProperties: false
+      properties:
+        access_token:
+          type: string
+        token_type:
+          type: string
+          enum:
+            - Bearer
+        expires_in:
+          type: integer
+          minimum: 0
+        refresh_token:
+          type: string
+    ProblemDetail:
+      type: object
+      required:
+        - title
+        - status
+      additionalProperties: false
+      properties:
+        title:
+          type: string
+        status:
+          type: integer
+          minimum: 400
+          maximum: 599
+        detail:
+          type: string
+        instance:
+          type: string

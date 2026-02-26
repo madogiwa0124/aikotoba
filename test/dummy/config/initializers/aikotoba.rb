@@ -7,6 +7,7 @@ Aikotoba.default_scope = {after_sign_in_path: "/sensitives"}
 # Aikotoba.lockable= true
 # Aikotoba.recoverable = true
 # Aikotoba.max_failed_attempts = 2
+Aikotoba.api_authenticatable = true
 
 Aikotoba.add_scope(:admin, {
   authenticate_for: "Admin",
@@ -19,7 +20,10 @@ Aikotoba.add_scope(:admin, {
   after_sign_out_path: "/admin/sign_in",
   confirm_path: "/admin/confirm",
   unlock_path: "/admin/unlock",
-  recover_path: "/admin/recover"
+  recover_path: "/admin/recover",
+  api_sign_in_path: "/admin/api/sessions",
+  api_refresh_path: "/admin/api/sessions/refresh",
+  api_sign_out_path: "/admin/api/sessions/current",
 })
 
 Rails.application.config.to_prepare do
