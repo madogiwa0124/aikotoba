@@ -37,7 +37,7 @@ Aikotoba::Engine.routes.draw do
         patch(File.join(config[:recover_path], ":token"), to: "recoveries#update", as: :update_account_password)
       end
 
-      constraints(Aikotoba::Api::AuthenticatableConstraint) do
+      constraints(Aikotoba::ApiAuthenticatableConstraint) do
         post(config[:api_sign_in_path], to: "api/sessions#create", as: :api_create_session)
         post(config[:api_refresh_path], to: "api/refresh_tokens#create", as: :api_refresh_session)
         delete(config[:api_sign_out_path], to: "api/sessions#destroy", as: :api_destroy_session)
