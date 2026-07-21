@@ -27,6 +27,14 @@ ActiveRecord::Schema[8.1].define(version: 2026_02_23_000100) do
     t.index ["token"], name: "index_aikotoba_account_confirmation_tokens_on_token", unique: true
   end
 
+  create_table "aikotoba_account_passwords", force: :cascade do |t|
+    t.integer "aikotoba_account_id", null: false
+    t.datetime "created_at", null: false
+    t.string "digest", null: false
+    t.datetime "updated_at", null: false
+    t.index ["aikotoba_account_id"], name: "index_account_passwords_on_account_id", unique: true
+  end
+
   create_table "aikotoba_account_recovery_tokens", force: :cascade do |t|
     t.integer "aikotoba_account_id", null: false
     t.datetime "created_at", null: false
@@ -79,7 +87,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_02_23_000100) do
     t.string "email", null: false
     t.integer "failed_attempts", default: 0, null: false
     t.boolean "locked", default: false, null: false
-    t.string "password_digest", null: false
     t.datetime "updated_at", null: false
     t.index ["authenticate_target_type", "authenticate_target_id"], name: "index_aikotoba_accounts_on_authenticate_target", unique: true
     t.index ["email"], name: "index_aikotoba_accounts_on_email", unique: true
@@ -92,6 +99,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_02_23_000100) do
   end
 
   add_foreign_key "aikotoba_account_confirmation_tokens", "aikotoba_accounts"
+  add_foreign_key "aikotoba_account_passwords", "aikotoba_accounts"
   add_foreign_key "aikotoba_account_recovery_tokens", "aikotoba_accounts"
   add_foreign_key "aikotoba_account_refresh_tokens", "aikotoba_account_sessions"
   add_foreign_key "aikotoba_account_sessions", "aikotoba_accounts"

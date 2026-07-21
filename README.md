@@ -103,7 +103,7 @@ Register an account using email and password.
 | GET       | /sign_up | Display sign up page. |
 | POST      | /sign_up | Create an account.    |
 
-The password is stored as a hash in [Argon2](https://github.com/technion/ruby-argon2).
+The password is stored as a hash in [Argon2](https://github.com/technion/ruby-argon2), in a separate `Aikotoba::Account::Password` record (table `aikotoba_account_passwords`) rather than on `Aikotoba::Account` itself, so `Account` does not depend on password-based authentication.
 
 ### Confirmable
 

@@ -14,8 +14,6 @@ module Aikotoba
     attribute :max_failed_attempts, :integer, default: -> { Aikotoba.max_failed_attempts }
 
     validates :email, presence: true, uniqueness: {case_sensitive: false}, format: EMAIL_REGEXP, length: {maximum: EMAIL_MAXIMUM_LENGTH}
-    validates :password, presence: true, length: {in: Password::LENGTH_RANGE}, on: [:create, :recover]
-    validates :password_digest, presence: true
     validates :confirmed, inclusion: [true, false]
     validates :failed_attempts, presence: true, numericality: {only_integer: true, greater_than_or_equal_to: 0}
     validates :max_failed_attempts, numericality: {only_integer: true, greater_than: 0}
@@ -33,14 +31,6 @@ module Aikotoba
         target_type_name = authenticate_target_type.gsub("::", "").underscore
         define_singleton_method(target_type_name) { authenticate_target }
       end
-    end
-
-    attr_reader :password
-
-    def password=(value)
-      new_password = Password.new(value: value)
-      @password = new_password.value
-      assign_attributes(password_digest: new_password.digest)
     end
 
     concerning :Authenticatable do
@@ -104,9 +94,34 @@ module Aikotoba
       def authentication_success!
         update!(failed_attempts: 0)
       end
+    end
+
+    concerning :PasswordAuthenticatable do
+      included do
+        has_one :password_credential,
+          class_name: "Aikotoba::Account::Password",
+          dependent: :destroy,
+          foreign_key: "aikotoba_account_id",
+          autosave: true,
+          inverse_of: :account
+
+        validates :password, presence: true, length: {in: Password::LENGTH_RANGE}, on: [:create, :recover]
+      end
+
+      def password
+        password_credential&.value
+      end
+
+      def password=(input)
+        (password_credential || build_password_credential).value = input
+      end
+
+      def password_digest
+        password_credential&.digest
+      end
 
       def password_match?(input_password)
-        Password.new(value: input_password).match?(digest: password_digest)
+        password_credential&.match?(input_password) || false
       end
     end
 

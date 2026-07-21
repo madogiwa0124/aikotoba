@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## Unreleased
+
+- Move password storage from `Aikotoba::Account#password_digest` into a new `Aikotoba::Account::Password` model/table (`aikotoba_account_passwords`), so `Account` no longer depends on password-based authentication. Breaking schema change: existing installs need a migration to create `aikotoba_account_passwords`, copy `password_digest` into it, and drop the column.
+
 ## :gift: 2026/02/25 `v0.2.0` released.
 
 - Add multi-scope support
