@@ -52,39 +52,9 @@ module Aikotoba
       end
 
       class_methods do
-        def authenticate_by(attributes:, target_type_name: nil)
-          email, password = attributes.values_at(:email, :password)
-          account = find_by_identifier(email, target_type_name: target_type_name)
-          return prevent_timing_atack(email, password) unless account
-
-          account.authenticate(password).tap do |result|
-            ActiveRecord::Base.transaction do
-              if result
-                account.authentication_success!
-              else
-                account.authentication_failed!
-                Lock.lock!(account: account, notify: true) if lockable? && account.should_lock?
-              end
-            end
-          end
-        end
-
-        private
-
         def find_by_identifier(email, target_type_name: nil)
           authenticatable(target_type_name: target_type_name).find_by(email: email)
         end
-
-        # NOTE: Verify passwords even when accounts are not found to prevent timing attacks.
-        def prevent_timing_atack(email, password)
-          account = build_by(attributes: {email: email, password: password})
-          account.password_match?(password)
-          nil
-        end
-      end
-
-      def authenticate(input_password)
-        password_match?(input_password) ? self : nil
       end
 
       def authentication_failed!
@@ -105,7 +75,7 @@ module Aikotoba
           autosave: true,
           inverse_of: :account
 
-        validates :password, presence: true, length: {in: Password::LENGTH_RANGE}, on: [:create, :recover]
+        validates :password, presence: true, length: {in: Password::LENGTH_RANGE}, on: :create
       end
 
       def password
@@ -118,10 +88,6 @@ module Aikotoba
 
       def password_digest
         password_credential&.digest
-      end
-
-      def password_match?(input_password)
-        password_credential&.match?(input_password) || false
       end
     end
 
@@ -182,11 +148,6 @@ module Aikotoba
         has_one :recovery_token,
           dependent: :destroy,
           foreign_key: "aikotoba_account_id"
-      end
-
-      def recover!(new_password:)
-        self.password = new_password
-        save!(context: :recover)
       end
     end
   end

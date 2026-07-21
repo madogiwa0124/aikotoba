@@ -87,7 +87,7 @@ class Aikotoba::RecoverableTest < ActionDispatch::IntegrationTest
     assert_redirected_to aikotoba.new_session_path
     assert_equal I18n.t(".aikotoba.messages.recovery.success"), flash[:notice]
     assert_nil @account.reload.recovery_token
-    updated_account = ::Aikotoba::Account.authenticate_by(attributes: {email: @account.email, password: "updated_password"})
+    updated_account = ::Aikotoba::Account::Password.authenticate_by(attributes: {email: @account.email, password: "updated_password"})
     assert_equal updated_account.id, @account.id
   end
 
