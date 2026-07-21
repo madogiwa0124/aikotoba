@@ -9,7 +9,7 @@ module Aikotoba
     belongs_to :account, class_name: "Aikotoba::Account", foreign_key: "aikotoba_account_id", inverse_of: :password_credential
 
     validates :digest, presence: true
-    validates :value, presence: true, length: {in: LENGTH_RANGE}, on: :recover
+    validates :value, presence: true, length: {in: LENGTH_RANGE}, on: [:create, :recover]
 
     attr_reader :value
 

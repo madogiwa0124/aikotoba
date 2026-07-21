@@ -61,6 +61,15 @@ class Aikotoba::AccountTest < ActiveSupport::TestCase
         account.register!
       end
     end
+
+    test "register! surfaces password length errors under :password" do
+      account = Aikotoba::Account.build_by(attributes: {
+        email: "user@example.com",
+        password: "short"
+      })
+      assert_raises(ActiveRecord::RecordInvalid) { account.register! }
+      assert_includes account.errors.full_messages, "Password is too short (minimum is 8 characters)"
+    end
   end
 
   class Authenticatable < ActiveSupport::TestCase

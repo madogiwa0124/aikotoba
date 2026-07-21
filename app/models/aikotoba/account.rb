@@ -74,8 +74,6 @@ module Aikotoba
           foreign_key: "aikotoba_account_id",
           autosave: true,
           inverse_of: :account
-
-        validates :password, presence: true, length: {in: Password::LENGTH_RANGE}, on: :create
       end
 
       def password
@@ -104,6 +102,11 @@ module Aikotoba
           save!
           Confirmation.create_token!(account: self, notify: true) if confirmable?
         end
+      rescue ActiveRecord::RecordInvalid => e
+        raise unless e.record == self
+        errors.where(:"password_credential.value").each { |error| errors.import(error, attribute: :password) }
+        errors.delete(:"password_credential.value")
+        raise
       end
     end
 
