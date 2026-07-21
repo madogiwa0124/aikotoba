@@ -23,9 +23,29 @@ This repository is a Rails Engine gem that provides simple email/password authen
 
 ## Models and Features
 
-- Account: Validations, password hashing, and feature concerns in [app/models/aikotoba/account.rb](../app/models/aikotoba/account.rb). Passwords use Argon2 with pepper from config.
+- Account: Generic identity and session/lock bookkeeping in [app/models/aikotoba/account.rb](../app/models/aikotoba/account.rb) — `authenticate_target` ("authenticate_for"), sessions, the `authenticatable` scope, `failed_attempts`/`locked` counters. It does not know how credentials are checked.
 - Tokens: Confirmation/Unlock/Recovery tokens under [app/models/aikotoba/account/\*](../app/models/aikotoba/account) use `Account::Token` ([app/models/aikotoba/account/token.rb](../app/models/aikotoba/account/token.rb)).
 - Token encryption: Optional deterministic encryption for `token` fields via `Aikotoba.encrypted_token`. See concern in [app/models/concerns/aikotoba/token_encryptable.rb](../app/models/concerns/aikotoba/token_encryptable.rb) and note AR 7+ requirement.
+
+### Auth method ownership principle
+
+`Account` must not depend on the concrete implementation of any authentication
+method. Each method owns a class that holds its own credential storage,
+matching logic, and authentication entry point — `Account` only holds what's
+generic across methods (identity, sessions, `authenticate_target`,
+brute-force lock counters). Password is the first (and currently only)
+example of this:
+
+- Storage + matching: [app/models/aikotoba/account/password.rb](../app/models/aikotoba/account/password.rb) — `Aikotoba::Account::Password` (table `aikotoba_account_passwords`) owns the password digest and `#match?`. `Account` only has a thin `password`/`password=`/`password_digest` delegator to the `password_credential` association, kept for call-site/API compatibility (registration forms, `build_by`, recovery).
+- Auth entry point: `Aikotoba::Account::Password.authenticate_by(attributes:, target_type_name:)` — not `Account.authenticate_by`. It finds the candidate account via the generic `Account.find_by_identifier`, then owns the credential check and the failed/success bookkeeping, triggering `Account::Lock` when appropriate.
+- Recovery: `Account::Password#recover!` (not `Account#recover!`) owns resetting the credential. `Account::Recovery` ([app/models/aikotoba/account/recovery.rb](../app/models/aikotoba/account/recovery.rb)) still owns the generic token lifecycle (issue/notify/destroy) and re-imports `Account::Password`'s validation errors onto `Account` under the `:password` attribute so existing error views keep working.
+
+When adding a new auth method, mirror this shape (own class, own
+`authenticate_by`, own storage/recovery) rather than adding another
+method-specific branch to `Account`. Generic mechanisms that any
+credential-guessing method could reuse (e.g. the `Lockable` lock/unlock
+counters and scopes) stay on `Account`; only the *decision* to trigger them
+lives in the method's own `authenticate_by`.
 
 ## Controller Conventions
 
