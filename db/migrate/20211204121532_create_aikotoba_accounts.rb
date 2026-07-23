@@ -68,6 +68,18 @@ class CreateAikotobaAccounts < ActiveRecord::Migration[6.1]
       t.timestamps
     end
 
+    create_table :aikotoba_account_magic_link_tokens do |t|
+      t.belongs_to(
+        :aikotoba_account,
+        null: false, foreign_key: true,
+        index: {unique: true, name: "index_account_magic_link_tokens_on_account_id"}
+      )
+      t.string :token, null: false, index: {unique: true}
+      t.datetime :expired_at, null: false
+
+      t.timestamps
+    end
+
     create_table :aikotoba_account_refresh_tokens do |t|
       t.belongs_to :aikotoba_account_session,
         null: false,

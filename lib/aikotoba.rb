@@ -41,6 +41,11 @@ module Aikotoba
   mattr_accessor(:recovery_token_expiry) { 4.hours }
   mattr_accessor(:recovery_rate_limit_options) { {} }
 
+  # for MagicLinkAuthenticatable
+  mattr_accessor(:magic_link_authenticatable) { false }
+  mattr_accessor(:magic_link_token_expiry) { 15.minutes }
+  mattr_accessor(:magic_link_rate_limit_options) { {} }
+
   # for encrypt token
   mattr_accessor(:encrypted_token) { false }
 
@@ -58,6 +63,7 @@ module Aikotoba
         confirm_path: "/confirm",
         unlock_path: "/unlock",
         recover_path: "/recover",
+        magic_link_path: "/magic_link",
         api_sign_in_path: "/api/sessions",
         api_refresh_path: "/api/sessions/refresh",
         api_sign_out_path: "/api/sessions/current"

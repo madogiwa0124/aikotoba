@@ -175,5 +175,13 @@ module Aikotoba
           foreign_key: "aikotoba_account_id"
       end
     end
+
+    concerning :MagicLinkAuthenticatable do
+      included do
+        has_one :magic_link_token,
+          dependent: :destroy,
+          foreign_key: "aikotoba_account_id"
+      end
+    end
   end
 end

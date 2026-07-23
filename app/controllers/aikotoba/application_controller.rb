@@ -5,7 +5,7 @@ module Aikotoba
     include EnabledFeatureCheckable
     include Scopable
 
-    helper_method :confirmable?, :lockable?, :recoverable?, :registerable?, :aikotoba_scoped_path, :aikotoba_scoped_path, :aikotoba_scope
+    helper_method :confirmable?, :lockable?, :recoverable?, :registerable?, :magic_link_authenticatable?, :aikotoba_scoped_path, :aikotoba_scoped_path, :aikotoba_scope
 
     def aikotoba_controller?
       true
