@@ -7,8 +7,8 @@ class Aikotoba::ConfirmableTest < ActionDispatch::IntegrationTest
   def setup
     Aikotoba.confirmable = true
     ActionController::Base.allow_forgery_protection = false
-    email, password = ["email@example.com", "password"]
-    @account = ::Aikotoba::Account.build_by(attributes: {email: email, password: password})
+    @password = "password"
+    @account = ::Aikotoba::Account.build_by(attributes: {email: "email@example.com", password: @password})
     @account.confirmed = false
     @account.save!
     @account.build_confirmation_token.save!
@@ -109,13 +109,13 @@ class Aikotoba::ConfirmableTest < ActionDispatch::IntegrationTest
 
   test "success POST new_session_path by comfirmed account" do
     get aikotoba.confirm_account_path(token: @account.confirmation_token.token)
-    post aikotoba.new_session_path, params: {account: {email: @account.email, password: @account.password}}
+    post aikotoba.new_session_path, params: {account: {email: @account.email, password: @password}}
     assert_redirected_to Aikotoba.default_scope[:after_sign_in_path]
     assert_equal I18n.t(".aikotoba.messages.authentication.success"), flash[:notice]
   end
 
   test "failed POST new_session_path by not comfirmed account" do
-    post aikotoba.new_session_path, params: {account: {email: @account.email, password: @account.password}}
+    post aikotoba.new_session_path, params: {account: {email: @account.email, password: @password}}
     assert_equal status, 422
     assert_equal I18n.t(".aikotoba.messages.authentication.failed"), flash[:alert]
   end

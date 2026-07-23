@@ -6,7 +6,7 @@ module Aikotoba
 
     LENGTH_RANGE = Aikotoba.password_length_range
 
-    belongs_to :account, class_name: "Aikotoba::Account", foreign_key: "aikotoba_account_id", inverse_of: :password_credential
+    belongs_to :account, class_name: "Aikotoba::Account", foreign_key: "aikotoba_account_id", inverse_of: :password
 
     validates :digest, presence: true
     validates :value, presence: true, length: {in: LENGTH_RANGE}, on: [:create, :recover]
@@ -33,7 +33,7 @@ module Aikotoba
         account = Account.find_by_identifier(email, target_type_name: target_type_name)
         return prevent_timing_attack(email: email, password: password) unless account
 
-        matched = account.password_credential&.match?(password) || false
+        matched = account.password&.match?(password) || false
         ActiveRecord::Base.transaction do
           if matched
             account.authentication_success!
@@ -50,7 +50,7 @@ module Aikotoba
       # NOTE: Verify passwords even when accounts are not found to prevent timing attacks.
       def prevent_timing_attack(email:, password:)
         account = Account.build_by(attributes: {email: email, password: password})
-        account.password_credential&.match?(password)
+        account.password&.match?(password)
         nil
       end
     end

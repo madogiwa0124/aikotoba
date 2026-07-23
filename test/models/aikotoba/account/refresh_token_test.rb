@@ -4,13 +4,13 @@ require "test_helper"
 
 class Aikotoba::Account::RefreshTokenTest < ActiveSupport::TestCase
   def setup
-    @account = Aikotoba::Account.create!(
+    @account = Aikotoba::Account.create_by!(attributes: {
       email: "user@example.com",
       password: "Password1!",
       confirmed: true,
       locked: false,
       failed_attempts: 0
-    )
+    })
     @session = Aikotoba::Account::Session.start!(
       account: @account,
       origin: :api,
@@ -71,13 +71,13 @@ class Aikotoba::Account::RefreshTokenTest < ActiveSupport::TestCase
 
   class Refresh < ActiveSupport::TestCase
     def setup
-      @account = Aikotoba::Account.create!(
+      @account = Aikotoba::Account.create_by!(attributes: {
         email: "user@example.com",
         password: "Password1!",
         confirmed: true,
         locked: false,
         failed_attempts: 0
-      )
+      })
       @session = Aikotoba::Account::Session.start!(
         account: @account,
         origin: :api,

@@ -3,21 +3,6 @@
 require "test_helper"
 
 class Aikotoba::AccountTest < ActiveSupport::TestCase
-  class PasswordHandling < ActiveSupport::TestCase
-    test "password assignment sets password_digest" do
-      account = Aikotoba::Account.new(email: "user@example.com")
-      account.password = "Password1!"
-      assert account.password_digest.present?
-      refute_equal account.password_digest, "Password1!"
-    end
-
-    test "password reader returns password value" do
-      account = Aikotoba::Account.new(email: "user@example.com")
-      account.password = "Password1!"
-      assert_equal account.password, "Password1!"
-    end
-  end
-
   class Registrable < ActiveSupport::TestCase
     test "build_by creates account with email and password" do
       account = Aikotoba::Account.build_by(attributes: {
@@ -25,7 +10,7 @@ class Aikotoba::AccountTest < ActiveSupport::TestCase
         password: "Password1!"
       })
       assert account.email == "user@example.com"
-      assert account.password_digest.present?
+      assert account.password.digest.present?
     end
 
     test "register! saves account" do
@@ -74,13 +59,13 @@ class Aikotoba::AccountTest < ActiveSupport::TestCase
 
   class Authenticatable < ActiveSupport::TestCase
     def setup
-      @account = Aikotoba::Account.create!(
+      @account = Aikotoba::Account.create_by!(attributes: {
         email: "user@example.com",
         password: "Password1!",
         confirmed: true,
         locked: false,
         failed_attempts: 0
-      )
+      })
     end
 
     test "authentication_failed! increments failed_attempts" do
@@ -104,12 +89,12 @@ class Aikotoba::AccountTest < ActiveSupport::TestCase
 
     test "authenticatable scope filters by target_type_name" do
       admin = Admin.create!(nickname: "admin_foo")
-      admin_account = Aikotoba::Account.create!(
+      admin_account = Aikotoba::Account.create_by!(attributes: {
         email: "admin@example.com",
         password: "Password1!",
         authenticate_target: admin,
         confirmed: true
-      )
+      })
       accounts = Aikotoba::Account.authenticatable(target_type_name: "Admin")
       assert_includes accounts.to_a, admin_account
       refute_includes accounts.to_a, @account
@@ -118,30 +103,30 @@ class Aikotoba::AccountTest < ActiveSupport::TestCase
     test "authenticatable scope filters confirmed accounts when confirmable" do
       Aikotoba.confirmable = true
       Aikotoba.lockable = true
-      unconfirmed = Aikotoba::Account.create!(
+      unconfirmed = Aikotoba::Account.create_by!(attributes: {
         email: "unconfirmed@example.com",
         password: "Password1!",
         confirmed: false,
         locked: false
-      )
-      confirmed = Aikotoba::Account.create!(
+      })
+      confirmed = Aikotoba::Account.create_by!(attributes: {
         email: "confirmed@example.com",
         password: "Password1!",
         confirmed: true,
         locked: false
-      )
-      locked = Aikotoba::Account.create!(
+      })
+      locked = Aikotoba::Account.create_by!(attributes: {
         email: "locked@example.com",
         password: "Password1!",
         confirmed: true,
         locked: true
-      )
-      unlocked = Aikotoba::Account.create!(
+      })
+      unlocked = Aikotoba::Account.create_by!(attributes: {
         email: "unlocked@example.com",
         password: "Password1!",
         confirmed: true,
         locked: false
-      )
+      })
       accounts = Aikotoba::Account.authenticatable
       assert_includes accounts.to_a, confirmed
       assert_includes accounts.to_a, unlocked
@@ -154,43 +139,43 @@ class Aikotoba::AccountTest < ActiveSupport::TestCase
 
   class Confirmable < ActiveSupport::TestCase
     test "confirmed scope returns only confirmed accounts" do
-      confirmed = Aikotoba::Account.create!(
+      confirmed = Aikotoba::Account.create_by!(attributes: {
         email: "confirmed@example.com",
         password: "Password1!",
         confirmed: true
-      )
-      unconfirmed = Aikotoba::Account.create!(
+      })
+      unconfirmed = Aikotoba::Account.create_by!(attributes: {
         email: "unconfirmed@example.com",
         password: "Password1!",
         confirmed: false
-      )
+      })
       accounts = Aikotoba::Account.confirmed
       assert_includes accounts.to_a, confirmed
       refute_includes accounts.to_a, unconfirmed
     end
 
     test "unconfirmed scope returns only unconfirmed accounts" do
-      confirmed = Aikotoba::Account.create!(
+      confirmed = Aikotoba::Account.create_by!(attributes: {
         email: "confirmed@example.com",
         password: "Password1!",
         confirmed: true
-      )
-      unconfirmed = Aikotoba::Account.create!(
+      })
+      unconfirmed = Aikotoba::Account.create_by!(attributes: {
         email: "unconfirmed@example.com",
         password: "Password1!",
         confirmed: false
-      )
+      })
       accounts = Aikotoba::Account.unconfirmed
       refute_includes accounts.to_a, confirmed
       assert_includes accounts.to_a, unconfirmed
     end
 
     test "confirm! updates confirmed to true" do
-      account = Aikotoba::Account.create!(
+      account = Aikotoba::Account.create_by!(attributes: {
         email: "user@example.com",
         password: "Password1!",
         confirmed: false
-      )
+      })
       account.confirm!
       assert account.reload.confirmed?
     end
@@ -198,74 +183,74 @@ class Aikotoba::AccountTest < ActiveSupport::TestCase
 
   class Lockable < ActiveSupport::TestCase
     test "locked scope returns only locked accounts" do
-      locked = Aikotoba::Account.create!(
+      locked = Aikotoba::Account.create_by!(attributes: {
         email: "locked@example.com",
         password: "Password1!",
         locked: true
-      )
-      unlocked = Aikotoba::Account.create!(
+      })
+      unlocked = Aikotoba::Account.create_by!(attributes: {
         email: "unlocked@example.com",
         password: "Password1!",
         locked: false
-      )
+      })
       accounts = Aikotoba::Account.locked
       assert_includes accounts.to_a, locked
       refute_includes accounts.to_a, unlocked
     end
 
     test "unlocked scope returns only unlocked accounts" do
-      locked = Aikotoba::Account.create!(
+      locked = Aikotoba::Account.create_by!(attributes: {
         email: "locked@example.com",
         password: "Password1!",
         locked: true
-      )
-      unlocked = Aikotoba::Account.create!(
+      })
+      unlocked = Aikotoba::Account.create_by!(attributes: {
         email: "unlocked@example.com",
         password: "Password1!",
         locked: false
-      )
+      })
       accounts = Aikotoba::Account.unlocked
       refute_includes accounts.to_a, locked
       assert_includes accounts.to_a, unlocked
     end
 
     test "should_lock? returns true when failed_attempts exceeds max" do
-      account = Aikotoba::Account.create!(
+      account = Aikotoba::Account.create_by!(attributes: {
         email: "user@example.com",
         password: "Password1!",
         failed_attempts: 11,
         max_failed_attempts: 10
-      )
+      })
       assert account.should_lock?
     end
 
     test "should_lock? returns false when failed_attempts does not exceed max" do
-      account = Aikotoba::Account.create!(
+      account = Aikotoba::Account.create_by!(attributes: {
         email: "user@example.com",
         password: "Password1!",
         failed_attempts: 10,
         max_failed_attempts: 10
-      )
+      })
       refute account.should_lock?
     end
 
     test "lock! sets locked to true" do
-      account = Aikotoba::Account.create!(
+      account = Aikotoba::Account.create_by!(attributes: {
         email: "user@example.com",
         password: "Password1!",
         locked: false
-      )
+      })
       account.lock!
       assert account.reload.locked?
     end
 
     test "unlock! sets locked to false and resets failed_attempts" do
-      account = Aikotoba::Account.create!(
+      account = Aikotoba::Account.create_by!(attributes: {
         email: "user@example.com",
         password: "Password1!",
         locked: true,
         failed_attempts: 10
-      )
+      })
       account.unlock!
       assert_not account.reload.locked?
       assert_equal account.failed_attempts, 0
@@ -274,34 +259,34 @@ class Aikotoba::AccountTest < ActiveSupport::TestCase
 
   class DefaultAttributes < ActiveSupport::TestCase
     test "confirmed defaults to false" do
-      account = Aikotoba::Account.create!(
+      account = Aikotoba::Account.create_by!(attributes: {
         email: "user@example.com",
         password: "Password1!"
-      )
+      })
       assert account.reload.confirmed == false
     end
 
     test "locked defaults to false" do
-      account = Aikotoba::Account.create!(
+      account = Aikotoba::Account.create_by!(attributes: {
         email: "user@example.com",
         password: "Password1!"
-      )
+      })
       assert account.reload.locked == false
     end
 
     test "failed_attempts defaults to 0" do
-      account = Aikotoba::Account.create!(
+      account = Aikotoba::Account.create_by!(attributes: {
         email: "user@example.com",
         password: "Password1!"
-      )
+      })
       assert_equal account.reload.failed_attempts, 0
     end
 
     test "max_failed_attempts defaults to Aikotoba.max_failed_attempts" do
-      account = Aikotoba::Account.create!(
+      account = Aikotoba::Account.create_by!(attributes: {
         email: "user@example.com",
         password: "Password1!"
-      )
+      })
       assert_equal account.max_failed_attempts, Aikotoba.max_failed_attempts
     end
   end

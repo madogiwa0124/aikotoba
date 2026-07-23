@@ -23,7 +23,7 @@ module Aikotoba
 
     def recover!(new_password:)
       ActiveRecord::Base.transaction do
-        @account.password_credential.recover!(new_password)
+        @account.password.recover!(new_password)
         @account.recovery_token&.destroy!
       end
     rescue ActiveRecord::RecordInvalid => e

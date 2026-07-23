@@ -522,7 +522,7 @@ All Messages are managed by `i18n` and can be freely overridden.
 By running the following script, you can hash and store passwords.
 
 ```ruby
-Aikotoba::Account.create!(email: "sample@example.com", password: "password")
+Aikotoba::Account.create_by!(attributes: {email: "sample@example.com", password: "password"})
 Aikotoba::Account::Password.authenticate_by(attributes: {email: "sample@example.com", password: "password"})
 # => created account instance.
 ```

@@ -7,10 +7,10 @@ class Aikotoba::ScopableTest < ActionDispatch::IntegrationTest
     ActionController::Base.allow_forgery_protection = false
     Aikotoba.registerable = true
     Aikotoba.confirmable = false
-    email, password = ["scope@example.com", "password"]
-    @account = ::Aikotoba::Account.build_by(attributes: {email: email, password: password})
+    @password = "password"
+    @account = ::Aikotoba::Account.build_by(attributes: {email: "scope@example.com", password: @password})
     @account.save!
-    @admin_account = ::Aikotoba::Account.build_by(attributes: {email: "admin_scope@example.com", password: "password"})
+    @admin_account = ::Aikotoba::Account.build_by(attributes: {email: "admin_scope@example.com", password: @password})
     admin = Admin.new(nickname: "admin_foo")
     @admin_account.authenticate_target = admin
     admin.save!
@@ -40,7 +40,7 @@ class Aikotoba::ScopableTest < ActionDispatch::IntegrationTest
   end
 
   test "default scope: after_sign_in_path and session key are from default scope" do
-    post aikotoba.new_session_path, params: {account: {email: @account.email, password: @account.password}}
+    post aikotoba.new_session_path, params: {account: {email: @account.email, password: @password}}
     assert_redirected_to "/sensitives"
     follow_redirect!
     assert_response :success
@@ -48,7 +48,7 @@ class Aikotoba::ScopableTest < ActionDispatch::IntegrationTest
   end
 
   test "admin scope: after_sign_in_path and session key are from admin scope" do
-    post aikotoba.admin_create_session_path, params: {account: {email: @admin_account.email, password: @admin_account.password}}
+    post aikotoba.admin_create_session_path, params: {account: {email: @admin_account.email, password: @password}}
     assert_redirected_to "/admin/sensitives"
     # Do not follow the redirect to avoid hitting admin-only page
     assert cookies[Aikotoba.scopes[:admin][:session_key]].present?

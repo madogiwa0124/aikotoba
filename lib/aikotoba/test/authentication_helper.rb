@@ -10,7 +10,7 @@ module Aikotoba
         end
 
         def aikotoba_sign_in(account)
-          post aikotoba.new_session_path, params: {account: {email: account.email, password: account.password}}
+          post aikotoba.new_session_path, params: {account: {email: account.email, password: account.password&.value}}
           follow_redirect!
         end
       end
@@ -27,7 +27,7 @@ module Aikotoba
         def aikotoba_sign_in(account)
           if page.driver.is_a?(Capybara::RackTest::Driver)
             disable_forgery_protection do
-              page.driver.send(:post, aikotoba.new_session_path, account: {email: account.email, password: account.password})
+              page.driver.send(:post, aikotoba.new_session_path, account: {email: account.email, password: account.password&.value})
             end
           else
             raise NotImplementedError, "Sorry. Only RackTest::Driver is supported as a test helper for Aikotoba's authentication."

@@ -3,33 +3,48 @@
 require "test_helper"
 
 class Aikotoba::Account::PasswordTest < ActiveSupport::TestCase
+  class ValueHandling < ActiveSupport::TestCase
+    test "value= computes and stores a digest" do
+      password = Aikotoba::Account::Password.new
+      password.value = "Password1!"
+      assert password.digest.present?
+      refute_equal password.digest, "Password1!"
+    end
+
+    test "value reader returns the plaintext value" do
+      password = Aikotoba::Account::Password.new
+      password.value = "Password1!"
+      assert_equal password.value, "Password1!"
+    end
+  end
+
   class MatchHandling < ActiveSupport::TestCase
     test "match? returns true for correct password" do
-      account = Aikotoba::Account.create!(
+      account = Aikotoba::Account.create_by!(attributes: {
         email: "user@example.com",
         password: "Password1!"
-      )
-      assert account.password_credential.match?("Password1!")
+      })
+      assert account.password.match?("Password1!")
     end
 
     test "match? returns false for incorrect password" do
-      account = Aikotoba::Account.create!(
+      account = Aikotoba::Account.create_by!(attributes: {
         email: "user@example.com",
         password: "Password1!"
-      )
-      refute account.password_credential.match?("WrongPassword!")
+      })
+      refute account.password.match?("WrongPassword!")
     end
   end
 
   class AuthenticateBy < ActiveSupport::TestCase
     def setup
-      @account = Aikotoba::Account.create!(
+      @account = Aikotoba::Account.create_by!(attributes: {
         email: "user@example.com",
         password: "Password1!",
         confirmed: true,
         locked: false,
         failed_attempts: 0
-      )
+      })
     end
 
     test "authenticate_by returns account for valid credentials" do
@@ -76,13 +91,13 @@ class Aikotoba::Account::PasswordTest < ActiveSupport::TestCase
 
     test "authenticate_by locks account when max attempts exceeded" do
       Aikotoba.lockable = true
-      account = Aikotoba::Account.create!(
+      account = Aikotoba::Account.create_by!(attributes: {
         email: "locktest@example.com",
         password: "Password1!",
         confirmed: true,
         locked: false,
         failed_attempts: 10
-      )
+      })
       Aikotoba::Account::Password.authenticate_by(attributes: {
         email: "locktest@example.com",
         password: "WrongPassword!"
@@ -93,24 +108,24 @@ class Aikotoba::Account::PasswordTest < ActiveSupport::TestCase
   end
 
   class Recoverable < ActiveSupport::TestCase
-    test "recover! updates password_digest" do
-      account = Aikotoba::Account.create!(
+    test "recover! updates digest" do
+      account = Aikotoba::Account.create_by!(attributes: {
         email: "user@example.com",
         password: "OldPassword1!"
-      )
-      old_digest = account.password_digest
-      account.password_credential.recover!("NewPassword1!")
-      assert_not_equal account.reload.password_digest, old_digest
-      assert account.password_credential.match?("NewPassword1!")
+      })
+      old_digest = account.password.digest
+      account.password.recover!("NewPassword1!")
+      assert_not_equal account.reload.password.digest, old_digest
+      assert account.password.match?("NewPassword1!")
     end
 
     test "recover! validates password length" do
-      account = Aikotoba::Account.create!(
+      account = Aikotoba::Account.create_by!(attributes: {
         email: "user@example.com",
         password: "Password1!"
-      )
+      })
       assert_raises(ActiveRecord::RecordInvalid) do
-        account.password_credential.recover!("short")
+        account.password.recover!("short")
       end
     end
   end
