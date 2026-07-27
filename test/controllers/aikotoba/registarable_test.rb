@@ -37,6 +37,15 @@ class Aikotoba::RegisterableTest < ActionDispatch::IntegrationTest
     assert_includes messages, "Email can't be blank"
   end
 
+  test "failed POST create_account_path when password param is omitted entirely" do
+    assert_no_difference "Aikotoba::Account.count" do
+      post aikotoba.create_account_path, params: {account: {email: "no-password@example.com"}}
+    end
+    assert_equal status, 422
+    messages = @controller.instance_variable_get(:@account).errors.full_messages
+    assert_includes messages, "Password can't be blank"
+  end
+
   test "Registerable path to 404 when Aikotoba.registerable is false" do
     Aikotoba.registerable = false
     get aikotoba.new_account_path

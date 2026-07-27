@@ -22,11 +22,21 @@ module Aikotoba
     end
 
     def recover!(new_password:)
+      # NOTE: An account can legitimately have no password (e.g. a magic-link-only
+      #       account), so there's nothing to recover. Surface this the same way an
+      #       invalid new_password would be (RecordInvalid -> :password error) instead
+      #       of raising NoMethodError on a nil association.
+      unless @account.password
+        @account.errors.add(:password, :blank)
+        raise ActiveRecord::RecordInvalid, @account
+      end
+
       ActiveRecord::Base.transaction do
         @account.password.recover!(new_password)
         @account.recovery_token&.destroy!
       end
     rescue ActiveRecord::RecordInvalid => e
+      raise if e.record == @account
       e.record.errors.each { |error| @account.errors.import(error, attribute: :password) }
       raise ActiveRecord::RecordInvalid, @account
     end
