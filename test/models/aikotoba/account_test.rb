@@ -55,6 +55,21 @@ class Aikotoba::AccountTest < ActiveSupport::TestCase
       assert_raises(ActiveRecord::RecordInvalid) { account.register! }
       assert_includes account.errors.full_messages, "Password is too short (minimum is 8 characters)"
     end
+
+    test "build_by and register! do not require any credential, by design" do
+      # NOTE: Account itself must not know or care which auth method(s) an
+      #       account ends up with, so the generic model API stays permissive.
+      #       Requiring a credential is the job of a specific registration
+      #       flow (e.g. AccountsController for password) — see the "Auth
+      #       method ownership principle" in copilot-instructions.md.
+      account = Aikotoba::Account.build_by(attributes: {email: "user@example.com"})
+      assert_nil account.password
+      assert_difference "Aikotoba::Account.count", 1 do
+        account.register!
+      end
+      assert account.persisted?
+      assert_nil account.password
+    end
   end
 
   class Authenticatable < ActiveSupport::TestCase

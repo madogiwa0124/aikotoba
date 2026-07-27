@@ -47,6 +47,20 @@ credential-guessing method could reuse (e.g. the `Lockable` lock/unlock
 counters and scopes) stay on `Account`; only the *decision* to trigger them
 lives in the method's own `authenticate_by`.
 
+`Account.build_by`/`register!` intentionally do not require any credential
+to be present — `build_by` only builds a `password` association when a
+`:password` key is actually passed in, and `register!` happily saves an
+account with no credential at all. This is by design, not a gap: a future
+passwordless method (magic link, passkey) needs to be able to register an
+account through the exact same generic entry point without a password ever
+existing. Enforcing "this account must have a usable credential" is the
+job of the specific registration flow, not the generic model layer — e.g.
+`AccountsController#build_account` (the password sign-up form) defaults
+`:password` to `""` before calling `build_by` specifically so
+`Account::Password`'s own presence validation rejects an omitted password.
+A different auth method's registration controller would enforce its own
+credential's presence the same way, on its own terms.
+
 ## Controller Conventions
 
 - Base controller: All engine controllers inherit from [app/controllers/aikotoba/application_controller.rb](../app/controllers/aikotoba/application_controller.rb) which includes `EnabledFeatureCheckable` and `Scopable` and defines `aikotoba_controller?`.
