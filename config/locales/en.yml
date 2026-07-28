@@ -4,6 +4,9 @@ en:
       aikotoba/account:
         email: Email
         password: Password
+        password_hash: Password
+      aikotoba/account/password_hash:
+        plaintext: Password
     errors:
       models:
         aikotoba/account/refresh_token:

@@ -10,7 +10,7 @@ class Aikotoba::AccountTest < ActiveSupport::TestCase
         password: "Password1!"
       })
       assert account.email == "user@example.com"
-      assert account.password.digest.present?
+      assert account.password_hash.digest.present?
     end
 
     test "register! saves account" do
@@ -63,12 +63,12 @@ class Aikotoba::AccountTest < ActiveSupport::TestCase
       #       flow (e.g. AccountsController for password) — see the "Auth
       #       method ownership principle" in copilot-instructions.md.
       account = Aikotoba::Account.build_by(attributes: {email: "user@example.com"})
-      assert_nil account.password
+      assert_nil account.password_hash
       assert_difference "Aikotoba::Account.count", 1 do
         account.register!
       end
       assert account.persisted?
-      assert_nil account.password
+      assert_nil account.password_hash
     end
 
     test "build_by still validates password when the key is explicitly nil, unlike an omitted key" do
@@ -76,9 +76,20 @@ class Aikotoba::AccountTest < ActiveSupport::TestCase
       #       explicit password: nil (e.g. a JSON API client sending "password": null) must
       #       not be silently treated the same way — it should surface a validation error.
       account = Aikotoba::Account.build_by(attributes: {email: "user@example.com", password: nil})
-      assert_not_nil account.password
+      assert_not_nil account.password_hash
       assert_raises(ActiveRecord::RecordInvalid) { account.register! }
       assert_includes account.errors.full_messages, "Password can't be blank"
+    end
+
+    test "register! surfaces a blank password as exactly one clean message" do
+      # NOTE: regression guard for a real bug hit while building this: PasswordHash used to
+      #       also validate :digest presence independently of :plaintext, so a blank
+      #       password failed both validations at once, leaking a raw internal attribute
+      #       name ("Password hash digest can't be blank") into full_messages.
+      account = Aikotoba::Account.build_by(attributes: {email: "user@example.com", password: ""})
+      assert_raises(ActiveRecord::RecordInvalid) { account.register! }
+      messages = account.errors.full_messages
+      assert_equal ["Password can't be blank", "Password is too short (minimum is 8 characters)"], messages
     end
   end
 

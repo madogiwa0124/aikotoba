@@ -87,7 +87,7 @@ class Aikotoba::RecoverableTest < ActionDispatch::IntegrationTest
     assert_redirected_to aikotoba.new_session_path
     assert_equal I18n.t(".aikotoba.messages.recovery.success"), flash[:notice]
     assert_nil @account.reload.recovery_token
-    updated_account = ::Aikotoba::Account::Password.authenticate_by(attributes: {email: @account.email, password: "updated_password"})
+    updated_account = ::Aikotoba::Account::PasswordHash.authenticate_by(attributes: {email: @account.email, password: "updated_password"})
     assert_equal updated_account.id, @account.id
   end
 
@@ -97,6 +97,17 @@ class Aikotoba::RecoverableTest < ActionDispatch::IntegrationTest
     assert_equal I18n.t(".aikotoba.messages.recovery.failed"), flash[:alert]
     messages = @controller.instance_variable_get(:@account).errors.full_messages
     assert_includes messages, "Password is too short (minimum is 8 characters)"
+  end
+
+  test "faild PATCH update_account_password_path by blank password does not duplicate messages" do
+    # NOTE: regression guard for PasswordHash previously also validating :digest presence
+    #       independently of :plaintext, which doubled up "Password can't be blank" for a
+    #       blank new_password.
+    @account.build_recovery_token.save!
+    patch aikotoba.update_account_password_path(token: @account.recovery_token.token, account: {password: ""})
+    assert_equal I18n.t(".aikotoba.messages.recovery.failed"), flash[:alert]
+    messages = @controller.instance_variable_get(:@account).errors.full_messages
+    assert_equal ["Password can't be blank", "Password is too short (minimum is 8 characters)"], messages
   end
 
   test "failed PATCH update_account_password_path when account has no password" do

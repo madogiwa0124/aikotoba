@@ -31,7 +31,7 @@ module Aikotoba
       #       password credential — otherwise an omitted :password key (as opposed to a
       #       blank one) makes Account.build_by skip it entirely, silently registering an
       #       account no auth method can ever sign into. Defaulting the key to "" ensures
-      #       Account::Password's own presence validation is what actually rejects it.
+      #       Account::PasswordHash's own presence validation is what actually rejects it.
       Account.build_by(attributes: {password: ""}.merge(params))
     end
 

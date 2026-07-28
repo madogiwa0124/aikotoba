@@ -2,19 +2,13 @@
 
 require "test_helper"
 
-class Aikotoba::Account::PasswordTest < ActiveSupport::TestCase
-  class ValueHandling < ActiveSupport::TestCase
-    test "value= computes and stores a digest" do
-      password = Aikotoba::Account::Password.new
-      password.value = "Password1!"
-      assert password.digest.present?
-      refute_equal password.digest, "Password1!"
-    end
-
-    test "value reader returns the plaintext value" do
-      password = Aikotoba::Account::Password.new
-      password.value = "Password1!"
-      assert_equal password.value, "Password1!"
+class Aikotoba::Account::PasswordHashTest < ActiveSupport::TestCase
+  class GenerateHandling < ActiveSupport::TestCase
+    test "generate computes and stores a digest" do
+      password_hash = Aikotoba::Account::PasswordHash.new
+      password_hash.generate("Password1!")
+      assert password_hash.digest.present?
+      refute_equal password_hash.digest, "Password1!"
     end
   end
 
@@ -24,7 +18,7 @@ class Aikotoba::Account::PasswordTest < ActiveSupport::TestCase
         email: "user@example.com",
         password: "Password1!"
       })
-      assert account.password.match?("Password1!")
+      assert account.password_hash.match?("Password1!")
     end
 
     test "match? returns false for incorrect password" do
@@ -32,7 +26,7 @@ class Aikotoba::Account::PasswordTest < ActiveSupport::TestCase
         email: "user@example.com",
         password: "Password1!"
       })
-      refute account.password.match?("WrongPassword!")
+      refute account.password_hash.match?("WrongPassword!")
     end
   end
 
@@ -48,7 +42,7 @@ class Aikotoba::Account::PasswordTest < ActiveSupport::TestCase
     end
 
     test "authenticate_by returns account for valid credentials" do
-      account = Aikotoba::Account::Password.authenticate_by(attributes: {
+      account = Aikotoba::Account::PasswordHash.authenticate_by(attributes: {
         email: "user@example.com",
         password: "Password1!"
       })
@@ -56,7 +50,7 @@ class Aikotoba::Account::PasswordTest < ActiveSupport::TestCase
     end
 
     test "authenticate_by returns nil for invalid email" do
-      account = Aikotoba::Account::Password.authenticate_by(attributes: {
+      account = Aikotoba::Account::PasswordHash.authenticate_by(attributes: {
         email: "nonexistent@example.com",
         password: "Password1!"
       })
@@ -64,7 +58,7 @@ class Aikotoba::Account::PasswordTest < ActiveSupport::TestCase
     end
 
     test "authenticate_by returns nil for invalid password" do
-      account = Aikotoba::Account::Password.authenticate_by(attributes: {
+      account = Aikotoba::Account::PasswordHash.authenticate_by(attributes: {
         email: "user@example.com",
         password: "WrongPassword!"
       })
@@ -73,7 +67,7 @@ class Aikotoba::Account::PasswordTest < ActiveSupport::TestCase
 
     test "authenticate_by increments failed_attempts on invalid password" do
       initial_attempts = @account.failed_attempts
-      Aikotoba::Account::Password.authenticate_by(attributes: {
+      Aikotoba::Account::PasswordHash.authenticate_by(attributes: {
         email: "user@example.com",
         password: "WrongPassword!"
       })
@@ -82,7 +76,7 @@ class Aikotoba::Account::PasswordTest < ActiveSupport::TestCase
 
     test "authenticate_by resets failed_attempts on successful authentication" do
       @account.update!(failed_attempts: 5)
-      Aikotoba::Account::Password.authenticate_by(attributes: {
+      Aikotoba::Account::PasswordHash.authenticate_by(attributes: {
         email: "user@example.com",
         password: "Password1!"
       })
@@ -98,12 +92,41 @@ class Aikotoba::Account::PasswordTest < ActiveSupport::TestCase
         locked: false,
         failed_attempts: 10
       })
-      Aikotoba::Account::Password.authenticate_by(attributes: {
+      Aikotoba::Account::PasswordHash.authenticate_by(attributes: {
         email: "locktest@example.com",
         password: "WrongPassword!"
       })
       assert account.reload.locked?
       Aikotoba.lockable = false
+    end
+
+    test "authenticate_by returns nil without raising for an account with no password_hash" do
+      passwordless = Aikotoba::Account.create_by!(attributes: {email: "no-password@example.com"})
+      account = Aikotoba::Account::PasswordHash.authenticate_by(attributes: {
+        email: "no-password@example.com",
+        password: "WhateverPassword1!"
+      })
+      assert_nil account
+      assert_equal passwordless.reload.failed_attempts, 1
+    end
+
+    test "authenticate_by returns nil for a blank password without touching the account" do
+      # NOTE: a blank password can never match, so authenticate_by short-circuits before
+      #       even looking up the account -- this guards against that path
+      #       misbehaving/raising, and confirms it deliberately skips failed_attempts
+      #       bookkeeping (the caller already knows their own input was blank).
+      account = Aikotoba::Account::PasswordHash.authenticate_by(attributes: {
+        email: "nonexistent@example.com",
+        password: ""
+      })
+      assert_nil account
+
+      account = Aikotoba::Account::PasswordHash.authenticate_by(attributes: {
+        email: "user@example.com",
+        password: ""
+      })
+      assert_nil account
+      assert_equal @account.reload.failed_attempts, 0
     end
   end
 
@@ -113,10 +136,10 @@ class Aikotoba::Account::PasswordTest < ActiveSupport::TestCase
         email: "user@example.com",
         password: "OldPassword1!"
       })
-      old_digest = account.password.digest
-      account.password.recover!("NewPassword1!")
-      assert_not_equal account.reload.password.digest, old_digest
-      assert account.password.match?("NewPassword1!")
+      old_digest = account.password_hash.digest
+      account.password_hash.recover!("NewPassword1!")
+      assert_not_equal account.reload.password_hash.digest, old_digest
+      assert account.password_hash.match?("NewPassword1!")
     end
 
     test "recover! validates password length" do
@@ -125,7 +148,7 @@ class Aikotoba::Account::PasswordTest < ActiveSupport::TestCase
         password: "Password1!"
       })
       assert_raises(ActiveRecord::RecordInvalid) do
-        account.password.recover!("short")
+        account.password_hash.recover!("short")
       end
     end
   end

@@ -30,7 +30,7 @@ module Aikotoba
       end
 
       def authenticate_account(params)
-        Account::Password.authenticate_by(attributes: params, target_type_name: aikotoba_authenticate_target)
+        Account::PasswordHash.authenticate_by(attributes: params, target_type_name: aikotoba_authenticate_target)
       end
 
       def authentication_failed_message

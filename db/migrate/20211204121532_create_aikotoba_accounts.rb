@@ -10,11 +10,11 @@ class CreateAikotobaAccounts < ActiveRecord::Migration[6.1]
       t.timestamps
     end
 
-    create_table :aikotoba_account_passwords do |t|
+    create_table :aikotoba_account_password_hashes do |t|
       t.belongs_to(
         :aikotoba_account,
         null: false, foreign_key: true,
-        index: {unique: true, name: "index_account_passwords_on_account_id"}
+        index: {unique: true, name: "index_account_password_hashes_on_account_id"}
       )
       t.string :digest, null: false
 

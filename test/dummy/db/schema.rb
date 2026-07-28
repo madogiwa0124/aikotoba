@@ -27,12 +27,12 @@ ActiveRecord::Schema[8.1].define(version: 2026_02_23_000100) do
     t.index ["token"], name: "index_aikotoba_account_confirmation_tokens_on_token", unique: true
   end
 
-  create_table "aikotoba_account_passwords", force: :cascade do |t|
+  create_table "aikotoba_account_password_hashes", force: :cascade do |t|
     t.integer "aikotoba_account_id", null: false
     t.datetime "created_at", null: false
     t.string "digest", null: false
     t.datetime "updated_at", null: false
-    t.index ["aikotoba_account_id"], name: "index_account_passwords_on_account_id", unique: true
+    t.index ["aikotoba_account_id"], name: "index_account_password_hashes_on_account_id", unique: true
   end
 
   create_table "aikotoba_account_recovery_tokens", force: :cascade do |t|
@@ -99,7 +99,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_02_23_000100) do
   end
 
   add_foreign_key "aikotoba_account_confirmation_tokens", "aikotoba_accounts"
-  add_foreign_key "aikotoba_account_passwords", "aikotoba_accounts"
+  add_foreign_key "aikotoba_account_password_hashes", "aikotoba_accounts"
   add_foreign_key "aikotoba_account_recovery_tokens", "aikotoba_accounts"
   add_foreign_key "aikotoba_account_refresh_tokens", "aikotoba_account_sessions"
   add_foreign_key "aikotoba_account_sessions", "aikotoba_accounts"

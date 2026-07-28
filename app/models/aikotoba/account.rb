@@ -68,8 +68,8 @@ module Aikotoba
 
     concerning :PasswordAuthenticatable do
       included do
-        has_one :password,
-          class_name: "Aikotoba::Account::Password",
+        has_one :password_hash,
+          class_name: "Aikotoba::Account::PasswordHash",
           dependent: :destroy,
           foreign_key: "aikotoba_account_id",
           autosave: true,
@@ -89,7 +89,7 @@ module Aikotoba
           attrs = attributes.to_h.symbolize_keys
           has_password = attrs.key?(:password)
           password = attrs.delete(:password)
-          new(attrs).tap { |account| account.build_password(value: password) if has_password }
+          new(attrs).tap { |account| account.build_password_hash.generate(password) if has_password }
         end
 
         def create_by!(attributes:)
@@ -102,11 +102,6 @@ module Aikotoba
           save!
           Confirmation.create_token!(account: self, notify: true) if confirmable?
         end
-      rescue ActiveRecord::RecordInvalid => e
-        raise unless e.record == self
-        errors.where(:"password.value").each { |error| errors.import(error, attribute: :password) }
-        errors.delete(:"password.value")
-        raise
       end
     end
 

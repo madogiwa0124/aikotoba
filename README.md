@@ -103,7 +103,7 @@ Register an account using email and password.
 | GET       | /sign_up | Display sign up page. |
 | POST      | /sign_up | Create an account.    |
 
-The password is stored as a hash in [Argon2](https://github.com/technion/ruby-argon2), in a separate `Aikotoba::Account::Password` record (table `aikotoba_account_passwords`) rather than on `Aikotoba::Account` itself, so `Account` does not depend on password-based authentication.
+The password is stored as a hash in [Argon2](https://github.com/technion/ruby-argon2), in a separate `Aikotoba::Account::PasswordHash` record (table `aikotoba_account_password_hashes`) rather than on `Aikotoba::Account` itself, so `Account` does not depend on password-based authentication.
 
 ### Confirmable
 
@@ -523,7 +523,7 @@ By running the following script, you can hash and store passwords.
 
 ```ruby
 Aikotoba::Account.create_by!(attributes: {email: "sample@example.com", password: "password"})
-Aikotoba::Account::Password.authenticate_by(attributes: {email: "sample@example.com", password: "password"})
+Aikotoba::Account::PasswordHash.authenticate_by(attributes: {email: "sample@example.com", password: "password"})
 # => created account instance.
 ```
 
@@ -640,13 +640,13 @@ class HelperTest < ActionDispatch::SystemTestCase
   driven_by :rack_test
 
   def setup
-    email, password = ["email@example.com", "password"]
-    @account = ::Aikotoba::Account.build_by(attributes: {email: email, password: password})
+    email, @password = ["email@example.com", "password"]
+    @account = ::Aikotoba::Account.build_by(attributes: {email: email, password: @password})
     @account.save
   end
 
   test "sign_in by helper" do
-    aikotoba_sign_in(@account)
+    aikotoba_sign_in(@account, password: @password)
     visit "/sensitives"
     assert_selector "h1", text: "Sensitive Page"
     click_on "Sign out"
@@ -654,7 +654,7 @@ class HelperTest < ActionDispatch::SystemTestCase
   end
 
   test "sign_out by helper" do
-    aikotoba_sign_in(@account)
+    aikotoba_sign_in(@account, password: @password)
     visit "/sensitives"
     aikotoba_sign_out
     visit "/sensitives"
