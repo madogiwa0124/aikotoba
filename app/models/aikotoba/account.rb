@@ -87,8 +87,9 @@ module Aikotoba
         #       knowledge, only relocate it, so this is left as the accepted minimal seam.
         def build_by(attributes:)
           attrs = attributes.to_h.symbolize_keys
+          has_password = attrs.key?(:password)
           password = attrs.delete(:password)
-          new(attrs).tap { |account| account.build_password(value: password) if password }
+          new(attrs).tap { |account| account.build_password(value: password) if has_password }
         end
 
         def create_by!(attributes:)

@@ -70,6 +70,16 @@ class Aikotoba::AccountTest < ActiveSupport::TestCase
       assert account.persisted?
       assert_nil account.password
     end
+
+    test "build_by still validates password when the key is explicitly nil, unlike an omitted key" do
+      # NOTE: an omitted :password key is the intentional passwordless path above, but an
+      #       explicit password: nil (e.g. a JSON API client sending "password": null) must
+      #       not be silently treated the same way — it should surface a validation error.
+      account = Aikotoba::Account.build_by(attributes: {email: "user@example.com", password: nil})
+      assert_not_nil account.password
+      assert_raises(ActiveRecord::RecordInvalid) { account.register! }
+      assert_includes account.errors.full_messages, "Password can't be blank"
+    end
   end
 
   class Authenticatable < ActiveSupport::TestCase

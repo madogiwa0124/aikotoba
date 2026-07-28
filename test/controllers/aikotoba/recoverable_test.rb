@@ -99,7 +99,7 @@ class Aikotoba::RecoverableTest < ActionDispatch::IntegrationTest
     assert_includes messages, "Password is too short (minimum is 8 characters)"
   end
 
-  test "faild PATCH update_account_password_path when account has no password" do
+  test "failed PATCH update_account_password_path when account has no password" do
     passwordless = ::Aikotoba::Account.create_by!(attributes: {email: "no-password@example.com"})
     passwordless.build_recovery_token.save!
     patch aikotoba.update_account_password_path(token: passwordless.recovery_token.token, account: {password: "NewPassword1!"})
