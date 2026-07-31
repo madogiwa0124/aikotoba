@@ -99,7 +99,7 @@ class Aikotoba::RecoverableTest < ActionDispatch::IntegrationTest
     assert_includes messages, "Password is too short (minimum is 8 characters)"
   end
 
-  test "faild PATCH update_account_password_path by blank password does not duplicate messages" do
+  test "failed PATCH update_account_password_path by blank password does not duplicate messages" do
     # NOTE: regression guard for PasswordHash previously also validating :digest presence
     #       independently of :plaintext, which doubled up "Password can't be blank" for a
     #       blank new_password.
