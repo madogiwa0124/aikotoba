@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_02_23_000100) do
+ActiveRecord::Schema[8.1].define(version: 2021_12_04_121532) do
   create_table "admins", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.string "nickname"
@@ -52,7 +52,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_02_23_000100) do
     t.string "token", null: false
     t.datetime "updated_at", null: false
     t.index ["aikotoba_account_session_id"], name: "idx_aikotoba_refresh_tokens_on_session_id", unique: true
-    t.index ["expired_at"], name: "index_aikotoba_account_refresh_tokens_on_expired_at"
     t.index ["token"], name: "index_aikotoba_account_refresh_tokens_on_token", unique: true
   end
 
