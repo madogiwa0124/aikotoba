@@ -29,10 +29,16 @@ module Aikotoba
     end
 
     def update
-      account = authenticate_account!(params[:token])
-      before_sign_in_process
-      aikotoba_sign_in(account)
-      after_sign_in_process
+      # NOTE: Sign-in is done using a URL token (a GET request), so both consuming the
+      #       token and establishing the session are done in the writing role -- unlike
+      #       Confirm/Unlock, which only flip a boolean flag, this also creates an
+      #       Account::Session record via aikotoba_sign_in.
+      ActiveRecord::Base.connected_to(role: :writing) do
+        account = authenticate_account!(params[:token])
+        before_sign_in_process
+        aikotoba_sign_in(account)
+        after_sign_in_process
+      end
       redirect_to after_sign_in_path, flash: {notice: successed_message}
     end
 
