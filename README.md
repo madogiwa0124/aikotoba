@@ -103,7 +103,7 @@ Register an account using email and password.
 | GET       | /sign_up | Display sign up page. |
 | POST      | /sign_up | Create an account.    |
 
-The password is stored as a hash in [Argon2](https://github.com/technion/ruby-argon2).
+The password is stored as a hash in [Argon2](https://github.com/technion/ruby-argon2), in a separate `Aikotoba::Account::PasswordHash` record (table `aikotoba_account_password_hashes`) rather than on `Aikotoba::Account` itself, so `Account` does not depend on password-based authentication.
 
 ### Confirmable
 
@@ -522,9 +522,15 @@ All Messages are managed by `i18n` and can be freely overridden.
 By running the following script, you can hash and store passwords.
 
 ```ruby
-Aikotoba::Account.create!(email: "sample@example.com", password: "password")
-Aikotoba::Account.authenticate_by(attributes: {email: "sample@example.com", password: "password"})
+Aikotoba::Account.create_by!(attributes: {email: "sample@example.com", password: "password"})
+Aikotoba::Account::PasswordHash.authenticate_by(attributes: {email: "sample@example.com", password: "password"})
 # => created account instance.
+```
+
+To update an existing account's email and/or password together in one validated save, use `#update_by!` (or the non-bang `#update_by`), the update-side counterpart to `.create_by!`/`.build_by`:
+
+```ruby
+account.update_by!(attributes: {email: "new@example.com", password: "new_password"})
 ```
 
 ### Create other model with `Aikotoba::Account`.
@@ -640,13 +646,13 @@ class HelperTest < ActionDispatch::SystemTestCase
   driven_by :rack_test
 
   def setup
-    email, password = ["email@example.com", "password"]
-    @account = ::Aikotoba::Account.build_by(attributes: {email: email, password: password})
+    email, @password = ["email@example.com", "password"]
+    @account = ::Aikotoba::Account.build_by(attributes: {email: email, password: @password})
     @account.save
   end
 
   test "sign_in by helper" do
-    aikotoba_sign_in(@account)
+    aikotoba_sign_in(@account, password: @password)
     visit "/sensitives"
     assert_selector "h1", text: "Sensitive Page"
     click_on "Sign out"
@@ -654,7 +660,7 @@ class HelperTest < ActionDispatch::SystemTestCase
   end
 
   test "sign_out by helper" do
-    aikotoba_sign_in(@account)
+    aikotoba_sign_in(@account, password: @password)
     visit "/sensitives"
     aikotoba_sign_out
     visit "/sensitives"

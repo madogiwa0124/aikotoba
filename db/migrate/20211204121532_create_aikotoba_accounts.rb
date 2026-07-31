@@ -3,10 +3,20 @@ class CreateAikotobaAccounts < ActiveRecord::Migration[6.1]
     create_table :aikotoba_accounts do |t|
       t.belongs_to :authenticate_target, polymorphic: true, index: {unique: true}
       t.string :email, null: false, index: {unique: true}
-      t.string :password_digest, null: false
       t.boolean :confirmed, null: false, default: false
       t.integer :failed_attempts, null: false, default: 0
       t.boolean :locked, null: false, default: false
+
+      t.timestamps
+    end
+
+    create_table :aikotoba_account_password_hashes do |t|
+      t.belongs_to(
+        :aikotoba_account,
+        null: false, foreign_key: true,
+        index: {unique: true, name: "index_account_password_hashes_on_account_id"}
+      )
+      t.string :digest, null: false
 
       t.timestamps
     end

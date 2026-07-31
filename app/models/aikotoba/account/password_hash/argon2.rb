@@ -3,7 +3,7 @@
 require "argon2"
 
 module Aikotoba
-  class Account::Password::Argon2
+  class Account::PasswordHash::Argon2
     def initialize(password:)
       @password = password
     end

@@ -3,13 +3,13 @@ require "test_helper"
 class Aikotoba::Account::SessionTest < ActiveSupport::TestCase
   class Initialization < ActiveSupport::TestCase
     def setup
-      @account = Aikotoba::Account.create!(
+      @account = Aikotoba::Account.create_by!(attributes: {
         email: "user@example.com",
         password: "Password1!",
         confirmed: true,
         locked: false,
         failed_attempts: 0
-      )
+      })
     end
 
     test "after_initialize sets token and expired_at" do
@@ -29,13 +29,13 @@ class Aikotoba::Account::SessionTest < ActiveSupport::TestCase
 
   class Scopes < ActiveSupport::TestCase
     def setup
-      @account = Aikotoba::Account.create!(
+      @account = Aikotoba::Account.create_by!(attributes: {
         email: "user@example.com",
         password: "Password1!",
         confirmed: true,
         locked: false,
         failed_attempts: 0
-      )
+      })
     end
 
     test "active scope returns non-expired sessions" do
@@ -49,11 +49,11 @@ class Aikotoba::Account::SessionTest < ActiveSupport::TestCase
 
     test "authenticatable scope filters via account confirmed/unlocked" do
       Aikotoba.confirmable = true
-      unconfirmed = Aikotoba::Account.create!(
+      unconfirmed = Aikotoba::Account.create_by!(attributes: {
         email: "locked@example.com",
         password: "Password1!",
         confirmed: false
-      )
+      })
       Aikotoba::Account::Session.create!(account: unconfirmed)
       s1 = Aikotoba::Account::Session.create!(account: @account)
 
@@ -65,13 +65,13 @@ class Aikotoba::Account::SessionTest < ActiveSupport::TestCase
   end
 
   def setup
-    @account = Aikotoba::Account.create!(
+    @account = Aikotoba::Account.create_by!(attributes: {
       email: "user@example.com",
       password: "Password1!",
       confirmed: true,
       locked: false,
       failed_attempts: 0
-    )
+    })
   end
 
   test "revoke! destroys the session" do
@@ -145,11 +145,11 @@ class Aikotoba::Account::SessionTest < ActiveSupport::TestCase
     assert_nil Aikotoba::Account::Session.find_by_token(expired.token)
 
     # NOTE: Session for unconfirmed account is not returned.
-    unconfirmed_account = Aikotoba::Account.create!(
+    unconfirmed_account = Aikotoba::Account.create_by!(attributes: {
       email: "unconfirmed@example.com",
       password: "Password1!",
       confirmed: false
-    )
+    })
     unconfirmed_session = Aikotoba::Account::Session.create!(account: unconfirmed_account)
     assert_nil Aikotoba::Account::Session.find_by_token(unconfirmed_session.token)
     Aikotoba.confirmable = false

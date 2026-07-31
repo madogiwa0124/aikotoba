@@ -1,5 +1,53 @@
 # CHANGELOG
 
+## Unreleased
+
+- Move password storage off `Aikotoba::Account` entirely into a new `Aikotoba::Account::PasswordHash` model/table (`aikotoba_account_password_hashes`, association `account.password_hash`), so `Account` no longer depends on password-based authentication. `Account#password`/`#password=`/`#password_digest`/`#authenticate`/`#authenticate_by`/`#recover!` no longer exist; `account.password_hash` exposes no plaintext reader either — only `account.password_hash&.digest` (the stored hash) is public, and there is no `#value`/`#plaintext` getter, only `#generate(input)` to (re)compute it.
+
+  **Breaking schema change** — this gem edits its canonical migration in place rather than shipping incremental migrations, so re-running `bin/rails aikotoba:install:migrations` will *not* pick up this change for existing installs. Add a migration by hand:
+
+  ```ruby
+  class MigratePasswordDigestToAikotobaAccountPasswordHashes < ActiveRecord::Migration[7.0]
+    def up
+      create_table :aikotoba_account_password_hashes do |t|
+        t.belongs_to :aikotoba_account, null: false, foreign_key: true, index: {unique: true, name: "index_account_password_hashes_on_account_id"}
+        t.string :digest, null: false
+        t.timestamps
+      end
+
+      execute <<~SQL
+        INSERT INTO aikotoba_account_password_hashes (aikotoba_account_id, digest, created_at, updated_at)
+        SELECT id, password_digest, created_at, updated_at FROM aikotoba_accounts
+      SQL
+
+      remove_column :aikotoba_accounts, :password_digest
+    end
+
+    def down
+      add_column :aikotoba_accounts, :password_digest, :string
+      execute <<~SQL
+        UPDATE aikotoba_accounts
+        SET password_digest = aikotoba_account_password_hashes.digest
+        FROM aikotoba_account_password_hashes
+        WHERE aikotoba_account_password_hashes.aikotoba_account_id = aikotoba_accounts.id
+      SQL
+      change_column_null :aikotoba_accounts, :password_digest, false
+      drop_table :aikotoba_account_password_hashes
+    end
+  end
+  ```
+
+  (The `down` step's `UPDATE ... FROM` syntax is PostgreSQL; adjust for MySQL/SQLite if needed.)
+
+  The `down` step's `change_column_null` will fail if any account was created without a
+  password (e.g. via `Account.build_by(attributes: {email:})`, which this release
+  intentionally allows at the model layer). If you may have such accounts, back them out
+  or give them a password before rolling back.
+
+- `Account.build_by(attributes:)`/`.create_by!(attributes:)` (create) and the new `#update_by(attributes:)`/`#update_by!(attributes:)` (update) all accept a flat `:password` key and translate it into the `password_hash` association, so the `account[password]` form/params contract is unchanged and neither creating nor updating an account's password requires knowing `password_hash`/`#generate` directly. `account.update!(password: ...)`/`Account.create!(email:, password:, ...)` don't work — `Account` has no `password=` for mass-assignment to land on.
+- `Account::PasswordHash.authenticate_by` is constant-time with respect to account/password state for any non-blank password: an account that doesn't exist and an account that exists but has no password both cost the same as a real failed-password attempt, so neither is distinguishable from the other by response time. A blank password is handled separately and returns instantly without hashing — safe, since the caller already knows their own input was blank, so its speed reveals nothing about the account.
+- `Aikotoba::Test::AuthenticationHelper#aikotoba_sign_in` (both `Request` and `System` variants) now requires an explicit `password:` keyword argument instead of reading it off the account — `aikotoba_sign_in(account, password: "the-plaintext-password")`.
+
 ## :gift: 2026/02/25 `v0.2.0` released.
 
 - Add multi-scope support

@@ -14,8 +14,6 @@ module Aikotoba
     attribute :max_failed_attempts, :integer, default: -> { Aikotoba.max_failed_attempts }
 
     validates :email, presence: true, uniqueness: {case_sensitive: false}, format: EMAIL_REGEXP, length: {maximum: EMAIL_MAXIMUM_LENGTH}
-    validates :password, presence: true, length: {in: Password::LENGTH_RANGE}, on: [:create, :recover]
-    validates :password_digest, presence: true
     validates :confirmed, inclusion: [true, false]
     validates :failed_attempts, presence: true, numericality: {only_integer: true, greater_than_or_equal_to: 0}
     validates :max_failed_attempts, numericality: {only_integer: true, greater_than: 0}
@@ -33,14 +31,6 @@ module Aikotoba
         target_type_name = authenticate_target_type.gsub("::", "").underscore
         define_singleton_method(target_type_name) { authenticate_target }
       end
-    end
-
-    attr_reader :password
-
-    def password=(value)
-      new_password = Password.new(value: value)
-      @password = new_password.value
-      assign_attributes(password_digest: new_password.digest)
     end
 
     concerning :Authenticatable do
@@ -62,39 +52,9 @@ module Aikotoba
       end
 
       class_methods do
-        def authenticate_by(attributes:, target_type_name: nil)
-          email, password = attributes.values_at(:email, :password)
-          account = find_by_identifier(email, target_type_name: target_type_name)
-          return prevent_timing_atack(email, password) unless account
-
-          account.authenticate(password).tap do |result|
-            ActiveRecord::Base.transaction do
-              if result
-                account.authentication_success!
-              else
-                account.authentication_failed!
-                Lock.lock!(account: account, notify: true) if lockable? && account.should_lock?
-              end
-            end
-          end
-        end
-
-        private
-
         def find_by_identifier(email, target_type_name: nil)
           authenticatable(target_type_name: target_type_name).find_by(email: email)
         end
-
-        # NOTE: Verify passwords even when accounts are not found to prevent timing attacks.
-        def prevent_timing_atack(email, password)
-          account = build_by(attributes: {email: email, password: password})
-          account.password_match?(password)
-          nil
-        end
-      end
-
-      def authenticate(input_password)
-        password_match?(input_password) ? self : nil
       end
 
       def authentication_failed!
@@ -104,18 +64,57 @@ module Aikotoba
       def authentication_success!
         update!(failed_attempts: 0)
       end
+    end
 
-      def password_match?(input_password)
-        Password.new(value: input_password).match?(digest: password_digest)
+    concerning :PasswordAuthenticatable do
+      included do
+        has_one :password_hash,
+          class_name: "Aikotoba::Account::PasswordHash",
+          dependent: :destroy,
+          foreign_key: "aikotoba_account_id",
+          autosave: true,
+          inverse_of: :account
       end
     end
 
     concerning :Registrable do
       class_methods do
+        # NOTE: This is one of the two places (see #update_by below) Account is allowed
+        #       to know :password is a valid registration attribute (unlike the removed
+        #       password/password=/password_digest delegators, which made Account speak
+        #       password as its own API). It exists so callers can keep submitting a flat
+        #       account[password] param instead of Rails' nested_attributes shape.
+        #       Extracting a Registration class wouldn't remove this knowledge, only
+        #       relocate it, so this is left as the accepted minimal seam.
         def build_by(attributes:)
-          email, password = attributes.values_at(:email, :password)
-          new(email: email).tap { |account| account.password = password }
+          attrs = attributes.to_h.symbolize_keys
+          has_password = attrs.key?(:password)
+          password = attrs.delete(:password)
+          new(attrs).tap { |account| account.build_password_hash.generate(password) if has_password }
         end
+
+        def create_by!(attributes:)
+          build_by(attributes: attributes).tap(&:save!)
+        end
+      end
+
+      # NOTE: The update-side counterpart to .build_by -- without it, updating an
+      #       existing account's password (e.g. alongside other attribute changes, in one
+      #       validated save) requires knowing password_hash is the association name and
+      #       that generate/build_password_hash is how to write to it. `account.update!
+      #       (password: ...)` can't work here the same way `Account.new(password: ...)`
+      #       can't: Account has no password= for mass-assignment to land on.
+      def update_by(attributes:)
+        attrs = attributes.to_h.symbolize_keys
+        has_password = attrs.key?(:password)
+        password = attrs.delete(:password)
+        assign_attributes(attrs)
+        (password_hash || build_password_hash).generate(password) if has_password
+        self
+      end
+
+      def update_by!(attributes:)
+        update_by(attributes: attributes).tap(&:save!)
       end
 
       def register!
@@ -167,11 +166,6 @@ module Aikotoba
         has_one :recovery_token,
           dependent: :destroy,
           foreign_key: "aikotoba_account_id"
-      end
-
-      def recover!(new_password:)
-        self.password = new_password
-        save!(context: :recover)
       end
     end
   end

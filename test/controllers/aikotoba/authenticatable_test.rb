@@ -6,8 +6,8 @@ class Aikotoba::AuthenticatableTest < ActionDispatch::IntegrationTest
   def setup
     ActionController::Base.allow_forgery_protection = false
     Aikotoba.confirmable = false
-    email, password = ["email@example.com", "password"]
-    @account = ::Aikotoba::Account.build_by(attributes: {email: email, password: password})
+    @password = "password"
+    @account = ::Aikotoba::Account.build_by(attributes: {email: "email@example.com", password: @password})
     @account.save!
   end
 
@@ -18,14 +18,14 @@ class Aikotoba::AuthenticatableTest < ActionDispatch::IntegrationTest
   end
 
   test "If GET new_session_path while logged in, it will be redirect to after_sign_in_path" do
-    post aikotoba.new_session_path, params: {account: {email: @account.email, password: @account.password}}
+    post aikotoba.new_session_path, params: {account: {email: @account.email, password: @password}}
     assert_redirected_to Aikotoba.default_scope[:after_sign_in_path]
     get aikotoba.new_session_path
     assert_redirected_to Aikotoba.default_scope[:after_sign_in_path]
   end
 
   test "success POST new_session_path" do
-    post aikotoba.new_session_path, params: {account: {email: @account.email, password: @account.password}}
+    post aikotoba.new_session_path, params: {account: {email: @account.email, password: @password}}
     assert_redirected_to Aikotoba.default_scope[:after_sign_in_path]
     assert_equal I18n.t(".aikotoba.messages.authentication.success"), flash[:notice]
   end
@@ -37,7 +37,7 @@ class Aikotoba::AuthenticatableTest < ActionDispatch::IntegrationTest
   end
 
   test "success DELETE destroy_session_path" do
-    post aikotoba.new_session_path, params: {account: {email: @account.email, password: @account.password}}
+    post aikotoba.new_session_path, params: {account: {email: @account.email, password: @password}}
     assert cookies[Aikotoba.default_scope[:session_key]].present?
     delete aikotoba.destroy_session_path
     assert cookies[Aikotoba.default_scope[:session_key]].blank?
@@ -47,7 +47,7 @@ class Aikotoba::AuthenticatableTest < ActionDispatch::IntegrationTest
   test "If the unauthenticaticatable after login, cannot access the login required page." do
     Aikotoba.confirmable = true
     @account.update!(confirmed: true)
-    post aikotoba.new_session_path, params: {account: {email: @account.email, password: @account.password}}
+    post aikotoba.new_session_path, params: {account: {email: @account.email, password: @password}}
     assert_redirected_to Aikotoba.default_scope[:after_sign_in_path]
     assert_equal I18n.t(".aikotoba.messages.authentication.success"), flash[:notice]
     @account.update!(confirmed: false)
@@ -82,7 +82,7 @@ class Aikotoba::AuthenticatableTest < ActionDispatch::IntegrationTest
   end
 
   test "If remove session record directly, the session is terminated on the next request." do
-    post aikotoba.new_session_path, params: {account: {email: @account.email, password: @account.password}}
+    post aikotoba.new_session_path, params: {account: {email: @account.email, password: @password}}
     assert_redirected_to Aikotoba.default_scope[:after_sign_in_path]
     # NOTE: Rebuild the cookies jar to read signed cookies.
     cookiejar = ActionDispatch::Cookies::CookieJar.build(request, cookies.to_hash)

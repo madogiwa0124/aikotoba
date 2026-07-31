@@ -5,7 +5,7 @@ class NavigationTest < ActionDispatch::SystemTestCase
 
   # Default namespace tests
   test "[default] create Aikotoba::Account -> sign_in -> sign_out" do
-    Aikotoba::Account.create!(email: "default1@example.com", password: "password")
+    Aikotoba::Account.create_by!(attributes: {email: "default1@example.com", password: "password"})
     visit "/sign_in"
     fill_in "Email", with: "default1@example.com"
     fill_in "Password", with: "password"
@@ -32,7 +32,7 @@ class NavigationTest < ActionDispatch::SystemTestCase
 
   test "[default] (Confirmable) sign_up -> generate confirm token -> confirm -> sign_in -> sign_out" do
     Aikotoba.confirmable = true
-    Aikotoba::Account.create!(email: "default3@example.com", password: "password")
+    Aikotoba::Account.create_by!(attributes: {email: "default3@example.com", password: "password"})
     visit "/sign_in"
     fill_in "Email", with: "default3@example.com"
     fill_in "Password", with: "password"
@@ -58,7 +58,7 @@ class NavigationTest < ActionDispatch::SystemTestCase
 
   test "[default] (Lockable) sign_up -> sign_in -> locked -> generate unlock token -> unlock -> sign_in -> sign_out" do
     Aikotoba.lockable = true
-    Aikotoba::Account.create!(email: "default4@example.com", password: "password")
+    Aikotoba::Account.create_by!(attributes: {email: "default4@example.com", password: "password"})
     visit "/sign_in"
     11.times do
       fill_in "Email", with: "default4@example.com"
@@ -89,7 +89,7 @@ class NavigationTest < ActionDispatch::SystemTestCase
 
   test "[default] (Recoverable) sign_up -> sign_in -> generate recover token -> password reset -> sign_in -> sign_out" do
     Aikotoba.recoverable = true
-    Aikotoba::Account.create!(email: "default5@example.com", password: "password")
+    Aikotoba::Account.create_by!(attributes: {email: "default5@example.com", password: "password"})
     visit "/sign_in"
     click_on "Send password reset token"
     assert_equal current_path, "/recover"
@@ -183,7 +183,7 @@ class NavigationTest < ActionDispatch::SystemTestCase
   # Admin namespace tests
   test "[admin] create Aikotoba::Account -> sign_in -> sign_out" do
     admin = Admin.create(nickname: "admin_foo")
-    Aikotoba::Account.create!(email: "admin1@example.com", password: "password", authenticate_target: admin)
+    Aikotoba::Account.create_by!(attributes: {email: "admin1@example.com", password: "password", authenticate_target: admin})
     visit "/admin/sign_in"
     fill_in "Email", with: "admin1@example.com"
     fill_in "Password", with: "password"
@@ -211,7 +211,7 @@ class NavigationTest < ActionDispatch::SystemTestCase
   test "[admin] (Confirmable) sign_up -> generate confirm token -> confirm -> sign_in -> sign_out" do
     Aikotoba.confirmable = true
     admin = Admin.create(nickname: "admin_foo")
-    Aikotoba::Account.create!(email: "admin3@example.com", password: "password", authenticate_target: admin)
+    Aikotoba::Account.create_by!(attributes: {email: "admin3@example.com", password: "password", authenticate_target: admin})
     visit "/admin/sign_in"
     fill_in "Email", with: "admin3@example.com"
     fill_in "Password", with: "password"
@@ -238,7 +238,7 @@ class NavigationTest < ActionDispatch::SystemTestCase
   test "[admin] (Lockable) sign_up -> sign_in -> locked -> generate unlock token -> unlock -> sign_in -> sign_out" do
     Aikotoba.lockable = true
     admin = Admin.create(nickname: "admin_foo")
-    Aikotoba::Account.create!(email: "admin4@example.com", password: "password", authenticate_target: admin)
+    Aikotoba::Account.create_by!(attributes: {email: "admin4@example.com", password: "password", authenticate_target: admin})
     visit "/admin/sign_in"
     11.times do
       fill_in "Email", with: "admin4@example.com"
@@ -270,7 +270,7 @@ class NavigationTest < ActionDispatch::SystemTestCase
   test "[admin] (Recoverable) sign_up -> sign_in -> generate recover token -> password reset -> sign_in -> sign_out" do
     Aikotoba.recoverable = true
     admin = Admin.create(nickname: "admin_foo")
-    Aikotoba::Account.create!(email: "admin5@example.com", password: "password", authenticate_target: admin)
+    Aikotoba::Account.create_by!(attributes: {email: "admin5@example.com", password: "password", authenticate_target: admin})
     visit "/admin/sign_in"
     click_on "Send password reset token"
     assert_equal current_path, "/admin/recover"
@@ -368,9 +368,9 @@ class NavigationTest < ActionDispatch::SystemTestCase
   # Test namespace isolation - ensure default and admin sessions are separate
   test "namespace isolation: default and admin sessions are separate" do
     # Create accounts for both namespaces
-    Aikotoba::Account.create!(email: "isolation_default@example.com", password: "password")
+    Aikotoba::Account.create_by!(attributes: {email: "isolation_default@example.com", password: "password"})
     admin = Admin.create(nickname: "admin_foo")
-    Aikotoba::Account.create!(email: "isolation_admin@example.com", password: "password", authenticate_target: admin)
+    Aikotoba::Account.create_by!(attributes: {email: "isolation_admin@example.com", password: "password", authenticate_target: admin})
 
     # Sign in to default namespace
     visit "/sign_in"
@@ -411,9 +411,9 @@ class NavigationTest < ActionDispatch::SystemTestCase
 
   test "namespace isolation: signed out from one namespace does only sign out that namespace" do
     # Create accounts for both namespaces
-    Aikotoba::Account.create!(email: "isolation_default@example.com", password: "password")
+    Aikotoba::Account.create_by!(attributes: {email: "isolation_default@example.com", password: "password"})
     admin = Admin.create(nickname: "admin_foo")
-    Aikotoba::Account.create!(email: "isolation_admin@example.com", password: "password", authenticate_target: admin)
+    Aikotoba::Account.create_by!(attributes: {email: "isolation_admin@example.com", password: "password", authenticate_target: admin})
     # Sign in to default namespace
     visit "/sign_in"
     fill_in "Email", with: "isolation_default@example.com"
