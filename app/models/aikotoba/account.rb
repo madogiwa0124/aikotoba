@@ -87,27 +87,34 @@ module Aikotoba
         #       Extracting a Registration class wouldn't remove this knowledge, only
         #       relocate it, so this is left as the accepted minimal seam.
         def build_by(attributes:)
-          attrs = attributes.to_h.symbolize_keys
-          has_password = attrs.key?(:password)
-          password = attrs.delete(:password)
+          attrs, has_password, password = extract_password_attribute(attributes)
           new(attrs).tap { |account| account.build_password_hash.generate(password) if has_password }
         end
 
         def create_by!(attributes:)
           build_by(attributes: attributes).tap(&:save!)
         end
+
+        private
+
+        # NOTE: Shared by .build_by and #update_by so the :password-key-splitting
+        #       logic exists exactly once. has_password is returned separately from
+        #       password because a present-but-nil password must still reach
+        #       PasswordHash#generate (so its presence validation can reject it),
+        #       while an absent :password key must build no password_hash at all.
+        def extract_password_attribute(attributes)
+          attrs = attributes.to_h.symbolize_keys
+          has_password = attrs.key?(:password)
+          password = attrs.delete(:password)
+          [attrs, has_password, password]
+        end
       end
 
-      # NOTE: The update-side counterpart to .build_by -- without it, updating an
-      #       existing account's password (e.g. alongside other attribute changes, in one
-      #       validated save) requires knowing password_hash is the association name and
-      #       that generate/build_password_hash is how to write to it. `account.update!
-      #       (password: ...)` can't work here the same way `Account.new(password: ...)`
-      #       can't: Account has no password= for mass-assignment to land on.
+      # NOTE: The update-side counterpart to .build_by above -- account.update!(password:)
+      #       can't work here any more than Account.new(password:) can, since Account has
+      #       no password= for mass-assignment to land on.
       def update_by(attributes:)
-        attrs = attributes.to_h.symbolize_keys
-        has_password = attrs.key?(:password)
-        password = attrs.delete(:password)
+        attrs, has_password, password = self.class.send(:extract_password_attribute, attributes)
         assign_attributes(attrs)
         (password_hash || build_password_hash).generate(password) if has_password
         self
