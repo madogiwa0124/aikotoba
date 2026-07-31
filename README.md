@@ -527,6 +527,12 @@ Aikotoba::Account::PasswordHash.authenticate_by(attributes: {email: "sample@exam
 # => created account instance.
 ```
 
+To update an existing account's email and/or password together in one validated save, use `#update_by!` (or the non-bang `#update_by`), the update-side counterpart to `.create_by!`/`.build_by`:
+
+```ruby
+account.update_by!(attributes: {email: "new@example.com", password: "new_password"})
+```
+
 ### Create other model with `Aikotoba::Account`.
 
 You can override `Aikotoba::AccountsController#after_create_account_process` to create the other models together.

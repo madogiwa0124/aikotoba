@@ -79,12 +79,13 @@ module Aikotoba
 
     concerning :Registrable do
       class_methods do
-        # NOTE: This is the one place Account is allowed to know :password is a valid
-        #       registration attribute (unlike the removed password/password=/password_digest
-        #       delegators, which made Account speak password as its own API). It exists so
-        #       callers can keep submitting a flat account[password] param instead of Rails'
-        #       nested_attributes shape. Extracting a Registration class wouldn't remove this
-        #       knowledge, only relocate it, so this is left as the accepted minimal seam.
+        # NOTE: This is one of the two places (see #update_by below) Account is allowed
+        #       to know :password is a valid registration attribute (unlike the removed
+        #       password/password=/password_digest delegators, which made Account speak
+        #       password as its own API). It exists so callers can keep submitting a flat
+        #       account[password] param instead of Rails' nested_attributes shape.
+        #       Extracting a Registration class wouldn't remove this knowledge, only
+        #       relocate it, so this is left as the accepted minimal seam.
         def build_by(attributes:)
           attrs = attributes.to_h.symbolize_keys
           has_password = attrs.key?(:password)
@@ -95,6 +96,25 @@ module Aikotoba
         def create_by!(attributes:)
           build_by(attributes: attributes).tap(&:save!)
         end
+      end
+
+      # NOTE: The update-side counterpart to .build_by -- without it, updating an
+      #       existing account's password (e.g. alongside other attribute changes, in one
+      #       validated save) requires knowing password_hash is the association name and
+      #       that generate/build_password_hash is how to write to it. `account.update!
+      #       (password: ...)` can't work here the same way `Account.new(password: ...)`
+      #       can't: Account has no password= for mass-assignment to land on.
+      def update_by(attributes:)
+        attrs = attributes.to_h.symbolize_keys
+        has_password = attrs.key?(:password)
+        password = attrs.delete(:password)
+        assign_attributes(attrs)
+        (password_hash || build_password_hash).generate(password) if has_password
+        self
+      end
+
+      def update_by!(attributes:)
+        update_by(attributes: attributes).tap(&:save!)
       end
 
       def register!

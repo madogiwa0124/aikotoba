@@ -12,7 +12,20 @@ module Aikotoba
     #       presence check would only ever fire alongside this one, never independently.
     #       The DB's `null: false` constraint still guards against `digest` ending up nil
     #       through some other path.
-    validates :plaintext, presence: true, length: {in: LENGTH_RANGE}, on: [:create, :recover]
+    #
+    # NOTE: Deliberately no `on:` restriction (used to be `on: [:create, :recover]`).
+    #       Nested has_one/belongs_to autosave validation uses the parent's context when
+    #       one is explicitly given (e.g. `save!(context: :recover)`), but otherwise
+    #       validates an already-persisted child under its own natural `:update` context
+    #       -- so a scoped `on:` here let `account.password_hash.generate("short");
+    #       account.save` silently skip this validation entirely for any *existing*
+    #       account (only `#recover!`'s explicit `context: :recover` caught it). Running
+    #       unconditionally closes that gap; it's still cheap, because Rails only
+    #       revalidates this record at all when it has pending changes to save (i.e. some
+    #       code actually called `generate`) or a custom context was passed -- an
+    #       untouched, already-persisted password_hash is never re-validated just because
+    #       the parent account is saved for an unrelated reason.
+    validates :plaintext, presence: true, length: {in: LENGTH_RANGE}
 
     def generate(input, pepper: Aikotoba.password_pepper, algorithm_class: Argon2)
       @plaintext = input

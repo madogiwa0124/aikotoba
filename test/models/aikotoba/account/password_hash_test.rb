@@ -10,6 +10,19 @@ class Aikotoba::Account::PasswordHashTest < ActiveSupport::TestCase
       assert password_hash.digest.present?
       refute_equal password_hash.digest, "Password1!"
     end
+
+    test "generate on an existing account still validates when saved through the parent" do
+      # NOTE: regression guard -- has_one autosave validates an already-persisted nested
+      #       record under its own natural :update context when the parent save doesn't
+      #       pass a custom context. The validation used to be scoped `on: [:create,
+      #       :recover]`, so this exact path (generate + plain account.save, not
+      #       #recover!) silently skipped it and persisted an invalid password.
+      account = Aikotoba::Account.create_by!(attributes: {email: "user@example.com", password: "Password1!"})
+      account.password_hash.generate("short")
+      refute account.save
+      assert_includes account.errors.full_messages, "Password is too short (minimum is 8 characters)"
+      refute account.reload.password_hash.match?("short")
+    end
   end
 
   class MatchHandling < ActiveSupport::TestCase

@@ -13,6 +13,22 @@ class Aikotoba::AccountTest < ActiveSupport::TestCase
       assert account.password_hash.digest.present?
     end
 
+    test "build_by passes authenticate_target through new(attrs) so after_initialize sees it" do
+      # NOTE: regression guard for a real footgun found while refactoring this: build_by
+      #       must construct via `new(attrs)` in one shot, not `new.tap { assign_attributes
+      #       (attrs) }`, because Account's after_initialize (which defines the dynamic
+      #       `account.admin`-style accessor from authenticate_target) already runs by the
+      #       time a bare `new` returns -- an authenticate_target assigned afterward is too
+      #       late for it to see, silently losing the accessor.
+      admin = Admin.create!(nickname: "admin_foo")
+      account = Aikotoba::Account.build_by(attributes: {
+        email: "admin@example.com",
+        authenticate_target: admin
+      })
+      assert account.respond_to?(:admin)
+      assert_equal admin, account.admin
+    end
+
     test "register! saves account" do
       account = Aikotoba::Account.build_by(attributes: {
         email: "user@example.com",
@@ -90,6 +106,47 @@ class Aikotoba::AccountTest < ActiveSupport::TestCase
       assert_raises(ActiveRecord::RecordInvalid) { account.register! }
       messages = account.errors.full_messages
       assert_equal ["Password can't be blank", "Password is too short (minimum is 8 characters)"], messages
+    end
+
+    test "update_by! updates other attributes and the password together in one save" do
+      account = Aikotoba::Account.create_by!(attributes: {email: "user@example.com", password: "Password1!"})
+      old_digest = account.password_hash.digest
+
+      account.update_by!(attributes: {email: "changed@example.com", password: "NewPassword1!"})
+
+      assert_equal "changed@example.com", account.reload.email
+      refute_equal old_digest, account.password_hash.digest
+      assert account.password_hash.match?("NewPassword1!")
+    end
+
+    test "update_by! validates the new password, rolling back with the rest of the save" do
+      account = Aikotoba::Account.create_by!(attributes: {email: "user@example.com", password: "Password1!"})
+
+      assert_raises(ActiveRecord::RecordInvalid) do
+        account.update_by!(attributes: {email: "changed@example.com", password: "short"})
+      end
+      assert_includes account.errors.full_messages, "Password is too short (minimum is 8 characters)"
+      account.reload
+      assert_equal "user@example.com", account.email
+      assert account.password_hash.match?("Password1!")
+    end
+
+    test "update_by! without a :password key leaves an existing password_hash untouched" do
+      account = Aikotoba::Account.create_by!(attributes: {email: "user@example.com", password: "Password1!"})
+      old_digest = account.password_hash.digest
+
+      account.update_by!(attributes: {email: "changed@example.com"})
+
+      assert_equal old_digest, account.reload.password_hash.digest
+    end
+
+    test "update_by! builds a password_hash for a previously passwordless account" do
+      account = Aikotoba::Account.create_by!(attributes: {email: "user@example.com"})
+      assert_nil account.password_hash
+
+      account.update_by!(attributes: {password: "Password1!"})
+
+      assert account.reload.password_hash.match?("Password1!")
     end
   end
 
