@@ -166,7 +166,7 @@ Aikotoba.magic_link_authenticatable = true
 Aikotoba enables a route to sign in via a one-time link sent by email —
 no password needed. This works for accounts that were never given a
 password at all (`Aikotoba::Account.create!(email: "sample@example.com")`),
-since password storage is owned entirely by `Aikotoba::Account::Password`
+since password storage is owned entirely by `Aikotoba::Account::PasswordHash`
 and `Account` itself has no password of its own. Signing in works exactly
 like `Authenticatable`, just entered by clicking the link instead of
 submitting the sign-in form.
