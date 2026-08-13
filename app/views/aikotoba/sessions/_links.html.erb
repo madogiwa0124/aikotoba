@@ -18,3 +18,8 @@
     <%= link_to I18n.t(".aikotoba.recoveries.new"), aikotoba_scoped_path(:new_recovery_token_path) %>
   </p>
 <% end %>
+<% if magic_link_authenticatable? %>
+  <p>
+    <%= link_to I18n.t(".aikotoba.magic_links.new"), aikotoba_scoped_path(:new_magic_link_path) %>
+  </p>
+<% end %>

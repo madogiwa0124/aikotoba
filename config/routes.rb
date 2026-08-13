@@ -4,6 +4,7 @@ require "aikotoba/constraints/registerable_constraint"
 require "aikotoba/constraints/confirmable_constraint"
 require "aikotoba/constraints/lockable_constraint"
 require "aikotoba/constraints/recoverable_constraint"
+require "aikotoba/constraints/magic_link_authenticatable_constraint"
 require "aikotoba/constraints/api_authenticatable_constraint"
 
 Aikotoba::Engine.routes.draw do
@@ -35,6 +36,12 @@ Aikotoba::Engine.routes.draw do
         post(config[:recover_path], to: "recoveries#create", as: :create_recovery_token)
         get(File.join(config[:recover_path], ":token"), to: "recoveries#edit", as: :edit_account_password)
         patch(File.join(config[:recover_path], ":token"), to: "recoveries#update", as: :update_account_password)
+      end
+
+      constraints(Aikotoba::MagicLinkAuthenticatableConstraint) do
+        get(config[:magic_link_path], to: "magic_links#new", as: :new_magic_link)
+        post(config[:magic_link_path], to: "magic_links#create", as: :create_magic_link)
+        get(File.join(config[:magic_link_path], ":token"), to: "magic_links#update", as: :authenticate_via_magic_link)
       end
 
       constraints(Aikotoba::ApiAuthenticatableConstraint) do

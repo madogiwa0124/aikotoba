@@ -22,6 +22,7 @@ Aikotoba is a Rails engine that makes it easy to implement simple email and pass
 - Confirmable(optional) : After registration, send an email with a token to confirm account.
 - Lockable(optional) : Lock account if make a mistake with password more than a certain number of times.
 - Recoverable(optional) : Recover account by resetting password.
+- MagicLinkAuthenticatable(optional) : (experimental) Authenticate account by clicking a one-time sign-in link sent by email, no password required.
 - API Token Authenticatable(optional) : (experimental) Authenticate account using Bearer token for API clients.
 
 [For more information](#features)
@@ -153,6 +154,28 @@ Aikotoba enables a route to recover an account by password reset.
 | POST      | /recover        | Create a recover token to account.                  |
 | GET       | /recover/:token | Display page for recover account by password reset. |
 | PATCH     | /recover/:token | Recover account by password reset.                  |
+
+### (Experimental) MagicLinkAuthenticatable
+
+To enable it, set `Aikotoba.magic_link_authenticatable` to `true`.
+
+```ruby
+Aikotoba.magic_link_authenticatable = true
+```
+
+Aikotoba enables a route to sign in via a one-time link sent by email —
+no password needed. This works for accounts that were never given a
+password at all (`Aikotoba::Account.create!(email: "sample@example.com")`),
+since password storage is owned entirely by `Aikotoba::Account::PasswordHash`
+and `Account` itself has no password of its own. Signing in works exactly
+like `Authenticatable`, just entered by clicking the link instead of
+submitting the sign-in form.
+
+| HTTP Verb | Path               | Overview                                       |
+| --------- | ------------------ | ----------------------------------------------- |
+| GET       | /magic_link        | Display page for requesting a sign in link.     |
+| POST      | /magic_link        | Send a one-time sign in link to the account.    |
+| GET       | /magic_link/:token | Verify the link and sign in.                    |
 
 ### (Experimental) API Token Authenticatable
 
@@ -360,6 +383,10 @@ Aikotoba.unlock_token_expiry = 1.day
 Aikotoba.recoverable = false
 Aikotoba.recovery_token_expiry = 4.hours
 
+# for (Experimental) MagicLinkAuthenticatable
+Aikotoba.magic_link_authenticatable = false
+Aikotoba.magic_link_token_expiry = 15.minutes
+
 # ============================================
 # Rate Limiting (Rails 8+ required)
 # ============================================
@@ -405,6 +432,14 @@ Aikotoba.recovery_rate_limit_options = {
   only: :create
 }
 
+# Limit magic link requests to 5 per hour, per email address
+Aikotoba.magic_link_rate_limit_options = {
+  to: 5,
+  within: 1.hour,
+  by: -> { request.params.dig(:account, :email).presence || request.remote_ip },
+  only: :create
+}
+
 # Rate limiting by IP address only (simpler, but less precise)
 # Aikotoba.confirmation_rate_limit_options = {
 #   to: 20,
@@ -429,6 +464,7 @@ Aikotoba.default_scope = {
   confirm_path: "/confirm",
   unlock_path: "/unlock",
   recover_path: "/recover",
+  magic_link_path: "/magic_link",
   after_sign_in_path: "/sensitives",
   after_sign_out_path: "/sign_in",
   api_sign_in_path: "/api/sessions",
