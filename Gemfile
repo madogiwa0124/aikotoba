@@ -16,7 +16,7 @@ group :development, :test do
   gem "sprockets-rails"
   gem "standard", require: false
   # TODO: Upgrade to minitest v6 when Rails' minitest v6 support stabilizes
-  gem "minitest", "~> 5.0"
+  gem "minitest", "~> 6.0"
 end
 
 group :test do
