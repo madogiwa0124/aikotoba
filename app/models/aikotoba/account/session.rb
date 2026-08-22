@@ -10,10 +10,35 @@ module Aikotoba
     enum :origin, {browser: "browser", api: "api"}, prefix: true
 
     belongs_to :account, class_name: "Aikotoba::Account", foreign_key: "aikotoba_account_id"
+    # NOTE: Not dependent: :destroy, for the reason spelled out in
+    #       OptionalAssociation: aikotoba_account_refresh_tokens is optional, and an
+    #       unconditional destroy callback queries it even when the host app never
+    #       migrated it.
+    #
+    #       This is deliberately *not* that concern's `optional_has_one :refresh_token`,
+    #       even though the macro works here and Account uses it for all four of its
+    #       token associations.
+    #       origin_api? is the exact mirror of the only place a refresh token is ever
+    #       created (start! below builds one iff the session is api-origin), which makes
+    #       it both cheaper and no less safe:
+    #
+    #       - Cheaper: a browser session issues zero queries against
+    #         aikotoba_account_refresh_tokens. The concern would load the association on
+    #         every sign-out just to find nothing, since it only skips when the table is
+    #         absent, not when the row cannot exist.
+    #       - No less safe: the concern's extra guard covers "an api session exists but
+    #         its table doesn't", which start! makes unreachable -- session and refresh
+    #         token are created in the same save, so no table means no api session
+    #         either. Account has no equivalent invariant (an account legitimately has
+    #         no token row), which is why it needs the table lookup and this doesn't.
+    #
+    #       Guarding on Aikotoba.api_authenticatable instead would be worse than both:
+    #       switching the flag off with api sessions still around strands their refresh
+    #       tokens and raises ActiveRecord::InvalidForeignKey on Session#destroy.
     has_one :refresh_token,
       class_name: "Aikotoba::Account::RefreshToken",
-      dependent: :destroy,
       foreign_key: "aikotoba_account_session_id"
+    before_destroy { refresh_token&.destroy if origin_api? }
 
     scope :authenticatable, ->(target_type_name: nil) {
       joins(:account).merge(Account.authenticatable(target_type_name: target_type_name))

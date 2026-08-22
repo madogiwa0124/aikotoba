@@ -61,6 +61,143 @@ job of the specific registration flow, not the generic model layer — e.g.
 A different auth method's registration controller would enforce its own
 credential's presence the same way, on its own terms.
 
+### Optional-feature schema: per-feature migrations and destroy-safety
+
+Confirmable/Lockable/Recoverable/MagicLinkAuthenticatable/API Token Authenticatable
+each own one table (`aikotoba_account_confirmation_tokens` /
+`_unlock_tokens` / `_recovery_tokens` / `_magic_link_tokens` /
+`_refresh_tokens`). Two related but separate conventions apply to them:
+
+**Migration layout**: everything stays in the single canonical
+[db/migrate/20211204121532_create_aikotoba_accounts.rb](../db/migrate/20211204121532_create_aikotoba_accounts.rb),
+edited in place per the [Developer Workflows](#developer-workflows) section
+below. The always-required tables (`aikotoba_accounts`,
+`aikotoba_account_password_hashes`, `aikotoba_account_sessions`) are live;
+each optional feature's `create_table` sits **commented out** below them,
+since every one of those features defaults to off. A host app uncomments the
+blocks it wants before `db:migrate`, or adds an equivalent migration of its
+own if it enables a feature later. When adding a new optional feature, add
+its table to that file commented out too — don't create a separate migration
+file, and don't leave it enabled by default.
+
+The dummy app can't uncomment a file it doesn't own, and its tests exercise
+every feature, so it creates the optional tables in its own
+[test/dummy/db/migrate/20260821000001_create_aikotoba_optional_tables.rb](../test/dummy/db/migrate/20260821000001_create_aikotoba_optional_tables.rb)
+(`test_helper.rb` puts both `test/dummy/db/migrate` and the engine's
+`db/migrate` on `ActiveRecord::Migrator.migrations_paths`). Keep it in sync
+when you change a commented-out block, or `test/dummy/db/schema.rb` will stop
+matching what the engine ships.
+
+**Destroy-safety**: `Account`'s optional `has_one` associations
+(`confirmation_token`, `unlock_token`, `recovery_token`, `magic_link_token`)
+and `Account::Session#refresh_token` are declared **without**
+`dependent: :destroy`. Each instead has a guarded `before_destroy`. This is
+deliberate, not an oversight — `dependent: :destroy` registers an
+*unconditional* Rails callback that queries the association's table on every
+parent destroy, which is exactly what raised `PG::UndefinedTable` for host
+apps that had a feature's flag off and therefore never migrated its table
+(e.g. `Web::Admin::AccountsController#destroy` failing on
+`aikotoba_account_magic_link_tokens`). Ruby's `if` short-circuits the
+right-hand side, so when the guard is false the association reader
+(`confirmation_token`) is never called and the table is never queried.
+
+The guard is **not** the feature flag. Gating on `confirmable?` and friends
+covers the "never enabled, never migrated" case but breaks the opposite one:
+a host app that used a feature and later switched its flag off still has rows
+in that table, and skipping the cleanup strands them, so `Account#destroy!`
+raises `ActiveRecord::InvalidForeignKey` (`PG::ForeignKeyViolation`) on the
+orphaned child — something `dependent: :destroy` handled fine. The guards
+therefore key off what actually determines whether there is anything to clean
+up:
+
+- `Account` declares each one with `optional_has_one :confirmation_token,
+  foreign_key: "aikotoba_account_id", dependent: :destroy`, the macro from
+  [app/models/concerns/aikotoba/optional_association.rb](../app/models/concerns/aikotoba/optional_association.rb).
+  It resolves the table name off the association's reflection (no hardcoded
+  strings) and gates on a `schema_cache.data_source_exists?` lookup: table
+  missing ⇒ nothing was ever written, skip without querying; table present ⇒
+  clean up, flag or no flag. Being schema-cached (negative results included)
+  it costs at most one query per process — and, like anything schema-cached,
+  a process that was already running when the migration was applied needs a
+  restart to see the new table.
+- `Account::Session` uses `origin_api?` instead, which is sharper: it is the
+  exact mirror of `Session.start!`'s `session.build_refresh_token if
+  session.origin_api?`, the only place a refresh token is ever created. A
+  browser session therefore never touches `aikotoba_account_refresh_tokens`
+  at all, and an api session always cleans its token up. Don't "simplify"
+  this to `Aikotoba.api_authenticatable` — that reintroduces the stranded-row
+  bug above, and refresh tokens live 30 days by default. Don't fold it into
+  `optional_has_one` either, for consistency's sake: the
+  macro only skips when the *table* is missing, so it would load the
+  association on every browser sign-out to find nothing, and the case it
+  additionally guards ("api session exists, its table doesn't") is
+  unreachable because `start!` creates both in the same save. `Account` has
+  no such invariant — an account legitimately has no token row — which is
+  exactly why it needs the table lookup and `Session` doesn't.
+
+`test/models/aikotoba/account_test.rb`'s `DestroyingOptionalTokens` class
+guards all three properties (cleanup happens, cleanup survives a flag being
+turned off, missing tables are never queried); the last one drops the tables
+inside a rolled-back transaction, which works because SQLite has
+transactional DDL.
+
+A scope-based alternative (`has_one :confirmation_token, -> { confirmable? ? all : none }, ...`)
+was tried and does **not** work, even though it looks like it should:
+Rails builds the association's implicit foreign-key `WHERE aikotoba_account_id = ?`
+clause *before* applying any custom scope (`AssociationScope#apply_scope` →
+`PredicateBuilder#build` → `type_for_attribute` → `load_schema!`), so it
+still needs the target table's `columns_hash` — and therefore the table
+itself — even when the scope would ultimately resolve to `.none`. Only a
+guard at the Ruby call-site (never invoking the association reader at all)
+avoids touching the table. Don't re-attempt the scope version.
+
+`dependent: :destroy` does **two** jobs, and dropping it costs both. The one
+we want to lose is the callback. The one we need to keep is
+`HasOneAssociation#remove_target!`, which reads `:dependent` out of the
+reflection's options to clear the previous record when a new one replaces it
+(triggered by `build_x_token` + `.save!`, not just by the association
+writer). Without it, `replace` falls back to nullifying the old row's foreign
+key and re-saving it, which fails the column's `NOT NULL` constraint and
+raises `ActiveRecord::RecordNotSaved`.
+
+So the caller writes `dependent: :destroy` as they would on any `has_one`, and
+`optional_has_one` splits it: withheld from `has_one` so no callback is
+registered, then set on the reflection afterwards so the runtime half still
+works.
+
+```ruby
+dependent = options.delete(:dependent)
+has_one(name, **options)
+reflect_on_association(name).options[:dependent] = dependent
+```
+
+Order matters; passing it to `has_one` registers the callback we are avoiding.
+Keeping `dependent:` at the call site rather than implying it is deliberate —
+the declaration should say what happens on destroy, exactly like a plain
+`has_one`. Only `:destroy` (or omitting it) is supported; anything else raises
+`ArgumentError`, because honouring `:nullify` and friends would mean forwarding
+them to `has_one` and getting the unconditional callback back, and silently
+ignoring them would be worse.
+
+The upshot is that `build_x_token` + `save!` behaves like a normal `has_one`
+again, so each owning class's `create_token!` (`Confirmation`, `Lock`,
+`Recovery`, `MagicLink`) stays plain Rails and there is no special
+`rebuild_`/`recreate_` verb to remember. Verified on both CI Rails versions
+(7.2 and 8.1); `Aikotoba::AccountTest::OptionalHasOne` plus the four
+"regenerated token" controller tests are what catch it if a future Rails stops
+honouring a post-declaration option.
+
+Note that `create_x_token!` (Rails' own generated method) does **not** work
+here, and never did — `SingularAssociation#_create_record` saves the new
+record *before* `set_new_record` replaces the old one, so it hits the unique
+index on the account FK. Use `build_x_token` + `save!`.
+
+Turning a flag **on** without migrating its table is still unsupported: that
+direction raises a real database error the first time the feature's code path
+runs, by design (see the migration-layout paragraph above and the README's
+Getting Start section). `Account#destroy!` is the one operation that stays
+safe either way.
+
 ## Controller Conventions
 
 - Base controller: All engine controllers inherit from [app/controllers/aikotoba/application_controller.rb](../app/controllers/aikotoba/application_controller.rb) which includes `EnabledFeatureCheckable` and `Scopable` and defines `aikotoba_controller?`.

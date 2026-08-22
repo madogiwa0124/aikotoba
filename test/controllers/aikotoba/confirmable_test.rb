@@ -11,7 +11,7 @@ class Aikotoba::ConfirmableTest < ActionDispatch::IntegrationTest
     @account = ::Aikotoba::Account.build_by(attributes: {email: "email@example.com", password: @password})
     @account.confirmed = false
     @account.save!
-    @account.build_confirmation_token.save!
+    Aikotoba::Account::Confirmation.create_token!(account: @account, notify: false)
   end
 
   def teardown
@@ -40,7 +40,6 @@ class Aikotoba::ConfirmableTest < ActionDispatch::IntegrationTest
   end
 
   test "regenerated token when success POST create_confirmation_token_path " do
-    @account.build_confirmation_token.save!
     @account.confirmation_token.update!(token: "before_token", expired_at: 1.day.ago)
     post aikotoba.create_confirmation_token_path, params: {account: {email: @account.email}}
     assert_redirected_to aikotoba.new_session_path

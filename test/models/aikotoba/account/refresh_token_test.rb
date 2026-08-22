@@ -4,6 +4,7 @@ require "test_helper"
 
 class Aikotoba::Account::RefreshTokenTest < ActiveSupport::TestCase
   def setup
+    Aikotoba.api_authenticatable = true
     @account = Aikotoba::Account.create_by!(attributes: {
       email: "user@example.com",
       password: "Password1!",
@@ -18,6 +19,10 @@ class Aikotoba::Account::RefreshTokenTest < ActiveSupport::TestCase
       user_agent: "MiniTest",
       expired_at: Aikotoba.api_access_token_expiry.since
     )
+  end
+
+  def teardown
+    Aikotoba.api_authenticatable = false
   end
 
   test "after_initialize sets token and expired_at" do
@@ -71,6 +76,7 @@ class Aikotoba::Account::RefreshTokenTest < ActiveSupport::TestCase
 
   class Refresh < ActiveSupport::TestCase
     def setup
+      Aikotoba.api_authenticatable = true
       @account = Aikotoba::Account.create_by!(attributes: {
         email: "user@example.com",
         password: "Password1!",
@@ -86,6 +92,10 @@ class Aikotoba::Account::RefreshTokenTest < ActiveSupport::TestCase
         expired_at: Aikotoba.api_access_token_expiry.since
       )
       @refresh_token_value = @session.refresh_token.token
+    end
+
+    def teardown
+      Aikotoba.api_authenticatable = false
     end
 
     test "refresh_session! returns nil for blank token" do
