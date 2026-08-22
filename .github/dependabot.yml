@@ -10,3 +10,6 @@ updates:
       all:
         patterns:
           - "*"
+    ignore:
+      - dependency-name: "minitest"
+        versions: ["6.x"]
