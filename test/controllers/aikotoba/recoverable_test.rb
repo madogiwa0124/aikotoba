@@ -38,7 +38,7 @@ class Aikotoba::RecoverableTest < ActionDispatch::IntegrationTest
   end
 
   test "regenerated token when success POST create_recovery_token_path " do
-    @account.build_recovery_token.save!
+    Aikotoba::Account::Recovery.create_token!(account: @account, notify: false)
     @account.recovery_token.update!(token: "before_token", expired_at: 1.day.ago)
     post aikotoba.create_recovery_token_path, params: {account: {email: @account.email}}
     @account.reload.recovery_token
@@ -56,21 +56,21 @@ class Aikotoba::RecoverableTest < ActionDispatch::IntegrationTest
   end
 
   test "success GET edit_account_password_path by active token" do
-    @account.build_recovery_token.save!
+    Aikotoba::Account::Recovery.create_token!(account: @account, notify: false)
     get aikotoba.edit_account_password_path(token: @account.recovery_token.token)
     assert_equal 200, status
     assert_select "h1", I18n.t(".aikotoba.recoveries.edit")
   end
 
   test "failed GET edit_account_password_path by expired token" do
-    @account.build_recovery_token.save!
+    Aikotoba::Account::Recovery.create_token!(account: @account, notify: false)
     @account.recovery_token.update!(expired_at: 1.hour.ago)
     get aikotoba.update_account_password_path(token: @account.recovery_token.token)
     assert_equal status, 404
   end
 
   test "failed GET edit_account_password_path by not found token" do
-    @account.build_recovery_token.save!
+    Aikotoba::Account::Recovery.create_token!(account: @account, notify: false)
     get aikotoba.edit_account_password_path(token: "not found token")
     assert_equal status, 404
   end
@@ -82,7 +82,7 @@ class Aikotoba::RecoverableTest < ActionDispatch::IntegrationTest
   end
 
   test "success PATCH update_account_password_path by valid password" do
-    @account.build_recovery_token.save!
+    Aikotoba::Account::Recovery.create_token!(account: @account, notify: false)
     patch aikotoba.update_account_password_path(token: @account.recovery_token.token, account: {password: "updated_password"})
     assert_redirected_to aikotoba.new_session_path
     assert_equal I18n.t(".aikotoba.messages.recovery.success"), flash[:notice]
@@ -92,7 +92,7 @@ class Aikotoba::RecoverableTest < ActionDispatch::IntegrationTest
   end
 
   test "faild PATCH update_account_password_path by invalid password" do
-    @account.build_recovery_token.save!
+    Aikotoba::Account::Recovery.create_token!(account: @account, notify: false)
     patch aikotoba.update_account_password_path(token: @account.recovery_token.token, account: {password: "short"})
     assert_equal I18n.t(".aikotoba.messages.recovery.failed"), flash[:alert]
     messages = @controller.instance_variable_get(:@account).errors.full_messages
@@ -103,7 +103,7 @@ class Aikotoba::RecoverableTest < ActionDispatch::IntegrationTest
     # NOTE: regression guard for PasswordHash previously also validating :digest presence
     #       independently of :plaintext, which doubled up "Password can't be blank" for a
     #       blank new_password.
-    @account.build_recovery_token.save!
+    Aikotoba::Account::Recovery.create_token!(account: @account, notify: false)
     patch aikotoba.update_account_password_path(token: @account.recovery_token.token, account: {password: ""})
     assert_equal I18n.t(".aikotoba.messages.recovery.failed"), flash[:alert]
     messages = @controller.instance_variable_get(:@account).errors.full_messages
@@ -112,7 +112,7 @@ class Aikotoba::RecoverableTest < ActionDispatch::IntegrationTest
 
   test "failed PATCH update_account_password_path when account has no password" do
     passwordless = ::Aikotoba::Account.create_by!(attributes: {email: "no-password@example.com"})
-    passwordless.build_recovery_token.save!
+    Aikotoba::Account::Recovery.create_token!(account: passwordless, notify: false)
     patch aikotoba.update_account_password_path(token: passwordless.recovery_token.token, account: {password: "NewPassword1!"})
     assert_equal I18n.t(".aikotoba.messages.recovery.failed"), flash[:alert]
     assert_equal status, 422
@@ -121,7 +121,7 @@ class Aikotoba::RecoverableTest < ActionDispatch::IntegrationTest
   end
 
   test "failed PATCH update_account_password_path by not found token" do
-    @account.build_recovery_token.save!
+    Aikotoba::Account::Recovery.create_token!(account: @account, notify: false)
     patch aikotoba.update_account_password_path(token: "not found token", account: {password: "password"})
     assert_equal 404, status
   end
@@ -134,7 +134,7 @@ class Aikotoba::RecoverableTest < ActionDispatch::IntegrationTest
 
   test "Recoverable path to 404 when Aikotoba.recoverable is false" do
     Aikotoba.recoverable = false
-    @account.build_recovery_token.save!
+    Aikotoba::Account::Recovery.create_token!(account: @account, notify: false)
     get aikotoba.new_recovery_token_path
     assert_equal 404, status
     get aikotoba.edit_account_password_path(token: @account.recovery_token.token)

@@ -6,7 +6,7 @@ class Aikotoba::Account::MagicLinkTest < ActiveSupport::TestCase
   class AuthenticateBy < ActiveSupport::TestCase
     def setup
       @account = Aikotoba::Account.create!(email: "user@example.com", confirmed: true, locked: false)
-      @account.build_magic_link_token.save!
+      Aikotoba::Account::MagicLink.create_token!(account: @account, notify: false)
     end
 
     test "account has no password" do
@@ -45,7 +45,7 @@ class Aikotoba::Account::MagicLinkTest < ActiveSupport::TestCase
     test "authenticate_by filters by target_type_name" do
       admin = Admin.create!(nickname: "admin_foo")
       admin_account = Aikotoba::Account.create!(email: "admin@example.com", authenticate_target: admin, confirmed: true)
-      admin_account.build_magic_link_token.save!
+      Aikotoba::Account::MagicLink.create_token!(account: admin_account, notify: false)
 
       account = Aikotoba::Account::MagicLink.authenticate_by(token: admin_account.magic_link_token.token, target_type_name: "Admin")
       assert_equal account, admin_account

@@ -45,6 +45,30 @@ Aikotoba use `Aikotoba::Account` for authentication. Add it to the migration for
 $ bin/rails aikotoba:install:migrations
 ```
 
+The copied migration creates the always-required tables (accounts / password hashes /
+sessions) and carries one **commented-out** block per optional feature: Confirmable,
+Lockable, Recoverable, MagicLinkAuthenticatable and API Token Authenticatable. All five
+default to off (see [Configuration](#configuration)), so nothing is created for them
+unless you ask for it. Uncomment the block for each feature you enable, then migrate:
+
+```sh
+$ bin/rails db:migrate
+```
+
+If you enable a feature *later*, after this migration has already run, uncommenting it is
+not enough -- add the same `create_table` in a new migration of your own instead.
+
+Either way, keeping "flag is on" and "its table exists" in sync is the host app's
+responsibility. If a feature's flag is on without its table, you'll hit real database
+errors (e.g. `PG::UndefinedTable`) the first time that feature's code path runs --
+Aikotoba does not, and cannot, guard against that direction.
+
+The reverse direction *is* safe: if a feature's table was never created, Aikotoba never
+queries it on `Account#destroy!` or session revocation, so it's fine for that table to
+not exist at all. Destroying accounts and revoking sessions also keeps working if you
+enable a feature, use it, and later turn its flag back off -- the leftover token rows are
+still cleaned up rather than left behind as orphans.
+
 Mount `Aikotoba::Engine` your application.
 
 ```ruby

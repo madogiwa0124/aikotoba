@@ -40,7 +40,7 @@ class Aikotoba::MagicLinkableTest < ActionDispatch::IntegrationTest
   end
 
   test "regenerated token when success POST create_magic_link_path" do
-    @account.build_magic_link_token.save!
+    Aikotoba::Account::MagicLink.create_token!(account: @account, notify: false)
     @account.magic_link_token.update!(token: "before_token", expired_at: 1.day.ago)
     post aikotoba.create_magic_link_path, params: {account: {email: @account.email}}
     assert_redirected_to aikotoba.new_session_path
@@ -60,7 +60,7 @@ class Aikotoba::MagicLinkableTest < ActionDispatch::IntegrationTest
   end
 
   test "success GET authenticate_via_magic_link_path by active token" do
-    @account.build_magic_link_token.save!
+    Aikotoba::Account::MagicLink.create_token!(account: @account, notify: false)
     get aikotoba.authenticate_via_magic_link_path(token: @account.magic_link_token.token)
     assert_redirected_to Aikotoba.default_scope[:after_sign_in_path]
     assert_equal I18n.t(".aikotoba.messages.authentication.success"), flash[:notice]
@@ -68,7 +68,7 @@ class Aikotoba::MagicLinkableTest < ActionDispatch::IntegrationTest
   end
 
   test "success GET authenticate_via_magic_link_path establishes a session" do
-    @account.build_magic_link_token.save!
+    Aikotoba::Account::MagicLink.create_token!(account: @account, notify: false)
     get aikotoba.authenticate_via_magic_link_path(token: @account.magic_link_token.token)
     get aikotoba.new_session_path
     assert_redirected_to Aikotoba.default_scope[:after_sign_in_path]
@@ -80,7 +80,7 @@ class Aikotoba::MagicLinkableTest < ActionDispatch::IntegrationTest
   end
 
   test "failed GET authenticate_via_magic_link_path by expired token" do
-    @account.build_magic_link_token.save!
+    Aikotoba::Account::MagicLink.create_token!(account: @account, notify: false)
     @account.magic_link_token.update!(expired_at: 1.hour.ago)
     get aikotoba.authenticate_via_magic_link_path(token: @account.magic_link_token.token)
     assert_equal status, 404
@@ -96,7 +96,7 @@ class Aikotoba::MagicLinkableTest < ActionDispatch::IntegrationTest
     Aikotoba.magic_link_authenticatable = false
     get aikotoba.new_magic_link_path
     assert_equal 404, status
-    @account.build_magic_link_token.save!
+    Aikotoba::Account::MagicLink.create_token!(account: @account, notify: false)
     get aikotoba.authenticate_via_magic_link_path(token: @account.magic_link_token.token)
     assert_equal 404, status
     post aikotoba.create_magic_link_path, params: {account: {email: @account.email}}

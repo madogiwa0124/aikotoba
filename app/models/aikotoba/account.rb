@@ -3,6 +3,7 @@
 module Aikotoba
   class Account < ApplicationRecord
     include EnabledFeatureCheckable
+    include OptionalAssociation
 
     # NOTE: (RFC5321) Path: The maximum total length of a reverse-path or forward-path is 256 octets.
     # https://datatracker.ietf.org/doc/html/rfc5321#section-4.5.3.1.3
@@ -134,9 +135,12 @@ module Aikotoba
 
     concerning :Confirmable do
       included do
-        has_one :confirmation_token,
-          dependent: :destroy,
-          foreign_key: "aikotoba_account_id"
+        # NOTE: optional_has_one rather than has_one -- this table may legitimately not
+        #       exist, so its dependent: :destroy callback has to be gated on that.
+        #       See OptionalAssociation.
+        optional_has_one :confirmation_token,
+          foreign_key: "aikotoba_account_id",
+          dependent: :destroy
         scope :confirmed, -> { where(confirmed: true) }
         scope :unconfirmed, -> { where(confirmed: false) }
       end
@@ -148,9 +152,10 @@ module Aikotoba
 
     concerning :Lockable do
       included do
-        has_one :unlock_token,
-          dependent: :destroy,
-          foreign_key: "aikotoba_account_id"
+        # NOTE: See the comment on Confirmable's association above -- same reasoning.
+        optional_has_one :unlock_token,
+          foreign_key: "aikotoba_account_id",
+          dependent: :destroy
         scope :locked, -> { where(locked: true) }
         scope :unlocked, -> { where(locked: false) }
       end
@@ -170,17 +175,19 @@ module Aikotoba
 
     concerning :Recoverable do
       included do
-        has_one :recovery_token,
-          dependent: :destroy,
-          foreign_key: "aikotoba_account_id"
+        # NOTE: See the comment on Confirmable's association above -- same reasoning.
+        optional_has_one :recovery_token,
+          foreign_key: "aikotoba_account_id",
+          dependent: :destroy
       end
     end
 
     concerning :MagicLinkAuthenticatable do
       included do
-        has_one :magic_link_token,
-          dependent: :destroy,
-          foreign_key: "aikotoba_account_id"
+        # NOTE: See the comment on Confirmable's association above -- same reasoning.
+        optional_has_one :magic_link_token,
+          foreign_key: "aikotoba_account_id",
+          dependent: :destroy
       end
     end
   end

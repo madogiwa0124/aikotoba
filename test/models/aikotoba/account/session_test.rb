@@ -65,6 +65,7 @@ class Aikotoba::Account::SessionTest < ActiveSupport::TestCase
   end
 
   def setup
+    Aikotoba.api_authenticatable = true
     @account = Aikotoba::Account.create_by!(attributes: {
       email: "user@example.com",
       password: "Password1!",
@@ -72,6 +73,10 @@ class Aikotoba::Account::SessionTest < ActiveSupport::TestCase
       locked: false,
       failed_attempts: 0
     })
+  end
+
+  def teardown
+    Aikotoba.api_authenticatable = false
   end
 
   test "revoke! destroys the session" do

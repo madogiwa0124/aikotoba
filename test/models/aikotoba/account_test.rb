@@ -383,4 +383,145 @@ class Aikotoba::AccountTest < ActiveSupport::TestCase
       assert_equal account.max_failed_attempts, Aikotoba.max_failed_attempts
     end
   end
+
+  class OptionalHasOne < ActiveSupport::TestCase
+    # NOTE: Anything other than :destroy would have to be forwarded to has_one to work,
+    #       which would register the unconditional destroy callback optional_has_one
+    #       exists to avoid. Raising beats silently doing nothing.
+    test "optional_has_one rejects dependent options it cannot honour" do
+      error = assert_raises(ArgumentError) do
+        Class.new(Aikotoba::Account) do
+          optional_has_one :nullified_token, dependent: :nullify
+        end
+      end
+      assert_match(/dependent: :destroy only/, error.message)
+    end
+
+    test "optional_has_one keeps the replace-on-rebuild cleanup dependent: :destroy provides" do
+      # NOTE: The reflection option is set after has_one so no unconditional callback is
+      #       registered, but HasOneAssociation#remove_target! still reads it at runtime.
+      #       Without it, the second build_ + save! below raises RecordNotSaved.
+      assert_equal :destroy, Aikotoba::Account.reflect_on_association(:confirmation_token).options[:dependent]
+
+      account = Aikotoba::Account.create_by!(attributes: {
+        email: "user@example.com",
+        password: "Password1!"
+      })
+      Aikotoba::Account::Confirmation.create_token!(account: account, notify: false)
+      first_token_id = account.confirmation_token.id
+
+      Aikotoba::Account::Confirmation.create_token!(account: account, notify: false)
+
+      assert_equal 1, Aikotoba::Account::ConfirmationToken.where(aikotoba_account_id: account.id).count
+      assert_not Aikotoba::Account::ConfirmationToken.exists?(first_token_id)
+    end
+  end
+
+  # NOTE: Optional-feature token tables are cleaned up by hand-written before_destroy
+  #       callbacks instead of dependent: :destroy, so that a host app which never
+  #       migrated a feature's table can still destroy accounts (see
+  #       OptionalAssociation). These guard both halves of that trade: the
+  #       cleanup still happens when the table is there, and nothing queries the table
+  #       when it isn't.
+  class DestroyingOptionalTokens < ActiveSupport::TestCase
+    OPTIONAL_TOKEN_TABLES = %w[
+      aikotoba_account_confirmation_tokens
+      aikotoba_account_unlock_tokens
+      aikotoba_account_recovery_tokens
+      aikotoba_account_magic_link_tokens
+      aikotoba_account_refresh_tokens
+    ].freeze
+
+    def setup
+      @account = Aikotoba::Account.create_by!(attributes: {
+        email: "user@example.com",
+        password: "Password1!"
+      })
+    end
+
+    def build_every_optional_token!
+      Aikotoba::Account::Confirmation.create_token!(account: @account, notify: false)
+      Aikotoba::Account::Lock.create_unlock_token!(account: @account, notify: false)
+      Aikotoba::Account::Recovery.create_token!(account: @account, notify: false)
+      Aikotoba::Account::MagicLink.create_token!(account: @account, notify: false)
+      Aikotoba::Account::Session.start!(account: @account, origin: :api)
+    end
+
+    def sql_statements_while
+      statements = []
+      subscriber = ->(*, payload) { statements << payload[:sql] }
+      ActiveSupport::Notifications.subscribed(subscriber, "sql.active_record") { yield }
+      statements
+    end
+
+    test "destroy! removes every optional token" do
+      build_every_optional_token!
+      assert_difference [
+        "Aikotoba::Account::ConfirmationToken.count",
+        "Aikotoba::Account::UnlockToken.count",
+        "Aikotoba::Account::RecoveryToken.count",
+        "Aikotoba::Account::MagicLinkToken.count",
+        "Aikotoba::Account::RefreshToken.count",
+        "Aikotoba::Account::Session.count"
+      ], -1 do
+        Aikotoba::Account.find(@account.id).destroy!
+      end
+    end
+
+    test "destroy! removes optional tokens even after their feature flag is turned off" do
+      # NOTE: The reverse of the test below. Gating the callbacks on the feature flag
+      #       would strand these rows and raise ActiveRecord::InvalidForeignKey here.
+      build_every_optional_token!
+      with_aikotoba_features_disabled do
+        assert_nothing_raised { Aikotoba::Account.find(@account.id).destroy! }
+      end
+      assert_equal 0, Aikotoba::Account::ConfirmationToken.where(aikotoba_account_id: @account.id).count
+      assert_equal 0, Aikotoba::Account::MagicLinkToken.where(aikotoba_account_id: @account.id).count
+    end
+
+    test "destroy! never queries an optional token table that does not exist" do
+      # NOTE: The actual bug this whole arrangement exists for -- a host app with a
+      #       feature disabled and its migration never run used to hit PG::UndefinedTable
+      #       on every Account#destroy!.
+      session = Aikotoba::Account::Session.start!(account: @account, origin: :browser)
+      with_optional_token_tables_dropped do
+        statements = sql_statements_while do
+          session.revoke!
+          Aikotoba::Account.find(@account.id).destroy!
+        end
+        assert_empty statements.grep(/#{Regexp.union(OPTIONAL_TOKEN_TABLES)}/).grep_v(/pragma_table_list|information_schema|sqlite_master/)
+      end
+    end
+
+    private
+
+    def with_aikotoba_features_disabled
+      previous = {
+        confirmable: Aikotoba.confirmable,
+        lockable: Aikotoba.lockable,
+        recoverable: Aikotoba.recoverable,
+        magic_link_authenticatable: Aikotoba.magic_link_authenticatable,
+        api_authenticatable: Aikotoba.api_authenticatable
+      }
+      previous.each_key { |feature| Aikotoba.public_send(:"#{feature}=", false) }
+      yield
+    ensure
+      previous.each { |feature, value| Aikotoba.public_send(:"#{feature}=", value) }
+    end
+
+    # NOTE: SQLite (the test adapter) has transactional DDL, so the drops roll back with
+    #       the surrounding transaction. The schema cache has to be cleared on both sides
+    #       because OptionalAssociation caches negative lookups too.
+    def with_optional_token_tables_dropped
+      connection = ActiveRecord::Base.connection
+      ActiveRecord::Base.transaction do
+        OPTIONAL_TOKEN_TABLES.each { |table| connection.drop_table(table) }
+        Aikotoba::Account.connection_pool.schema_cache.clear!
+        yield
+        raise ActiveRecord::Rollback
+      end
+    ensure
+      Aikotoba::Account.connection_pool.schema_cache.clear!
+    end
+  end
 end
