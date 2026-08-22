@@ -12,4 +12,4 @@ updates:
           - "*"
     ignore:
       - dependency-name: "minitest"
-        versions: ["6.x"]
+        versions: [">= 6.0.0"]
