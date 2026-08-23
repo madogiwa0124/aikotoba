@@ -92,6 +92,28 @@ class Aikotoba::MagicLinkableTest < ActionDispatch::IntegrationTest
     end
   end
 
+  test "with request_back_after_sign_in enabled, magic link sign in redirects back to the page captured at sign_in" do
+    Aikotoba.default_scope = {request_back_after_sign_in: true}
+    get aikotoba.new_session_path, headers: {"HTTP_REFERER" => "http://www.example.com/sensitives"}
+    Aikotoba::Account::MagicLink.create_token!(account: @account, notify: false)
+    get aikotoba.authenticate_via_magic_link_path(token: @account.magic_link_token.token)
+    assert_redirected_to "/sensitives"
+  ensure
+    Aikotoba.default_scope = {request_back_after_sign_in: false}
+  end
+
+  test "with request_back_after_sign_in enabled, bouncing between sign_in and magic_link pages does not clobber the captured return_to" do
+    Aikotoba.default_scope = {request_back_after_sign_in: true}
+    get aikotoba.new_session_path, headers: {"HTTP_REFERER" => "http://www.example.com/sensitives"}
+    get aikotoba.new_magic_link_path, headers: {"HTTP_REFERER" => "http://www.example.com#{aikotoba.new_session_path}"}
+    get aikotoba.new_session_path, headers: {"HTTP_REFERER" => "http://www.example.com#{aikotoba.new_magic_link_path}"}
+    Aikotoba::Account::MagicLink.create_token!(account: @account, notify: false)
+    get aikotoba.authenticate_via_magic_link_path(token: @account.magic_link_token.token)
+    assert_redirected_to "/sensitives"
+  ensure
+    Aikotoba.default_scope = {request_back_after_sign_in: false}
+  end
+
   test "MagicLinkAuthenticatable path returns 404 when Aikotoba.magic_link_authenticatable is false" do
     Aikotoba.magic_link_authenticatable = false
     get aikotoba.new_magic_link_path
