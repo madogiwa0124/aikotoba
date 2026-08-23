@@ -113,6 +113,27 @@ Aikotoba enable helper methods for authentication. The method name can be change
 
 - `aikotoba_current_account` : Returns the logged in instance of `Aikotoba::Account`.
 
+#### Redirecting back to the originally requested page after sign in
+
+By default, a successful sign in always redirects to `after_sign_in_path`. Set
+`request_back_after_sign_in: true` on a scope to instead send the account back
+to whatever page it was trying to reach before being redirected to sign in
+(falling back to `after_sign_in_path` when there is nothing to go back to):
+
+```ruby
+Aikotoba.default_scope = {request_back_after_sign_in: true}
+```
+
+No changes are required in your `authenticate_account!`
+(see [Getting Start](#getting-start)) — Aikotoba reads the `Referer` header
+that the browser sends along with the `GET /sign_in` request it was redirected
+to, and stores it for the duration of the sign in. Only a same-host path is
+ever trusted and stored (the scheme/host are discarded), and it's used at most
+once, so a stale or spoofed `Referer` can't be replayed or turned into an open
+redirect. It also applies to [MagicLinkAuthenticatable](#experimental-magiclinkauthenticatable)
+sign in, so signing in via a magic link sent from the same visit redirects
+back to the same destination.
+
 ### Registrable
 
 To enable it, set `Aikotoba.registerable` to `true`. (It is enabled by default.)
