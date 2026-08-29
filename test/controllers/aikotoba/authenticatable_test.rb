@@ -61,6 +61,112 @@ class Aikotoba::AuthenticatableTest < ActionDispatch::IntegrationTest
     Aikotoba.confirmable = false
   end
 
+  test "with request_back_after_sign_in enabled, redirects back to the referer that sent the account to sign in" do
+    Aikotoba.default_scope = {request_back_after_sign_in: true}
+    get "/sensitives", headers: {"HTTP_REFERER" => nil}
+    assert_redirected_to aikotoba.new_session_path
+    get aikotoba.new_session_path, headers: {"HTTP_REFERER" => "http://www.example.com/sensitives"}
+    assert_equal 200, status
+    post aikotoba.new_session_path, params: {account: {email: @account.email, password: @password}}
+    assert_redirected_to "/sensitives"
+  ensure
+    Aikotoba.default_scope = {request_back_after_sign_in: false}
+  end
+
+  test "with request_back_after_sign_in enabled, falls back to after_sign_in_path when there is no referer" do
+    Aikotoba.default_scope = {request_back_after_sign_in: true}
+    get aikotoba.new_session_path
+    post aikotoba.new_session_path, params: {account: {email: @account.email, password: @password}}
+    assert_redirected_to Aikotoba.default_scope[:after_sign_in_path]
+  ensure
+    Aikotoba.default_scope = {request_back_after_sign_in: false}
+  end
+
+  test "with request_back_after_sign_in enabled, ignores a referer pointing at a different host" do
+    Aikotoba.default_scope = {request_back_after_sign_in: true}
+    get aikotoba.new_session_path, headers: {"HTTP_REFERER" => "http://evil.example.com/steal"}
+    post aikotoba.new_session_path, params: {account: {email: @account.email, password: @password}}
+    assert_redirected_to Aikotoba.default_scope[:after_sign_in_path]
+  ensure
+    Aikotoba.default_scope = {request_back_after_sign_in: false}
+  end
+
+  test "with request_back_after_sign_in enabled, ignores a same-host referer path smuggling a protocol-relative redirect" do
+    Aikotoba.default_scope = {request_back_after_sign_in: true}
+    get aikotoba.new_session_path, headers: {"HTTP_REFERER" => "http://www.example.com//evil.example.com/phish"}
+    post aikotoba.new_session_path, params: {account: {email: @account.email, password: @password}}
+    assert_redirected_to Aikotoba.default_scope[:after_sign_in_path]
+  ensure
+    Aikotoba.default_scope = {request_back_after_sign_in: false}
+  end
+
+  test "with request_back_after_sign_in enabled, an opaque-scheme referer does not raise" do
+    Aikotoba.default_scope = {request_back_after_sign_in: true}
+    get aikotoba.new_session_path, headers: {"HTTP_REFERER" => "javascript:alert(1)"}
+    assert_equal 200, status
+    post aikotoba.new_session_path, params: {account: {email: @account.email, password: @password}}
+    assert_redirected_to Aikotoba.default_scope[:after_sign_in_path]
+  ensure
+    Aikotoba.default_scope = {request_back_after_sign_in: false}
+  end
+
+  test "with request_back_after_sign_in enabled, a bare-host referer with no path falls back to after_sign_in_path" do
+    Aikotoba.default_scope = {request_back_after_sign_in: true}
+    get aikotoba.new_session_path, headers: {"HTTP_REFERER" => "http://www.example.com"}
+    post aikotoba.new_session_path, params: {account: {email: @account.email, password: @password}}
+    assert_redirected_to Aikotoba.default_scope[:after_sign_in_path]
+  ensure
+    Aikotoba.default_scope = {request_back_after_sign_in: false}
+  end
+
+  test "with request_back_after_sign_in enabled, a stale recovery token sub-page is not captured as the return_to" do
+    Aikotoba.default_scope = {request_back_after_sign_in: true}
+    get aikotoba.new_session_path, headers: {"HTTP_REFERER" => "http://www.example.com/recover/sometoken123"}
+    post aikotoba.new_session_path, params: {account: {email: @account.email, password: @password}}
+    assert_redirected_to Aikotoba.default_scope[:after_sign_in_path]
+  ensure
+    Aikotoba.default_scope = {request_back_after_sign_in: false}
+  end
+
+  test "with request_back_after_sign_in enabled, the stored return_to is used only once" do
+    Aikotoba.default_scope = {request_back_after_sign_in: true}
+    get aikotoba.new_session_path, headers: {"HTTP_REFERER" => "http://www.example.com/sensitives"}
+    post aikotoba.new_session_path, params: {account: {email: @account.email, password: @password}}
+    assert_redirected_to "/sensitives"
+    delete aikotoba.destroy_session_path
+    post aikotoba.new_session_path, params: {account: {email: @account.email, password: @password}}
+    assert_redirected_to Aikotoba.default_scope[:after_sign_in_path]
+  ensure
+    Aikotoba.default_scope = {request_back_after_sign_in: false}
+  end
+
+  test "with request_back_after_sign_in disabled by default, referer is not used for the redirect" do
+    get aikotoba.new_session_path, headers: {"HTTP_REFERER" => "http://www.example.com/sensitives"}
+    post aikotoba.new_session_path, params: {account: {email: @account.email, password: @password}}
+    assert_redirected_to Aikotoba.default_scope[:after_sign_in_path]
+  end
+
+  test "with request_back_after_sign_in enabled, a scope's own auth pages are excluded even without editing the exclusion list" do
+    Aikotoba.default_scope = {request_back_after_sign_in: true, some_future_feature_path: "/some_future_feature"}
+    get aikotoba.new_session_path, headers: {"HTTP_REFERER" => "http://www.example.com/sensitives"}
+    get aikotoba.new_session_path, headers: {"HTTP_REFERER" => "http://www.example.com/some_future_feature"}
+    post aikotoba.new_session_path, params: {account: {email: @account.email, password: @password}}
+    assert_redirected_to "/sensitives"
+  ensure
+    Aikotoba.default_scope[:request_back_after_sign_in] = false
+    Aikotoba.default_scope.delete(:some_future_feature_path)
+  end
+
+  test "with request_back_after_sign_in enabled, a hypothetical after_..._path config key is not treated as one of the scope's own auth pages" do
+    Aikotoba.default_scope = {request_back_after_sign_in: true, after_confirm_path: "/confirmed"}
+    get aikotoba.new_session_path, headers: {"HTTP_REFERER" => "http://www.example.com/confirmed"}
+    post aikotoba.new_session_path, params: {account: {email: @account.email, password: @password}}
+    assert_redirected_to "/confirmed"
+  ensure
+    Aikotoba.default_scope[:request_back_after_sign_in] = false
+    Aikotoba.default_scope.delete(:after_confirm_path)
+  end
+
   test "success admin scope authentication" do
     admin_email, admin_password = ["admin@example.com", "admin_password"]
     admin_account = ::Aikotoba::Account.build_by(attributes: {email: admin_email, password: admin_password})
