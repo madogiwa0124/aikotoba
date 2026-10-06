@@ -49,6 +49,13 @@ module Aikotoba
   # for encrypt token
   mattr_accessor(:encrypted_token) { false }
 
+  # NOTE: Naming convention for `*_path` keys below, relied on by
+  # RequestBackable#aikotoba_own_scoped_paths: a key named `after_..._path`
+  # (or `root_path`) is a host-app-owned redirect target, never a page this
+  # engine renders itself. Engine-rendered pages (sign_in_path, confirm_path,
+  # magic_link_path, ...) must not use the `after_` prefix, or they'll be
+  # treated as a host-owned redirect target instead of one of the engine's
+  # own auth pages.
   mattr_accessor(:scopes) {
     HashWithIndifferentAccess.new({
       default: {
@@ -59,6 +66,7 @@ module Aikotoba
         sign_out_path: "/sign_out",
         after_sign_in_path: "/",
         after_sign_out_path: "/sign_in",
+        request_back_after_sign_in: false,
         sign_up_path: "/sign_up",
         confirm_path: "/confirm",
         unlock_path: "/unlock",

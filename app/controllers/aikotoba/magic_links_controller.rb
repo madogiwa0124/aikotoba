@@ -3,6 +3,7 @@
 module Aikotoba
   class MagicLinksController < ApplicationController
     include Authenticatable
+    include RequestBackable
     include Protection::RateLimiting
 
     def self.magic_link_rate_limit_options
@@ -65,7 +66,7 @@ module Aikotoba
     end
 
     def after_sign_in_path
-      aikotoba_scope_config[:after_sign_in_path]
+      return_to_path || aikotoba_scope_config[:after_sign_in_path]
     end
 
     def success_send_magic_link_token_path
