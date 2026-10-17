@@ -115,24 +115,31 @@ Aikotoba enable helper methods for authentication. The method name can be change
 
 #### Redirecting back to the originally requested page after sign in
 
-By default, a successful sign in always redirects to `after_sign_in_path`. Set
-`request_back_after_sign_in: true` on a scope to instead send the account back
-to whatever page it was trying to reach before being redirected to sign in
-(falling back to `after_sign_in_path` when there is nothing to go back to):
+By default, a successful sign in always redirects to `after_sign_in_path`. To
+instead send the account back to the page it was trying to reach before being
+redirected to sign in, replace the `redirect_to` in your `authenticate_account!`
+(see [Getting Start](#getting-start)) with `aikotoba_request_authentication`,
+which takes the same options as `redirect_to` (modeled on the Rails
+authentication generator's `request_authentication`):
 
 ```ruby
-Aikotoba.default_scope = {request_back_after_sign_in: true}
+def authenticate_account!
+  return if current_account
+  aikotoba_request_authentication flash: {alert: "Oops. You need to Signed up or Signed in." }
+end
 ```
 
-No changes are required in your `authenticate_account!`
-(see [Getting Start](#getting-start)) — Aikotoba reads the `Referer` header
-that the browser sends along with the `GET /sign_in` request it was redirected
-to, and stores it for the duration of the sign in. Only a same-host path is
-ever trusted and stored (the scheme/host are discarded), and it's used at most
-once, so a stale or spoofed `Referer` can't be replayed or turned into an open
-redirect. It also applies to [MagicLinkAuthenticatable](#experimental-magiclinkauthenticatable)
-sign in, so signing in via a magic link sent from the same visit redirects
-back to the same destination.
+It stores the current `request.fullpath` in the session, keyed per scope,
+redirects to the scope's sign in page, and after the next successful sign in
+redirects back there, falling back to `after_sign_in_path` when nothing was
+stored. Only a plain page visit (a non-XHR HTML `GET`) is stored, a
+protocol-relative path (`//host/...`) is never stored, so it can't become an
+open redirect, and it's used at most once. It also applies to [MagicLinkAuthenticatable](#experimental-magiclinkauthenticatable)
+sign in.
+
+Aikotoba deliberately doesn't capture this from the `Referer` of `GET /sign_in`:
+browsers keep the original `Referer` across a redirect, so it points at the
+page that *linked to* the protected page rather than the protected page itself.
 
 ### Registrable
 

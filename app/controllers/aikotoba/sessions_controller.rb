@@ -3,11 +3,9 @@
 module Aikotoba
   class SessionsController < ApplicationController
     include Authenticatable
-    include RequestBackable
 
     def new
       return redirect_to after_sign_in_path if aikotoba_current_account
-      store_return_to_path
       @account = build_account({email: "", password: ""})
     end
 
@@ -46,7 +44,7 @@ module Aikotoba
     end
 
     def after_sign_in_path
-      return_to_path || aikotoba_scope_config[:after_sign_in_path]
+      aikotoba_after_authentication_path
     end
 
     def after_sign_out_path

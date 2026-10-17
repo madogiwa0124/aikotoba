@@ -3,6 +3,7 @@ module Aikotoba
     extend ActiveSupport::Concern
     include Protection::SessionFixationAttack
     include Scopable
+    include RequestBackable
 
     included do
       helper_method :aikotoba_current_account

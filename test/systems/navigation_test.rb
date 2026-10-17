@@ -15,6 +15,18 @@ class NavigationTest < ActionDispatch::SystemTestCase
     assert_equal current_path, "/sign_in"
   end
 
+  test "[default] visit protected page -> redirected to sign_in -> sign_in -> back to protected page" do
+    Aikotoba::Account.create_by!(attributes: {email: "default7@example.com", password: "password"})
+    visit "/sensitives?from=protected"
+    assert_current_path "/sign_in"
+    fill_in "Email", with: "default7@example.com"
+    fill_in "Password", with: "password"
+    click_on "Sign in"
+    assert_selector ".message", text: "Signed in successfully."
+    assert_current_path "/sensitives?from=protected"
+    click_on "Sign out"
+  end
+
   test "[default] (Registerable) sign_up -> sign_in -> sign_out" do
     Aikotoba.registerable = true
     visit "/sign_up"
@@ -208,6 +220,19 @@ class NavigationTest < ActionDispatch::SystemTestCase
     assert_selector ".message", text: "Signed in successfully."
     click_on "Sign out"
     assert_equal current_path, "/admin/sign_in"
+  end
+
+  test "[admin] visit protected page -> redirected to sign_in -> sign_in -> back to protected page" do
+    admin = Admin.create(nickname: "admin_foo")
+    Aikotoba::Account.create_by!(attributes: {email: "admin6@example.com", password: "password", authenticate_target: admin})
+    visit "/admin/sensitives?from=protected"
+    assert_current_path "/admin/sign_in"
+    fill_in "Email", with: "admin6@example.com"
+    fill_in "Password", with: "password"
+    click_on "Sign in"
+    assert_selector ".message", text: "Signed in successfully."
+    assert_current_path "/admin/sensitives?from=protected"
+    click_on "Sign out"
   end
 
   test "[admin] (Registerable) sign_up -> sign_in -> sign_out" do
