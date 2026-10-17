@@ -77,7 +77,7 @@ why this change is needed.
 ## Breaking-change detection hints (generalized rules)
 
 - Session foundation switches to Cookie/DB (e.g., `set_*cookie*`, `resume_*session*`, token-based introduction)
-- Default key names or config options are added/changed (e.g., `session_key`, `session_expiry`, `keep_legacy_login_session`)
+- Default key names or config options are added/changed (e.g., `session_key`, `session_expiry`, `api_access_token_expiry`)
 - Migrations adding new tables/columns (e.g., session-related tables in `db/migrate/*`)
 - Public API/test expectation changes (Rails `session` → `cookies.signed`)
 - Operational requirements inferred from diffs (HTTPS required, per-scope sign-out)

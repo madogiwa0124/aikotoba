@@ -42,12 +42,6 @@ module Aikotoba
         # Deleting only the cookie will require explicit re-login, and the situation where only the DB session remains can also occur
         # when the cookie is directly deleted on the browser side, so we decided to allow it.
         terminate_aikotoba_session(only_cookie: true)
-        # NOTE: This is to maintain the session logged in by the old login process, so if you find the account from the session, log in.
-        # TODO: Remove this process in future.
-        if Aikotoba.keep_legacy_login_session && session[aikotoba_session_key].present?
-          account = find_aikotoba_account_by_legacy_session
-          account_session = start_new_aikotoba_session_for(account) if account.present?
-        end
       end
       account_session
     end
@@ -55,12 +49,6 @@ module Aikotoba
     def find_aikotoba_session_by_cookie
       token = cookies.signed[aikotoba_session_key]
       aikotoba_session_find_by(token) if token.present?
-    end
-
-    # NOTE: This is to maintain the session logged in by the old login process, so if you find the account from the session, log in.
-    # TODO: Remove this process in future.
-    def find_aikotoba_account_by_legacy_session
-      aikotoba_authenticatable_accounts.find_by(id: session[aikotoba_session_key])
     end
 
     def start_new_aikotoba_session_for(account)
@@ -98,12 +86,6 @@ module Aikotoba
         ip_address: request.remote_ip,
         user_agent: request.user_agent
       }
-    end
-
-    # NOTE: Authenticate by target type if specified in the scope configuration.
-    # TODO: Remove this process in future.
-    def aikotoba_authenticatable_accounts
-      Account.authenticatable(target_type_name: aikotoba_authenticate_target)
     end
 
     def aikotoba_session_find_by(token)

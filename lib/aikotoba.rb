@@ -12,7 +12,6 @@ module Aikotoba
   mattr_accessor(:password_pepper) { "aikotoba-default-pepper" }
   mattr_accessor(:password_length_range) { 8..100 }
   mattr_accessor(:session_expiry) { 7.days }
-  mattr_accessor(:keep_legacy_login_session) { false }
 
   # for API Token Authentication
   mattr_accessor(:api_authenticatable) { false }

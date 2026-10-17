@@ -150,24 +150,4 @@ class Aikotoba::AuthenticatableTest < ActionDispatch::IntegrationTest
     get Aikotoba.default_scope[:after_sign_in_path]
     assert_redirected_to aikotoba.new_session_path
   end
-
-  test "If legacy session is set, it is automatically migrated to the new cookie format" do
-    Aikotoba.keep_legacy_login_session = true
-    # Set legacy session
-    session_key = Aikotoba.default_scope[:session_key]
-    post "/test/set-legacy-session", params: {key: session_key, value: @account.id}
-    assert_response :success
-
-    get Aikotoba.default_scope[:after_sign_in_path]
-    assert_response :success
-
-    cookiejar = ActionDispatch::Cookies::CookieJar.build(request, cookies.to_hash)
-    aikotoba_session_token = cookiejar.signed[session_key]
-    assert aikotoba_session_token.present?
-
-    session_record = @account.sessions.find_by(token: aikotoba_session_token)
-    assert session_record.present?
-    assert_equal session_record.aikotoba_account_id, @account.id
-    Aikotoba.keep_legacy_login_session = false
-  end
 end
