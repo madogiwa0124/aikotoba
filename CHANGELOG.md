@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- **Breaking**: Remove the deprecated top-level scope accessors (`Aikotoba.sign_in_path`, `Aikotoba.sign_in_path=`, and the same pair for every other `default_scope` key) along with `Aikotoba::DEPRECATOR`. They have warned since v0.2.0. Replace `Aikotoba.sign_in_path = "/login"` with `Aikotoba.default_scope[:sign_in_path] = "/login"` (or `Aikotoba.default_scope = {sign_in_path: "/login"}`), and `Aikotoba.sign_in_path` with `Aikotoba.default_scope[:sign_in_path]`. Leftover calls now raise `NoMethodError`.
+
 - Move password storage off `Aikotoba::Account` entirely into a new `Aikotoba::Account::PasswordHash` model/table (`aikotoba_account_password_hashes`, association `account.password_hash`), so `Account` no longer depends on password-based authentication. `Account#password`/`#password=`/`#password_digest`/`#authenticate`/`#authenticate_by`/`#recover!` no longer exist; `account.password_hash` exposes no plaintext reader either — only `account.password_hash&.digest` (the stored hash) is public, and there is no `#value`/`#plaintext` getter, only `#generate(input)` to (re)compute it.
 
   **Breaking schema change** — this gem edits its canonical migration in place rather than shipping incremental migrations, so re-running `bin/rails aikotoba:install:migrations` will *not* pick up this change for existing installs. Add a migration by hand:

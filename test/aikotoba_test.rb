@@ -5,15 +5,6 @@ class AikotobaTest < ActiveSupport::TestCase
     assert Aikotoba::VERSION
   end
 
-  def with_captured_deprecations(deprecator = Aikotoba::DEPRECATOR)
-    original_behavior = deprecator.behavior
-    captured = []
-    deprecator.behavior = [proc { |msg, _callstack, _deprecator| captured << msg }]
-    yield captured
-  ensure
-    deprecator.behavior = original_behavior
-  end
-
   test "default_scope= merges into default_scope" do
     original = Aikotoba.scopes.deep_dup
     begin
@@ -37,38 +28,6 @@ class AikotobaTest < ActiveSupport::TestCase
       assert_equal "/admin/sign_in", admin[:sign_in_path]
       # Inherit unspecified keys from default
       assert_equal Aikotoba.default_scope[:sign_out_path], admin[:sign_out_path]
-    ensure
-      Aikotoba.scopes.replace(original)
-    end
-  end
-
-  test "legacy getter emits deprecation warning" do
-    with_captured_deprecations do |captured|
-      original = Aikotoba.scopes.deep_dup
-
-      begin
-        assert_equal Aikotoba.sign_in_path, Aikotoba.default_scope[:sign_in_path]
-        Aikotoba.default_scope[:sign_in_path] = "/another_path"
-        assert_equal Aikotoba.sign_in_path, "/another_path"
-
-        assert captured.any? { |m| m.include?("Aikotoba.sign_in_path is deprecated") },
-          "expected deprecation warning for legacy getter"
-      ensure
-        Aikotoba.scopes.replace(original)
-      end
-    end
-  end
-
-  test "legacy setter emits deprecation and updates default_scope" do
-    original = Aikotoba.scopes.deep_dup
-    begin
-      with_captured_deprecations do |captured|
-        Aikotoba.sign_in_path = "/via_legacy_setter"
-        assert captured.any? { |m| m.include?("Aikotoba.sign_in_path= is deprecated") },
-          "expected deprecation warning for legacy setter"
-      end
-
-      assert_equal "/via_legacy_setter", Aikotoba.default_scope[:sign_in_path]
     ensure
       Aikotoba.scopes.replace(original)
     end

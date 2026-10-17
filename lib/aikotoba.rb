@@ -5,8 +5,6 @@ require "aikotoba/engine"
 require "aikotoba/errors"
 
 module Aikotoba
-  DEPRECATOR = ActiveSupport::Deprecation.new("1.0", "Aikotoba")
-
   mattr_accessor(:parent_controller) { "ApplicationController" }
   mattr_accessor(:parent_mailer) { "ActionMailer::Base" }
   mattr_accessor(:mailer_sender) { "from@example.com" }
@@ -83,18 +81,5 @@ module Aikotoba
 
   def self.add_scope(name, config = {})
     scopes[name] = default_scope.merge(config)
-  end
-
-  # TODO: Deprecated for compatibility, will be removed in the future
-  default_scope.each do |key, value|
-    define_singleton_method(key) do
-      DEPRECATOR.warn("Aikotoba.#{key} is deprecated. Please use Aikotoba.default_scope[:#{key}] instead.")
-      default_scope[key]
-    end
-
-    define_singleton_method("#{key}=") do |new_value|
-      DEPRECATOR.warn("Aikotoba.#{key}= is deprecated. Please use Aikotoba.default_scope[:#{key}]= instead.")
-      default_scope[key] = new_value
-    end
   end
 end
