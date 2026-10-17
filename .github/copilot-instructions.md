@@ -252,6 +252,6 @@ safe either way.
 ## Notes
 
 - Route availability (`sign_up`, `confirm`, `unlock`, `recover`) is gated by config (`Aikotoba.registerable`, `confirmable`, `lockable`, `recoverable`) via constraints.
-- Deprecated config accessors (e.g., `Aikotoba.sign_in_path`) log deprecation and proxy to `default_scope`; prefer `Aikotoba.default_scope[:sign_in_path]`.
+- Scope settings are only reachable through `Aikotoba.default_scope[:key]` / `Aikotoba.scopes[:name][:key]`; the old top-level accessors (e.g., `Aikotoba.sign_in_path`) were removed.
 
 If any part is unclear or feels incomplete (e.g., preferred way to boot the dummy app in your environment, or project-specific override points), tell me and I’ll refine this doc.

@@ -2,7 +2,6 @@ require 'aikotoba'
 
 Aikotoba.password_pepper = "aikotoba-default-pepper"
 Aikotoba.default_scope = {after_sign_in_path: "/sensitives"}
-# Aikotoba.after_sign_in_path = "/sensitives"
 # Aikotoba.confirmable = true
 # Aikotoba.lockable= true
 # Aikotoba.recoverable = true
