@@ -35,6 +35,10 @@ Add this line to your application's Gemfile:
 gem 'aikotoba'
 ```
 
+Aikotoba requires Rails 7.2 or later.
+
+Emails (confirmation, unlock, password recovery, magic link) are sent with `deliver_later` after the surrounding transaction commits. Configure a persistent Active Job backend in production: the default `:async` adapter loses queued emails when the process restarts.
+
 ## Usage
 
 ### Getting Start
@@ -456,7 +460,8 @@ Aikotoba.magic_link_token_expiry = 15.minutes
 # This ensures:
 # - Invalid or missing email params don't bypass rate limiting
 # - Fallback to IP address when email is not provided
-# - Protection against email enumeration attacks
+# - Repeated emails to the same address are throttled (this keys on the email, so it does not limit
+#   requests spread across many different addresses)
 #
 # Examples:
 

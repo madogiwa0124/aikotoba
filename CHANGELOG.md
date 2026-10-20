@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- **Breaking**: Require Rails 7.2 or later (was `>= 6.1.4`). Token emails now wait for `ActiveRecord.after_all_transactions_commit`, which was added in Rails 7.2.
+
+- **Breaking**: Confirmation, unlock, password recovery and magic link emails are now sent with `deliver_later` instead of `deliver_now`, and only after every open transaction commits. Previously they were sent inside the transaction that created the token, so a rollback (e.g. an exception in `after_create_account_process`) could leave the user holding a link to a token that no longer exists, and an SMTP outage turned the request into a 500. Configure a persistent Active Job backend in production; the default `:async` adapter loses queued emails on restart. In tests, wrap the step that sends the email in `assert_emails` (or `perform_enqueued_jobs`) before reading `ActionMailer::Base.deliveries`.
+
 - **Breaking**: Remove `Aikotoba.keep_legacy_login_session` and the migration path that turned a pre-v0.2.0 `session[session_key]` (account id) into a cookie + DB session. It was a v0.2.0 upgrade aid. Delete any `Aikotoba.keep_legacy_login_session = ...` line from your initializer, since it now raises `NoMethodError`. Apps upgrading straight from v0.1.x will see sessions created by v0.1.x signed out once.
 
 - **Breaking**: Remove the deprecated top-level scope accessors (`Aikotoba.sign_in_path`, `Aikotoba.sign_in_path=`, and the same pair for every other `default_scope` key) along with `Aikotoba::DEPRECATOR`. They have warned since v0.2.0. Replace `Aikotoba.sign_in_path = "/login"` with `Aikotoba.default_scope[:sign_in_path] = "/login"` (or `Aikotoba.default_scope = {sign_in_path: "/login"}`), and `Aikotoba.sign_in_path` with `Aikotoba.default_scope[:sign_in_path]`. Leftover calls now raise `NoMethodError`.

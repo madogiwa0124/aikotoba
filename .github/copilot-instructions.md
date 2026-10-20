@@ -211,7 +211,7 @@ safe either way.
 
 ## Developer Workflows
 
-- Dependencies: Ruby on Rails `>= 6.1.4`; Argon2; optional Active Record Encryption (Rails 7+). Gem dependencies are declared in [aikotoba.gemspec](../aikotoba.gemspec) and dev/test gems in [Gemfile](../Gemfile).
+- Dependencies: Ruby on Rails `>= 7.2`; Argon2; optional Active Record Encryption (Rails 7+). Gem dependencies are declared in [aikotoba.gemspec](../aikotoba.gemspec) and dev/test gems in [Gemfile](../Gemfile).
 - Lunch dummy app: Use the engine-mounted dummy app under [test/dummy](../test/dummy). To start the server:
 
   ```sh

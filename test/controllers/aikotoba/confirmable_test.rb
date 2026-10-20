@@ -94,7 +94,9 @@ class Aikotoba::ConfirmableTest < ActionDispatch::IntegrationTest
 
   test "success POST create_account_path with comfirm token send" do
     Aikotoba.registerable = true
-    post aikotoba.create_account_path, params: {account: {email: "bar@example.com", password: "password"}}
+    assert_emails 1 do
+      post aikotoba.create_account_path, params: {account: {email: "bar@example.com", password: "password"}}
+    end
     assert_redirected_to aikotoba.new_session_path
     assert_equal I18n.t(".aikotoba.messages.registration.success"), flash[:notice]
     account = @controller.instance_variable_get(:@account)
