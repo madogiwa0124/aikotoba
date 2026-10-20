@@ -16,8 +16,12 @@ module Aikotoba
       record.expired_at ||= token.expired_at
     end
 
+    # NOTE: Waits for every open transaction (including callers' outer ones) to commit,
+    #       and is dropped on rollback, so a sent link never points at a missing token.
     def notify
-      AccountMailer.with(account: account).recover.deliver_now
+      ActiveRecord.after_all_transactions_commit do
+        AccountMailer.with(account: account).recover.deliver_later
+      end
     end
   end
 end
