@@ -41,11 +41,15 @@ module Aikotoba
           dependent: :destroy,
           foreign_key: "aikotoba_account_id"
 
+        # NOTE: The accounts a scope handles: all of them when it has no authenticate_for,
+        #       otherwise only that target type. A Class passed to authenticate_for is
+        #       converted to a string for searching.
+        scope :for_target_type, ->(target_type_name) {
+          target_type_name.present? ? where(authenticate_target_type: target_type_name.to_s) : all
+        }
+
         scope :authenticatable, ->(target_type_name: nil) {
-          result = all
-          # NOTE: To ensure that authentication works even if a Class is passed to authenticate_for,
-          #       convert it to a string for searching.
-          result = result.where(authenticate_target_type: target_type_name.to_s) if target_type_name.present?
+          result = for_target_type(target_type_name)
           result = result.confirmed if confirmable?
           result = result.unlocked if lockable?
           result

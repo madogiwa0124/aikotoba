@@ -82,10 +82,26 @@ module Aikotoba
     scopes[name] = default_scope.merge(config)
   end
 
+  # NOTE: The scope whose links an account's emails use: the first scope whose
+  #       authenticate_for matches the account's target type, else the default scope.
+  #       Emails are rendered in a job, with no request to tell which scope was used.
+  def self.scope_name_for(target_type_name)
+    name, _ = scopes.find { |_, config| scope_for?(config, target_type_name) }
+    name || "default"
+  end
+
   # NOTE: A scope restricted by authenticate_for gets no sign-up: its accounts need an
   #       authenticate_target of that type, which the generic sign-up form can't create.
   #       Routes and the sign-in page's sign-up link both read this, so they can't disagree.
+  #       blank? (not nil?) matches Account.for_target_type, which treats "" as unrestricted.
   def self.registerable_scope?(scope_config)
-    scope_config[:authenticate_for].nil?
+    scope_config[:authenticate_for].blank?
   end
+
+  # NOTE: Whether the scope is the one set up for this target type (authenticate_for: "Admin"
+  #       for "Admin"). An unrestricted scope also signs Admins in, but isn't "for" them.
+  def self.scope_for?(scope_config, target_type_name)
+    scope_config[:authenticate_for].present? && scope_config[:authenticate_for].to_s == target_type_name.to_s
+  end
+  private_class_method :scope_for?
 end

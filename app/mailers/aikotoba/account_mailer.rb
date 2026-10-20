@@ -10,7 +10,7 @@ module Aikotoba
       @token = @account.confirmation_token
       return unless @token
 
-      @confirm_url = aikotoba.confirm_account_url(token: @token.token)
+      @confirm_url = aikotoba_scoped_url(:confirm_account_url, token: @token.token)
       mail(to: @account.email, subject: I18n.t(".aikotoba.mailers.confirm.subject"))
     end
 
@@ -19,7 +19,7 @@ module Aikotoba
       @token = @account.unlock_token
       return unless @token
 
-      @unlock_url = aikotoba.unlock_account_url(token: @token.token)
+      @unlock_url = aikotoba_scoped_url(:unlock_account_url, token: @token.token)
       mail(to: @account.email, subject: I18n.t(".aikotoba.mailers.unlock.subject"))
     end
 
@@ -28,7 +28,7 @@ module Aikotoba
       @token = @account.recovery_token
       return unless @token
 
-      @recover_url = aikotoba.edit_account_password_url(token: @token.token)
+      @recover_url = aikotoba_scoped_url(:edit_account_password_url, token: @token.token)
       mail(to: @account.email, subject: I18n.t(".aikotoba.mailers.recover.subject"))
     end
 
@@ -37,8 +37,20 @@ module Aikotoba
       @token = @account.magic_link_token
       return unless @token
 
-      @magic_link_url = aikotoba.authenticate_via_magic_link_url(token: @token.token)
+      @magic_link_url = aikotoba_scoped_url(:authenticate_via_magic_link_url, token: @token.token)
       mail(to: @account.email, subject: I18n.t(".aikotoba.mailers.magic_link.subject"))
+    end
+
+    private
+
+    def aikotoba_scoped_url(route, **params)
+      scope = Aikotoba.scope_name_for(@account.authenticate_target_type)
+      name = (scope == "default") ? route : :"#{scope}_#{route}"
+      # NOTE: The name is built from config, never from request input, but only ever
+      #       public_send an engine route helper, not other public methods on the proxy.
+      raise ArgumentError, "not an Aikotoba route helper: #{name}" unless Aikotoba::Engine.routes.named_routes.route_defined?(name)
+
+      aikotoba.public_send(name, **params)
     end
   end
 end

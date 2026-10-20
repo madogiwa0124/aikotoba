@@ -46,7 +46,7 @@ module Aikotoba
     end
 
     def find_by_send_token_account!(params)
-      Account.unconfirmed.find_by!(email: params[:email])
+      Account.for_target_type(aikotoba_authenticate_target).unconfirmed.find_by!(email: params[:email])
     end
 
     def send_token_account!(account)
@@ -54,7 +54,7 @@ module Aikotoba
     end
 
     def find_by_has_token_account!(params)
-      Account::ConfirmationToken.active.find_by!(token: params[:token]).account
+      Account::ConfirmationToken.active.for_target_type(aikotoba_authenticate_target).find_by!(token: params[:token]).account
     end
 
     def confirm_account!(account)

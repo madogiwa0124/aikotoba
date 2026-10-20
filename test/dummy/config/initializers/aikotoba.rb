@@ -20,6 +20,7 @@ Aikotoba.add_scope(:admin, {
   confirm_path: "/admin/confirm",
   unlock_path: "/admin/unlock",
   recover_path: "/admin/recover",
+  magic_link_path: "/admin/magic_link",
   api_sign_in_path: "/admin/api/sessions",
   api_refresh_path: "/admin/api/sessions/refresh",
   api_sign_out_path: "/admin/api/sessions/current",

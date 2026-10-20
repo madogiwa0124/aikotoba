@@ -5,6 +5,28 @@ class AikotobaTest < ActiveSupport::TestCase
     assert Aikotoba::VERSION
   end
 
+  test "scope_name_for picks the scope whose authenticate_for matches, else default" do
+    assert_equal "admin", Aikotoba.scope_name_for("Admin")
+    assert_equal "default", Aikotoba.scope_name_for(nil)
+    assert_equal "default", Aikotoba.scope_name_for("User")
+  end
+
+  test "a scope with a blank authenticate_for is unrestricted everywhere" do
+    assert Aikotoba.registerable_scope?({authenticate_for: ""})
+    assert Aikotoba.registerable_scope?({authenticate_for: nil})
+    assert_not Aikotoba.registerable_scope?({authenticate_for: "Admin"})
+
+    original = Aikotoba.scopes.deep_dup
+    begin
+      Aikotoba.add_scope(:blank, authenticate_for: "")
+      assert_equal "default", Aikotoba.scope_name_for("")
+      assert_equal "default", Aikotoba.scope_name_for(nil)
+      assert_equal "admin", Aikotoba.scope_name_for("Admin")
+    ensure
+      Aikotoba.scopes.replace(original)
+    end
+  end
+
   test "default_scope= merges into default_scope" do
     original = Aikotoba.scopes.deep_dup
     begin

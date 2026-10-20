@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- **Breaking**: A scope's confirm, unlock, password reset and magic link endpoints now only handle accounts that can sign in to that scope. With `authenticate_for` set, they send emails only to accounts with that `authenticate_target_type` and return 404 for tokens belonging to other accounts. Before, for example, `/admin/recover` would send a reset email to any account. The emails now link to the account's own scope (the first scope whose `authenticate_for` matches, else the default scope) instead of always to the default scope. Links in emails sent before upgrading still point to the default scope's paths. Those keep working when the default scope has no `authenticate_for`, and otherwise the user can request a new email.
+
 - **Breaking**: A scope with `authenticate_for` no longer gets a sign up route (`sign_up_path`) or a sign up link on its sign in page, even when `Aikotoba.registerable` is enabled. Before, `Aikotoba.registerable` was global, so every scope exposed a public sign up form. The README's `after_create_account_process` example then created an `Admin` for any sign up under `aikotoba_scope.admin?`, which let anyone create an Admin account. Without that hook, the form created accounts with no target that could never sign in to that scope. Create those accounts yourself instead (see the README), and remove any `aikotoba_scope.admin?`-style branch that builds a restricted target from your `after_create_account_process`.
 
 - **Breaking**: Require Rails 7.2 or later (was `>= 6.1.4`). Token emails now wait for `ActiveRecord.after_all_transactions_commit`, which was added in Rails 7.2.

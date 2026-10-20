@@ -53,7 +53,7 @@ module Aikotoba
     end
 
     def find_by_send_token_account!(params)
-      Account.find_by!(email: params[:email])
+      Account.for_target_type(aikotoba_authenticate_target).find_by!(email: params[:email])
     end
 
     def send_magic_link_token!(account)
