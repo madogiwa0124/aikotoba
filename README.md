@@ -160,6 +160,33 @@ Register an account using email and password.
 | GET       | /sign_up | Display sign up page. |
 | POST      | /sign_up | Create an account.    |
 
+The built-in sign up is meant for the simple case: an email and password account in a scope without `authenticate_for`. For anything more involved, such as extra form fields, creating a profile model together with the account, or creating accounts for a scope that sets `authenticate_for` (see [Filtering by authenticate target type](#filtering-by-authenticate-target-type)), write your own controller on top of the model methods instead of extending the built-in one:
+
+```ruby
+class SignUpsController < ApplicationController
+  def create
+    @account = Aikotoba::Account.build_by(attributes: {email: sign_up_params[:email], password: sign_up_params[:password].to_s})
+    ActiveRecord::Base.transaction do
+      @account.authenticate_target = Profile.create!(nickname: sign_up_params[:nickname])
+      # Saves the account and, when confirmable, issues a confirmation token.
+      # The email is enqueued only after this transaction commits.
+      @account.register!
+    end
+    redirect_to aikotoba.new_session_path
+  rescue ActiveRecord::RecordInvalid
+    render :new, status: :unprocessable_entity
+  end
+
+  private
+
+  def sign_up_params
+    params.require(:account).permit(:email, :password, :nickname)
+  end
+end
+```
+
+Pass `password` even when it is blank (as above): `build_by` only builds a password when the key is present, so dropping it would save an account no one can sign in to. If the controller creates accounts for a restricted scope, such as Admins, put it behind your own authorization instead of exposing it publicly.
+
 The password is stored as a hash in [Argon2](https://github.com/technion/ruby-argon2), in a separate `Aikotoba::Account::PasswordHash` record (table `aikotoba_account_password_hashes`) rather than on `Aikotoba::Account` itself, so `Account` does not depend on password-based authentication.
 
 ### Confirmable
@@ -536,7 +563,6 @@ Aikotoba.add_scope(:admin, {
   root_path: "/admin",
   sign_in_path: "/admin/sign_in",
   sign_out_path: "/admin/sign_out",
-  sign_up_path: "/admin/sign_up",
   confirm_path: "/admin/confirm",
   unlock_path: "/admin/unlock",
   recover_path: "/admin/recover",
@@ -583,25 +609,11 @@ Aikotoba.add_scope(:admin, {
 When `authenticate_for` is set, only accounts with matching `authenticate_target_type` will authenticate successfully in that scope.
 This is useful for separating authentication between different user types (e.g., Admin vs User).
 
-**Note:** The account type is determined by the model associated via `authenticate_target`. Set up your associations in `after_create_account_process`:
+**Note:** A scope with `authenticate_for` has no sign up, even when `Aikotoba.registerable` is enabled: no route is generated for its `sign_up_path`, and its sign in page shows no sign up link. Its accounts need an `authenticate_target` of that type, which the generic sign up form can't create, and a public form that could would let anyone create, say, an Admin account. Create these accounts yourself (from the console, a seed, an invitation flow, or your own controller as described in [Registrable](#registrable)):
 
 ```ruby
-Rails.application.config.to_prepare do
-  Aikotoba::AccountsController.class_eval do
-    def after_create_account_process
-      if aikotoba_scope.admin?
-        admin = Admin.new(nickname: "admin_foo")
-        @account.authenticate_target = admin
-        admin.save!
-      else
-        user = User.new(nickname: "foo")
-        @account.authenticate_target = user
-        user.save!
-      end
-      @account.save!
-    end
-  end
-end
+admin = Admin.create!(nickname: "admin")
+Aikotoba::Account.create_by!(attributes: {email: "admin@example.com", password: "password", authenticate_target: admin})
 ```
 
 ## Tips
@@ -628,7 +640,7 @@ account.update_by!(attributes: {email: "new@example.com", password: "new_passwor
 
 ### Create other model with `Aikotoba::Account`.
 
-You can override `Aikotoba::AccountsController#after_create_account_process` to create the other models together.
+You can override `Aikotoba::AccountsController#after_create_account_process` to create the other models together. Sign up only exists in scopes without `authenticate_for` (see [Filtering by authenticate target type](#filtering-by-authenticate-target-type)).
 
 ```ruby
 require 'aikotoba'
@@ -636,16 +648,9 @@ require 'aikotoba'
 Rails.application.config.to_prepare do
   Aikotoba::AccountsController.class_eval do
     def after_create_account_process
-      # You can get the scope name by `aikotoba_scope` method.
-      if aikotoba_scope.admin?
-        admin = Admin.new(nickname: "admin_foo")
-        @account.authenticate_target = admin
-        admin.save!
-      else
-        user = User.new(nickname: "foo")
-        @account.authenticate_target = user
-        user.save!
-      end
+      user = User.new(nickname: "foo")
+      @account.authenticate_target = user
+      user.save!
       @account.save!
     end
   end

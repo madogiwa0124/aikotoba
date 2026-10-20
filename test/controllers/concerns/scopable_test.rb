@@ -35,8 +35,8 @@ class Aikotoba::ScopableTest < ActionDispatch::IntegrationTest
     # form action points to admin create_session path
     assert_select "form[action=?]", "/admin/sign_in"
 
-    # registerable link should point to admin new_account path
-    assert_select "a[href=?]", "/admin/sign_up", I18n.t(".aikotoba.accounts.new")
+    # admin scope sets authenticate_for, so it offers no sign-up link even with registerable on
+    assert_select "a", text: I18n.t(".aikotoba.accounts.new"), count: 0
   end
 
   test "default scope: after_sign_in_path and session key are from default scope" do
