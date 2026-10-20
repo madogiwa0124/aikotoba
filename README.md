@@ -616,6 +616,11 @@ admin = Admin.create!(nickname: "admin")
 Aikotoba::Account.create_by!(attributes: {email: "admin@example.com", password: "password", authenticate_target: admin})
 ```
 
+`create_by!` only saves the account. With Confirmable enabled it starts unconfirmed and can't sign in yet:
+
+- To send the confirmation email, build it and call `register!` instead: `Aikotoba::Account.build_by(attributes: {email: "admin@example.com", password: "password", authenticate_target: admin}).register!`
+- If you create the account yourself and trust the address, mark it confirmed with `account.confirm!`.
+
 ## Tips
 
 ### Customize Message
