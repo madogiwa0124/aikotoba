@@ -149,7 +149,7 @@ class NavigationTest < ActionDispatch::SystemTestCase
     Aikotoba.magic_link_authenticatable = false
   end
 
-  test "[default] (ALL) sign_up -> confirm -> sigin_in -> lock -> unlcok -> sigin_in -> recover -> sign_in -> sign_out" do
+  test "[default] (ALL) sign_up -> confirm -> sign_in -> lock -> unlock -> sign_in -> recover -> sign_in -> sign_out" do
     # Enable all features
     Aikotoba.registerable = true
     Aikotoba.confirmable = true
@@ -349,7 +349,7 @@ class NavigationTest < ActionDispatch::SystemTestCase
     Aikotoba.recoverable = false
   end
 
-  test "[admin] (ALL) create Aikotoba::Account -> confirm -> sigin_in -> lock -> unlcok -> sigin_in -> recover -> sign_in -> sign_out" do
+  test "[admin] (ALL) create Aikotoba::Account -> confirm -> sign_in -> lock -> unlock -> sign_in -> recover -> sign_in -> sign_out" do
     # Enable all features
     Aikotoba.registerable = true
     Aikotoba.confirmable = true
