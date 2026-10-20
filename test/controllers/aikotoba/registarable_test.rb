@@ -46,6 +46,15 @@ class Aikotoba::RegisterableTest < ActionDispatch::IntegrationTest
     assert_includes messages, "Password can't be blank"
   end
 
+  test "Registerable path to 404 in a scope with authenticate_for, even when Aikotoba.registerable is true" do
+    get "/admin/sign_up"
+    assert_equal 404, status
+    assert_no_difference "Aikotoba::Account.count" do
+      post "/admin/sign_up", params: {account: {email: "admin_signup@example.com", password: "password"}}
+    end
+    assert_equal 404, status
+  end
+
   test "Registerable path to 404 when Aikotoba.registerable is false" do
     Aikotoba.registerable = false
     get aikotoba.new_account_path

@@ -149,7 +149,7 @@ class NavigationTest < ActionDispatch::SystemTestCase
     Aikotoba.magic_link_authenticatable = false
   end
 
-  test "[default] (ALL) sign_up -> confirm -> sigin_in -> lock -> unlcok -> sigin_in -> recover -> sign_in -> sign_out" do
+  test "[default] (ALL) sign_up -> confirm -> sign_in -> lock -> unlock -> sign_in -> recover -> sign_in -> sign_out" do
     # Enable all features
     Aikotoba.registerable = true
     Aikotoba.confirmable = true
@@ -251,18 +251,12 @@ class NavigationTest < ActionDispatch::SystemTestCase
     click_on "Sign out"
   end
 
-  test "[admin] (Registerable) sign_up -> sign_in -> sign_out" do
+  test "[admin] (Registerable) sign_in page offers no sign_up, since the scope sets authenticate_for" do
     Aikotoba.registerable = true
-    visit "/admin/sign_up"
-    fill_in "Email", with: "admin2@example.com"
-    fill_in "Password", with: "password"
-    click_on "Sign up"
-    assert_selector ".message", text: "Signed up successfully."
-    fill_in "Email", with: "admin2@example.com"
-    fill_in "Password", with: "password"
-    click_on "Sign in"
-    assert_selector ".message", text: "Signed in successfully."
-    click_on "Sign out"
+    visit "/admin/sign_in"
+    assert_no_link I18n.t(".aikotoba.accounts.new")
+    visit "/sign_in"
+    assert_link I18n.t(".aikotoba.accounts.new"), href: "/sign_up"
     Aikotoba.registerable = false
   end
 
@@ -355,23 +349,23 @@ class NavigationTest < ActionDispatch::SystemTestCase
     Aikotoba.recoverable = false
   end
 
-  test "[admin] (ALL) sign_up -> confirm -> sigin_in -> lock -> unlcok -> sigin_in -> recover -> sign_in -> sign_out" do
+  test "[admin] (ALL) create Aikotoba::Account -> confirm -> sign_in -> lock -> unlock -> sign_in -> recover -> sign_in -> sign_out" do
     # Enable all features
     Aikotoba.registerable = true
     Aikotoba.confirmable = true
     Aikotoba.recoverable = true
     Aikotoba.lockable = true
 
-    # Sign up
-    visit "/admin/sign_up"
-    fill_in "Email", with: "all_admin@example.com"
-    fill_in "Password", with: "password"
-    assert_emails 1 do
-      click_on "Sign up"
-    end
-    assert_selector ".message", text: "Signed up successfully."
+    # NOTE: The admin scope sets authenticate_for, so it has no sign-up; create the account directly.
+    admin = Admin.create(nickname: "admin_foo")
+    Aikotoba::Account.create_by!(attributes: {email: "all_admin@example.com", password: "password", authenticate_target: admin})
 
-    # Confirmable: get confirm URL from email and visit it
+    # Confirmable: request a confirm URL, then visit it
+    visit "/admin/confirm"
+    fill_in "Email", with: "all_admin@example.com"
+    assert_emails 1 do
+      click_on "Send confirm token"
+    end
     confirm_email = ActionMailer::Base.deliveries.last
     confirm_path = confirm_email.body.to_s.split("\n")[0].split(" ")[2]
     visit confirm_path

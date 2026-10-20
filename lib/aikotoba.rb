@@ -81,4 +81,11 @@ module Aikotoba
   def self.add_scope(name, config = {})
     scopes[name] = default_scope.merge(config)
   end
+
+  # NOTE: A scope restricted by authenticate_for gets no sign-up: its accounts need an
+  #       authenticate_target of that type, which the generic sign-up form can't create.
+  #       Routes and the sign-in page's sign-up link both read this, so they can't disagree.
+  def self.registerable_scope?(scope_config)
+    scope_config[:authenticate_for].nil?
+  end
 end

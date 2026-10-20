@@ -28,15 +28,9 @@ Aikotoba.add_scope(:admin, {
 Rails.application.config.to_prepare do
   Aikotoba::AccountsController.class_eval do
     def after_create_account_process
-      if aikotoba_scope.admin?
-        admin = Admin.new(nickname: "admin_foo")
-        @account.authenticate_target = admin
-        admin.save!
-      else
-        user = User.new(nickname: "foo")
-        @account.authenticate_target = user
-        user.save!
-      end
+      user = User.new(nickname: "foo")
+      @account.authenticate_target = user
+      user.save!
       @account.save!
     end
   end
