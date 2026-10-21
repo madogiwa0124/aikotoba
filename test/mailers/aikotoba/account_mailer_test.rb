@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "test_helper"
+require "minitest/mock"
 
 class Aikotoba::AccountMailerTest < ActionMailer::TestCase
   def setup
@@ -40,5 +41,19 @@ class Aikotoba::AccountMailerTest < ActionMailer::TestCase
     mail = Aikotoba::AccountMailer.with(account: @account).recover.deliver_now
     assert_includes mail.body.to_s, latest
     assert_not_includes mail.body.to_s, first
+  end
+
+  test "refuses to call anything but an engine route helper" do
+    Aikotoba::Account::Confirmation.create_token!(account: @account, notify: false)
+    Aikotoba.stub(:scope_name_for, "unknown") do
+      error = assert_raises(ArgumentError) do
+        Aikotoba::AccountMailer.with(account: @account).confirm.deliver_now
+      end
+      assert_match "unknown_confirm_account_url", error.message
+    end
+
+    mailer = Aikotoba::AccountMailer.new
+    mailer.instance_variable_set(:@account, @account)
+    assert_raises(ArgumentError) { mailer.send(:aikotoba_scoped_url, :routes) }
   end
 end

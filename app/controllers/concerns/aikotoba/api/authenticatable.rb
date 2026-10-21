@@ -61,10 +61,6 @@ module Aikotoba
           user_agent: request.user_agent
         }
       end
-
-      def aikotoba_authenticate_target
-        aikotoba_scope_config[:authenticate_for]
-      end
     end
   end
 end

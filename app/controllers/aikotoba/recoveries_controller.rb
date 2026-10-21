@@ -58,11 +58,11 @@ module Aikotoba
     end
 
     def find_by_send_token_account!(params)
-      Account.find_by!(email: params[:email])
+      Account.for_target_type(aikotoba_authenticate_target).find_by!(email: params[:email])
     end
 
     def find_by_has_token_account!(params)
-      Account::RecoveryToken.active.find_by!(token: params[:token]).account
+      Account::RecoveryToken.active.for_target_type(aikotoba_authenticate_target).find_by!(token: params[:token]).account
     end
 
     def send_recovery_token!(account)

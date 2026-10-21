@@ -394,6 +394,7 @@ Aikotoba.add_scope(:admin, {
   confirm_path: "/admin/confirm",
   unlock_path: "/admin/unlock",
   recover_path: "/admin/recover",
+  magic_link_path: "/admin/magic_link",
   api_sign_in_path: "/admin/api/sessions",
   api_refresh_path: "/admin/api/sessions/refresh",
   api_sign_out_path: "/admin/api/sessions/current"
@@ -566,6 +567,7 @@ Aikotoba.add_scope(:admin, {
   confirm_path: "/admin/confirm",
   unlock_path: "/admin/unlock",
   recover_path: "/admin/recover",
+  magic_link_path: "/admin/magic_link",
   after_sign_in_path: "/admin/sensitives",
   after_sign_out_path: "/admin/sign_in",
   # API Token Authentication paths for admin scope
@@ -608,6 +610,10 @@ Aikotoba.add_scope(:admin, {
 
 When `authenticate_for` is set, only accounts with matching `authenticate_target_type` will authenticate successfully in that scope.
 This is useful for separating authentication between different user types (e.g., Admin vs User).
+
+The same rule applies to the scope's confirm, unlock, password reset and magic link endpoints: they only send emails to, and accept tokens from, accounts with a matching `authenticate_target_type`. A scope without `authenticate_for` handles every account, just as it lets every account sign in.
+
+The links in those emails point to the account's own scope: the first scope whose `authenticate_for` matches the account's `authenticate_target_type`, or the default scope if none does. This holds wherever the email was requested from, since it is rendered in a background job with no request to tell. If several scopes share the same `authenticate_for`, the first one wins.
 
 **Note:** A scope with `authenticate_for` has no sign up, even when `Aikotoba.registerable` is enabled: no route is generated for its `sign_up_path`, and its sign in page shows no sign up link. Its accounts need an `authenticate_target` of that type, which the generic sign up form can't create, and a public form that could would let anyone create, say, an Admin account. Create these accounts yourself (from the console, a seed, an invitation flow, or your own controller as described in [Registrable](#registrable)):
 

@@ -91,9 +91,5 @@ module Aikotoba
     def aikotoba_session_find_by(token)
       Account::Session.find_by_token(token, target_type_name: aikotoba_authenticate_target)
     end
-
-    def aikotoba_authenticate_target
-      aikotoba_scope_config[:authenticate_for]
-    end
   end
 end

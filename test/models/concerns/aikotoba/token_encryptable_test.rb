@@ -34,6 +34,14 @@ class Aikotoba::TokenEncryptableTest < ActiveSupport::TestCase
     assert_equal found_token.token, "generated_token_2"
   end
 
+  test "Being able to find the token by the original value through a scope-filtered join on the account." do
+    admin_account = ::Aikotoba::Account.create_by!(attributes: {email: "encrypted_admin@example.com", password: "password", authenticate_target: Admin.create!(nickname: "encrypted")})
+    token = ::Aikotoba::Account::ConfirmationToken.create(account: admin_account, token: "generated_token_3")
+    found_token = ::Aikotoba::Account::ConfirmationToken.for_target_type("Admin").find_by(token: "generated_token_3")
+    assert_equal token, found_token
+    assert_nil ::Aikotoba::Account::ConfirmationToken.for_target_type("User").find_by(token: "generated_token_3")
+  end
+
   private
 
   # NOTE: If Aikotoba::Account::ConfirmationToken is loaded first while Aikotoba.enypted_token is disabled,

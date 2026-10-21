@@ -9,6 +9,7 @@ module Aikotoba
     validates :expired_at, presence: true
 
     scope :active, ->(now: Time.current) { where("expired_at >= ?", now) }
+    scope :for_target_type, ->(target_type_name) { joins(:account).merge(Account.for_target_type(target_type_name)) }
 
     after_initialize do |record|
       token = Account::Token.new(expiry: Aikotoba.recovery_token_expiry)
