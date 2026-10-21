@@ -5,10 +5,15 @@ require "test_helper"
 class Aikotoba::AuthenticatableTest < ActionDispatch::IntegrationTest
   def setup
     ActionController::Base.allow_forgery_protection = false
+    @original_confirmable = Aikotoba.confirmable
     Aikotoba.confirmable = false
     @password = "password"
     @account = ::Aikotoba::Account.build_by(attributes: {email: "email@example.com", password: @password})
     @account.save!
+  end
+
+  def teardown
+    Aikotoba.confirmable = @original_confirmable
   end
 
   test "success GET new_session_path" do
@@ -58,7 +63,6 @@ class Aikotoba::AuthenticatableTest < ActionDispatch::IntegrationTest
     @account.update!(confirmed: true)
     get Aikotoba.default_scope[:after_sign_in_path]
     assert_redirected_to aikotoba.new_session_path
-    Aikotoba.confirmable = false
   end
 
   test "after being sent to sign in from a protected page, signing in redirects back to that page" do

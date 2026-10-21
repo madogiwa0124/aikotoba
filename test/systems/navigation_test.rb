@@ -5,6 +5,18 @@ class NavigationTest < ActionDispatch::SystemTestCase
 
   driven_by :rack_test
 
+  FEATURE_FLAGS = %i[registerable confirmable lockable recoverable magic_link_authenticatable].freeze
+
+  # NOTE: Feature flags are process-wide, so restore them even when a test fails midway;
+  #       otherwise a flag left on breaks unrelated tests that happen to run next.
+  setup do
+    @original_feature_flags = FEATURE_FLAGS.index_with { |flag| Aikotoba.public_send(flag) }
+  end
+
+  teardown do
+    @original_feature_flags.each { |flag, value| Aikotoba.public_send(:"#{flag}=", value) }
+  end
+
   # Default namespace tests
   test "[default] create Aikotoba::Account -> sign_in -> sign_out" do
     Aikotoba::Account.create_by!(attributes: {email: "default1@example.com", password: "password"})
@@ -41,7 +53,6 @@ class NavigationTest < ActionDispatch::SystemTestCase
     click_on "Sign in"
     assert_selector ".message", text: "Signed in successfully."
     click_on "Sign out"
-    Aikotoba.registerable = false
   end
 
   test "[default] (Confirmable) sign_up -> generate confirm token -> confirm -> sign_in -> sign_out" do
@@ -69,7 +80,6 @@ class NavigationTest < ActionDispatch::SystemTestCase
     click_on "Sign in"
     assert_selector ".message", text: "Signed in successfully."
     click_on "Sign out"
-    Aikotoba.confirmable = false
   end
 
   test "[default] (Lockable) sign_up -> sign_in -> locked -> generate unlock token -> unlock -> sign_in -> sign_out" do
@@ -102,7 +112,6 @@ class NavigationTest < ActionDispatch::SystemTestCase
     click_on "Sign in"
     assert_selector ".message", text: "Signed in successfully."
     click_on "Sign out"
-    Aikotoba.lockable = false
   end
 
   test "[default] (Recoverable) sign_up -> sign_in -> generate recover token -> password reset -> sign_in -> sign_out" do
@@ -127,7 +136,6 @@ class NavigationTest < ActionDispatch::SystemTestCase
     click_on "Sign in"
     assert_selector ".message", text: "Signed in successfully."
     click_on "Sign out"
-    Aikotoba.recoverable = false
   end
 
   test "[default] (MagicLinkAuthenticatable) sign_in -> request sign in link -> sign in via link -> sign out" do
@@ -146,7 +154,6 @@ class NavigationTest < ActionDispatch::SystemTestCase
     visit magic_link_path
     assert_selector ".message", text: "Signed in successfully."
     click_on "Sign out"
-    Aikotoba.magic_link_authenticatable = false
   end
 
   test "[default] (ALL) sign_up -> confirm -> sign_in -> lock -> unlock -> sign_in -> recover -> sign_in -> sign_out" do
@@ -217,12 +224,6 @@ class NavigationTest < ActionDispatch::SystemTestCase
     click_on "Sign in"
     assert_selector ".message", text: "Signed in successfully."
     click_on "Sign out"
-
-    # Reset features
-    Aikotoba.registerable = false
-    Aikotoba.confirmable = false
-    Aikotoba.recoverable = false
-    Aikotoba.lockable = false
   end
 
   # Admin namespace tests
@@ -257,7 +258,6 @@ class NavigationTest < ActionDispatch::SystemTestCase
     assert_no_link I18n.t(".aikotoba.accounts.new")
     visit "/sign_in"
     assert_link I18n.t(".aikotoba.accounts.new"), href: "/sign_up"
-    Aikotoba.registerable = false
   end
 
   test "[admin] (Confirmable) sign_up -> generate confirm token -> confirm -> sign_in -> sign_out" do
@@ -286,7 +286,6 @@ class NavigationTest < ActionDispatch::SystemTestCase
     click_on "Sign in"
     assert_selector ".message", text: "Signed in successfully."
     click_on "Sign out"
-    Aikotoba.confirmable = false
   end
 
   test "[admin] (Lockable) sign_up -> sign_in -> locked -> generate unlock token -> unlock -> sign_in -> sign_out" do
@@ -320,7 +319,6 @@ class NavigationTest < ActionDispatch::SystemTestCase
     click_on "Sign in"
     assert_selector ".message", text: "Signed in successfully."
     click_on "Sign out"
-    Aikotoba.lockable = false
   end
 
   test "[admin] (Recoverable) sign_up -> sign_in -> generate recover token -> password reset -> sign_in -> sign_out" do
@@ -346,7 +344,6 @@ class NavigationTest < ActionDispatch::SystemTestCase
     click_on "Sign in"
     assert_selector ".message", text: "Signed in successfully."
     click_on "Sign out"
-    Aikotoba.recoverable = false
   end
 
   test "[admin] (ALL) create Aikotoba::Account -> confirm -> sign_in -> lock -> unlock -> sign_in -> recover -> sign_in -> sign_out" do
@@ -421,12 +418,6 @@ class NavigationTest < ActionDispatch::SystemTestCase
     click_on "Sign in"
     assert_selector ".message", text: "Signed in successfully."
     click_on "Sign out"
-
-    # Reset features
-    Aikotoba.registerable = false
-    Aikotoba.confirmable = false
-    Aikotoba.recoverable = false
-    Aikotoba.lockable = false
   end
 
   # Test namespace isolation - ensure default and admin sessions are separate

@@ -4,6 +4,14 @@ require "test_helper"
 
 class Aikotoba::AccountTest < ActiveSupport::TestCase
   class Registrable < ActiveSupport::TestCase
+    def setup
+      @original_confirmable = Aikotoba.confirmable
+    end
+
+    def teardown
+      Aikotoba.confirmable = @original_confirmable
+    end
+
     test "build_by creates account with email and password" do
       account = Aikotoba::Account.build_by(attributes: {
         email: "user@example.com",
@@ -49,7 +57,6 @@ class Aikotoba::AccountTest < ActiveSupport::TestCase
       assert_difference "Aikotoba::Account::ConfirmationToken.count", 1 do
         account.register!
       end
-      Aikotoba.confirmable = false
     end
 
     test "register! does not create confirmation token when not confirmable" do
@@ -152,6 +159,8 @@ class Aikotoba::AccountTest < ActiveSupport::TestCase
 
   class Authenticatable < ActiveSupport::TestCase
     def setup
+      @original_confirmable = Aikotoba.confirmable
+      @original_lockable = Aikotoba.lockable
       @account = Aikotoba::Account.create_by!(attributes: {
         email: "user@example.com",
         password: "Password1!",
@@ -159,6 +168,11 @@ class Aikotoba::AccountTest < ActiveSupport::TestCase
         locked: false,
         failed_attempts: 0
       })
+    end
+
+    def teardown
+      Aikotoba.confirmable = @original_confirmable
+      Aikotoba.lockable = @original_lockable
     end
 
     test "authentication_failed! increments failed_attempts" do
@@ -225,8 +239,6 @@ class Aikotoba::AccountTest < ActiveSupport::TestCase
       assert_includes accounts.to_a, unlocked
       assert_not_includes accounts.to_a, unconfirmed
       assert_not_includes accounts.to_a, locked
-      Aikotoba.confirmable = false
-      Aikotoba.lockable = false
     end
   end
 
