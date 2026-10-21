@@ -613,7 +613,9 @@ This is useful for separating authentication between different user types (e.g.,
 
 The same rule applies to the scope's confirm, unlock, password reset and magic link endpoints: they only send emails to, and accept tokens from, accounts with a matching `authenticate_target_type`. A scope without `authenticate_for` handles every account, just as it lets every account sign in.
 
-The links in those emails point to the account's own scope: the first scope whose `authenticate_for` matches the account's `authenticate_target_type`, or the default scope if none does. This holds wherever the email was requested from, since it is rendered in a background job with no request to tell. If several scopes share the same `authenticate_for`, the first one wins.
+The links in those emails point to the account's own scope: the scope whose `authenticate_for` matches the account's `authenticate_target_type`, or the default scope if none does. This holds wherever the email was requested from, since it is rendered in a background job with no request to tell.
+
+Each `authenticate_for` value may be set on only one scope, so that an account's type maps to exactly one scope. Otherwise `Aikotoba::Errors::InvalidScopeConfiguration` is raised when the scope is added, or at boot once your initializers have run. Keep in mind that `add_scope` copies unspecified keys from the default scope, including `authenticate_for`. If the default scope sets one, give every added scope its own `authenticate_for` (`nil` for an unrestricted scope).
 
 **Note:** A scope with `authenticate_for` has no sign up, even when `Aikotoba.registerable` is enabled: no route is generated for its `sign_up_path`, and its sign in page shows no sign up link. Its accounts need an `authenticate_target` of that type, which the generic sign up form can't create, and a public form that could would let anyone create, say, an Admin account. Create these accounts yourself (from the console, a seed, an invitation flow, or your own controller as described in [Registrable](#registrable)):
 

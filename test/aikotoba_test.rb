@@ -27,6 +27,47 @@ class AikotobaTest < ActiveSupport::TestCase
     end
   end
 
+  test "add_scope rejects an authenticate_for another scope already has" do
+    original = Aikotoba.scopes.deep_dup
+    begin
+      error = assert_raises(Aikotoba::Errors::InvalidScopeConfiguration) do
+        Aikotoba.add_scope(:staff, authenticate_for: "Admin", root_path: "/staff")
+      end
+      assert_match "Admin (admin, staff)", error.message
+      assert_not Aikotoba.scopes.key?(:staff)
+
+      Aikotoba.add_scope(:public, root_path: "/public")
+      assert_nil Aikotoba.scopes[:public][:authenticate_for]
+    ensure
+      Aikotoba.scopes.replace(original)
+    end
+  end
+
+  test "add_scope rejects inheriting the default scope's authenticate_for" do
+    original = Aikotoba.scopes.deep_dup
+    begin
+      Aikotoba.default_scope[:authenticate_for] = "User"
+      assert_raises(Aikotoba::Errors::InvalidScopeConfiguration) do
+        Aikotoba.add_scope(:mobile, root_path: "/mobile")
+      end
+      Aikotoba.add_scope(:mobile, root_path: "/mobile", authenticate_for: nil)
+      assert_nil Aikotoba.scopes[:mobile][:authenticate_for]
+    ensure
+      Aikotoba.scopes.replace(original)
+    end
+  end
+
+  test "validate_scopes! catches a duplicate made after add_scope" do
+    original = Aikotoba.scopes.deep_dup
+    begin
+      Aikotoba.validate_scopes!
+      Aikotoba.default_scope = {authenticate_for: "Admin"}
+      assert_raises(Aikotoba::Errors::InvalidScopeConfiguration) { Aikotoba.validate_scopes! }
+    ensure
+      Aikotoba.scopes.replace(original)
+    end
+  end
+
   test "default_scope= merges into default_scope" do
     original = Aikotoba.scopes.deep_dup
     begin

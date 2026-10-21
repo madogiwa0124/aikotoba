@@ -3,5 +3,7 @@ module Aikotoba
     class Base < StandardError; end
 
     class NotAvailableException < Base; end
+
+    class InvalidScopeConfiguration < Base; end
   end
 end
