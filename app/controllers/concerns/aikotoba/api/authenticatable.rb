@@ -21,7 +21,7 @@ module Aikotoba
       def aikotoba_api_token_payload(account_session)
         Api::Token.new(
           access_token: account_session.token,
-          refresh_token: account_session.refresh_token.token,
+          refresh_token: account_session.refresh_token.plaintext_token,
           expired_at: account_session.expired_at
         )
       end

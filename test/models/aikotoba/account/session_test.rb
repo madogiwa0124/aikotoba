@@ -130,20 +130,20 @@ class Aikotoba::Account::SessionTest < ActiveSupport::TestCase
     assert s.token.present?
     assert s.expired_at < 1.hour.from_now
     assert s.refresh_token.persisted?
-    assert s.refresh_token.token.present?
+    assert s.refresh_token.plaintext_token.present?
     assert s.refresh_token.expired_at > 7.days.from_now
   end
 
   test "refresh! revokes old session and issues new session with rotated tokens" do
     session = Aikotoba::Account::Session.start!(account: @account, origin: :api, ip_address: "127.0.0.1", user_agent: "MiniTest")
     old_token = session.token
-    old_refresh_token = session.refresh_token.token
+    old_refresh_token = session.refresh_token.plaintext_token
     new_session = session.refresh!(origin: :api, ip_address: "127.0.0.1", user_agent: "MiniTest")
     assert session.destroyed?
     assert_not_equal old_token, new_session.token
     assert new_session.expired_at > session.expired_at
     assert new_session.refresh_token.persisted?
-    assert_not_equal old_refresh_token, new_session.refresh_token.token
+    assert_not_equal old_refresh_token, new_session.refresh_token.plaintext_token
   end
 
   test "find_by_token returns active authenticatable session" do

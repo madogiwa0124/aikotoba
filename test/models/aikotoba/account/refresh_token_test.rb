@@ -25,10 +25,22 @@ class Aikotoba::Account::RefreshTokenTest < ActiveSupport::TestCase
     Aikotoba.api_authenticatable = false
   end
 
-  test "after_initialize sets token and expired_at" do
+  test "after_initialize sets token_digest and expired_at" do
     refresh_token = @session.refresh_token
-    assert refresh_token.token.present?
+    assert refresh_token.plaintext_token.present?
     assert refresh_token.expired_at.future?
+  end
+
+  test "only the SHA-256 digest of the token is persisted" do
+    refresh_token = @session.refresh_token
+    stored = Aikotoba::Account::RefreshToken.where(id: refresh_token.id).pick(:token_digest)
+    assert_equal OpenSSL::Digest::SHA256.hexdigest(refresh_token.plaintext_token), stored
+    assert_not_equal refresh_token.plaintext_token, stored
+  end
+
+  test "plaintext_token raises on an instance that did not issue the token" do
+    reloaded = Aikotoba::Account::RefreshToken.find(@session.refresh_token.id)
+    assert_raises(Aikotoba::Errors::PlaintextTokenUnavailable) { reloaded.plaintext_token }
   end
 
   test "active? returns true for non-expired token" do
@@ -91,7 +103,7 @@ class Aikotoba::Account::RefreshTokenTest < ActiveSupport::TestCase
         user_agent: "MiniTest",
         expired_at: Aikotoba.api_access_token_expiry.since
       )
-      @refresh_token_value = @session.refresh_token.token
+      @refresh_token_value = @session.refresh_token.plaintext_token
     end
 
     def teardown
@@ -104,6 +116,11 @@ class Aikotoba::Account::RefreshTokenTest < ActiveSupport::TestCase
 
     test "refresh_session! returns nil for unknown token" do
       assert_nil Aikotoba::Account::RefreshToken.refresh_session!(refresh_token_value: "unknown_token")
+    end
+
+    test "refresh_session! returns nil when given the stored digest instead of the token" do
+      digest = Aikotoba::Account::RefreshToken.where(id: @session.refresh_token.id).pick(:token_digest)
+      assert_nil Aikotoba::Account::RefreshToken.refresh_session!(refresh_token_value: digest)
     end
 
     test "refresh_session! returns nil for expired token" do

@@ -716,6 +716,8 @@ To use it, enable Aikotoba.encipted_token in the initializer.
 Aikotoba.encrypted_token = true
 ```
 
+API refresh tokens are not affected by this setting: they are always stored as a SHA-256 digest, so the database never holds a usable refresh token.
+
 ### How to identify the controller provided.
 
 The controller provided by Aikotoba is designed to inherit from `Aikotoba::ApplicationController`.

@@ -26,6 +26,7 @@ This repository is a Rails Engine gem that provides simple email/password authen
 - Account: Generic identity and session/lock bookkeeping in [app/models/aikotoba/account.rb](../app/models/aikotoba/account.rb) — `authenticate_target` ("authenticate_for"), sessions, the `authenticatable` scope, `failed_attempts`/`locked` counters. It does not know how credentials are checked.
 - Tokens: Confirmation/Unlock/Recovery tokens under [app/models/aikotoba/account/\*](../app/models/aikotoba/account) use `Account::Token` ([app/models/aikotoba/account/token.rb](../app/models/aikotoba/account/token.rb)).
 - Token encryption: Optional deterministic encryption for `token` fields via `Aikotoba.encrypted_token`. See concern in [app/models/concerns/aikotoba/token_encryptable.rb](../app/models/concerns/aikotoba/token_encryptable.rb) and note AR 7+ requirement.
+- Token hashing: `Account::RefreshToken` stores only `token_digest` (SHA-256 via `Account::Token.digest`) and does not include `TokenEncryptable`. The plaintext is held only on the issuing instance (`#plaintext_token`, raises `Errors::PlaintextTokenUnavailable` elsewhere), so look tokens up by digest. Sessions (browser cookie is signed; API access token is short-lived) and the emailed tokens still store `token` as-is — the mailers read the token back from the DB when the job runs, which hashing would break.
 
 ### Auth method ownership principle
 
