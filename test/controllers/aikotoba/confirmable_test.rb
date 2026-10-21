@@ -5,6 +5,7 @@ require "minitest/autorun"
 
 class Aikotoba::ConfirmableTest < ActionDispatch::IntegrationTest
   def setup
+    @original_registerable = Aikotoba.registerable
     Aikotoba.confirmable = true
     ActionController::Base.allow_forgery_protection = false
     @password = "password"
@@ -16,6 +17,7 @@ class Aikotoba::ConfirmableTest < ActionDispatch::IntegrationTest
 
   def teardown
     Aikotoba.confirmable = false
+    Aikotoba.registerable = @original_registerable
   end
 
   test "success GET new_confirmation_token" do
@@ -105,7 +107,6 @@ class Aikotoba::ConfirmableTest < ActionDispatch::IntegrationTest
     assert_equal account.email, confirm_email.to[0]
     assert_match(/Confirm url:/, confirm_email.body.to_s)
     assert_includes(confirm_email.body.to_s, account.reload.confirmation_token.token)
-    Aikotoba.registerable = false
   end
 
   test "success POST new_session_path by comfirmed account" do

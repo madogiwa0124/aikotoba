@@ -29,6 +29,7 @@ class Aikotoba::Account::SessionTest < ActiveSupport::TestCase
 
   class Scopes < ActiveSupport::TestCase
     def setup
+      @original_confirmable = Aikotoba.confirmable
       @account = Aikotoba::Account.create_by!(attributes: {
         email: "user@example.com",
         password: "Password1!",
@@ -36,6 +37,10 @@ class Aikotoba::Account::SessionTest < ActiveSupport::TestCase
         locked: false,
         failed_attempts: 0
       })
+    end
+
+    def teardown
+      Aikotoba.confirmable = @original_confirmable
     end
 
     test "active scope returns non-expired sessions" do
@@ -60,11 +65,11 @@ class Aikotoba::Account::SessionTest < ActiveSupport::TestCase
       authenticatable = Aikotoba::Account::Session.authenticatable.to_a
 
       assert_equal authenticatable, [s1]
-      Aikotoba.confirmable = false
     end
   end
 
   def setup
+    @original_confirmable = Aikotoba.confirmable
     Aikotoba.api_authenticatable = true
     @account = Aikotoba::Account.create_by!(attributes: {
       email: "user@example.com",
@@ -77,6 +82,7 @@ class Aikotoba::Account::SessionTest < ActiveSupport::TestCase
 
   def teardown
     Aikotoba.api_authenticatable = false
+    Aikotoba.confirmable = @original_confirmable
   end
 
   test "revoke! destroys the session" do
@@ -157,6 +163,5 @@ class Aikotoba::Account::SessionTest < ActiveSupport::TestCase
     })
     unconfirmed_session = Aikotoba::Account::Session.create!(account: unconfirmed_account)
     assert_nil Aikotoba::Account::Session.find_by_token(unconfirmed_session.token)
-    Aikotoba.confirmable = false
   end
 end

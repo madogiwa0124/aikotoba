@@ -45,6 +45,7 @@ class Aikotoba::Account::PasswordHashTest < ActiveSupport::TestCase
 
   class AuthenticateBy < ActiveSupport::TestCase
     def setup
+      @original_lockable = Aikotoba.lockable
       @account = Aikotoba::Account.create_by!(attributes: {
         email: "user@example.com",
         password: "Password1!",
@@ -52,6 +53,10 @@ class Aikotoba::Account::PasswordHashTest < ActiveSupport::TestCase
         locked: false,
         failed_attempts: 0
       })
+    end
+
+    def teardown
+      Aikotoba.lockable = @original_lockable
     end
 
     test "authenticate_by returns account for valid credentials" do
@@ -110,7 +115,6 @@ class Aikotoba::Account::PasswordHashTest < ActiveSupport::TestCase
         password: "WrongPassword!"
       })
       assert account.reload.locked?
-      Aikotoba.lockable = false
     end
 
     test "authenticate_by returns nil without raising for an account with no password_hash" do
