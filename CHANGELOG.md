@@ -2,6 +2,30 @@
 
 ## Unreleased
 
+- **Breaking**: API refresh tokens are now stored as a SHA-256 digest (`aikotoba_account_refresh_tokens.token_digest`) instead of the token itself, so a leaked database (backup, replica, SQL injection read) no longer hands out refresh tokens that stay usable for up to 30 days. The plaintext only exists on the record that issued it: `Account::RefreshToken#token` is gone, `#plaintext_token` returns it on that instance and raises `Aikotoba::Errors::PlaintextTokenUnavailable` on any other (e.g. one reloaded from the DB). Look tokens up with `find_by(token_digest: Aikotoba::Account::Token.digest(value))` instead of `find_by(token: value)`. `Aikotoba.encrypted_token` no longer applies to refresh tokens. Access tokens and browser sessions are unchanged.
+
+  **Breaking schema change** — the canonical migration is edited in place, so existing installs that enabled `Aikotoba.api_authenticatable` need a migration of their own. Existing refresh tokens cannot be converted in general (with `encrypted_token` enabled, the stored value is ciphertext), so this one deletes them. API clients keep working until their access token expires (15 minutes by default) and must then sign in again; browser sessions are not affected.
+
+  ```ruby
+  class HashAikotobaRefreshTokens < ActiveRecord::Migration[7.2]
+    def up
+      execute "DELETE FROM aikotoba_account_refresh_tokens"
+      remove_column :aikotoba_account_refresh_tokens, :token
+      add_column :aikotoba_account_refresh_tokens, :token_digest, :string, null: false
+      add_index :aikotoba_account_refresh_tokens, :token_digest, unique: true
+    end
+
+    def down
+      execute "DELETE FROM aikotoba_account_refresh_tokens"
+      remove_column :aikotoba_account_refresh_tokens, :token_digest
+      add_column :aikotoba_account_refresh_tokens, :token, :string, null: false
+      add_index :aikotoba_account_refresh_tokens, :token, unique: true
+    end
+  end
+  ```
+
+  If `encrypted_token` was never enabled, you can keep existing refresh tokens instead by hashing them in place before renaming the column (PostgreSQL: `UPDATE aikotoba_account_refresh_tokens SET token = encode(sha256(token::bytea), 'hex')`, MySQL 5.7+: `SET token = SHA2(token, 256)`), then `rename_column :aikotoba_account_refresh_tokens, :token, :token_digest`. SQLite has no built-in SHA-256, so use the migration above there.
+
 - **Breaking**: Two scopes can no longer share an `authenticate_for` value. `add_scope`, and app boot (after your initializers), raise `Aikotoba::Errors::InvalidScopeConfiguration` instead. The scope an account's emails link to is picked by its target type, so a shared value made that choice ambiguous. Note that `add_scope` copies `authenticate_for` from the default scope unless you pass it. If your default scope sets one, pass `authenticate_for:` (or `nil`) to each added scope.
 
 - **Breaking**: A scope's confirm, unlock, password reset and magic link endpoints now only handle accounts that can sign in to that scope. With `authenticate_for` set, they send emails only to accounts with that `authenticate_target_type` and return 404 for tokens belonging to other accounts. Before, for example, `/admin/recover` would send a reset email to any account. The emails now link to the account's own scope (the first scope whose `authenticate_for` matches, else the default scope) instead of always to the default scope. Links in emails sent before upgrading still point to the default scope's paths. Those keep working when the default scope has no `authenticate_for`, and otherwise the user can request a new email.

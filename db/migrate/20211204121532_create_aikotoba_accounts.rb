@@ -110,7 +110,7 @@ class CreateAikotobaAccounts < ActiveRecord::Migration[6.1]
     #     null: false,
     #     foreign_key: true,
     #     index: {unique: true, name: "idx_aikotoba_refresh_tokens_on_session_id"}
-    #   t.string :token, null: false, index: {unique: true}
+    #   t.string :token_digest, null: false, index: {unique: true}
     #   t.datetime :expired_at, null: false
     #
     #   t.timestamps

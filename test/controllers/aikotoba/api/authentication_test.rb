@@ -241,7 +241,7 @@ class Aikotoba::Api::AuthenticationTest < ActionDispatch::IntegrationTest
     refresh_token_value = body["refresh_token"]
 
     # Expire the refresh token in the DB
-    Aikotoba::Account::RefreshToken.find_by!(token: refresh_token_value)
+    Aikotoba::Account::RefreshToken.find_by!(token_digest: Aikotoba::Account::Token.digest(refresh_token_value))
       .update_columns(expired_at: 1.minute.ago)
 
     # Refresh fails

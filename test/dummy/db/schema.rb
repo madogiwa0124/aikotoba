@@ -59,10 +59,10 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_21_000001) do
     t.integer "aikotoba_account_session_id", null: false
     t.datetime "created_at", null: false
     t.datetime "expired_at", precision: nil, null: false
-    t.string "token", null: false
+    t.string "token_digest", null: false
     t.datetime "updated_at", null: false
     t.index ["aikotoba_account_session_id"], name: "idx_aikotoba_refresh_tokens_on_session_id", unique: true
-    t.index ["token"], name: "index_aikotoba_account_refresh_tokens_on_token", unique: true
+    t.index ["token_digest"], name: "index_aikotoba_account_refresh_tokens_on_token_digest", unique: true
   end
 
   create_table "aikotoba_account_sessions", force: :cascade do |t|

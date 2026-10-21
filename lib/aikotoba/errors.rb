@@ -5,5 +5,7 @@ module Aikotoba
     class NotAvailableException < Base; end
 
     class InvalidScopeConfiguration < Base; end
+
+    class PlaintextTokenUnavailable < Base; end
   end
 end
