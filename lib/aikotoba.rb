@@ -79,11 +79,30 @@ module Aikotoba
   end
 
   def self.add_scope(name, config = {})
-    scopes[name] = default_scope.merge(config)
+    scope_config = default_scope.merge(config)
+    validate_scopes!(scopes.merge(name => scope_config))
+    scopes[name] = scope_config
   end
 
-  # NOTE: The scope whose links an account's emails use: the first scope whose
-  #       authenticate_for matches the account's target type, else the default scope.
+  # NOTE: Each authenticate_for may belong to one scope only, so an account's type maps to
+  #       exactly one scope (see scope_name_for). Checked by add_scope, and again after
+  #       initialization (Engine), to catch default_scope= or direct edits made afterwards.
+  def self.validate_scopes!(scopes_to_check = scopes)
+    shared = scopes_to_check
+      .select { |_, config| config[:authenticate_for].present? }
+      .group_by { |_, config| config[:authenticate_for].to_s }
+      .select { |_, entries| entries.size > 1 }
+    return if shared.empty?
+
+    details = shared.map { |type, entries| "#{type} (#{entries.map(&:first).join(", ")})" }.join("; ")
+    raise Errors::InvalidScopeConfiguration,
+      "authenticate_for must be unique per scope, but is shared: #{details}. " \
+      "add_scope copies authenticate_for from the default scope unless you set it, so set it " \
+      "explicitly on the added scope (nil for an unrestricted scope)."
+  end
+
+  # NOTE: The scope whose links an account's emails use: the scope whose authenticate_for
+  #       matches the account's target type (unique, see validate_scopes!), else the default.
   #       Emails are rendered in a job, with no request to tell which scope was used.
   def self.scope_name_for(target_type_name)
     name, _ = scopes.find { |_, config| scope_for?(config, target_type_name) }
