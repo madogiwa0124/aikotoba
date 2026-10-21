@@ -14,7 +14,7 @@ module Aikotoba
     private
 
     def aikotoba_scope_registerable?
-      registerable? && Aikotoba.registerable_scope?(aikotoba_scope_config)
+      registerable? && aikotoba_scope_config.registerable?
     end
   end
 end

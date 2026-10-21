@@ -14,7 +14,7 @@ Aikotoba::Engine.routes.draw do
       post(config[:sign_in_path], to: "sessions#create", as: :create_session)
       delete(config[:sign_out_path], to: "sessions#destroy", as: :destroy_session)
 
-      if Aikotoba.registerable_scope?(config)
+      if config.registerable?
         constraints(Aikotoba::RegisterableConstraint) do
           get(config[:sign_up_path], to: "accounts#new", as: :new_account)
           post(config[:sign_up_path], to: "accounts#create", as: :create_account)

@@ -44,7 +44,7 @@ module Aikotoba
     private
 
     def aikotoba_scoped_url(route, **params)
-      scope = Aikotoba.scope_name_for(@account.authenticate_target_type)
+      scope = Aikotoba.scopes.name_for(@account.authenticate_target_type)
       name = (scope == "default") ? route : :"#{scope}_#{route}"
       # NOTE: The name is built from config, never from request input, but only ever
       #       public_send an engine route helper, not other public methods on the proxy.

@@ -5,23 +5,23 @@ class AikotobaTest < ActiveSupport::TestCase
     assert Aikotoba::VERSION
   end
 
-  test "scope_name_for picks the scope whose authenticate_for matches, else default" do
-    assert_equal "admin", Aikotoba.scope_name_for("Admin")
-    assert_equal "default", Aikotoba.scope_name_for(nil)
-    assert_equal "default", Aikotoba.scope_name_for("User")
+  test "scopes.name_for picks the scope whose authenticate_for matches, else default" do
+    assert_equal "admin", Aikotoba.scopes.name_for("Admin")
+    assert_equal "default", Aikotoba.scopes.name_for(nil)
+    assert_equal "default", Aikotoba.scopes.name_for("User")
   end
 
   test "a scope with a blank authenticate_for is unrestricted everywhere" do
-    assert Aikotoba.registerable_scope?({authenticate_for: ""})
-    assert Aikotoba.registerable_scope?({authenticate_for: nil})
-    assert_not Aikotoba.registerable_scope?({authenticate_for: "Admin"})
+    assert Aikotoba::Scope.new(authenticate_for: "").registerable?
+    assert Aikotoba::Scope.new(authenticate_for: nil).registerable?
+    assert_not Aikotoba::Scope.new(authenticate_for: "Admin").registerable?
 
     original = Aikotoba.scopes.deep_dup
     begin
       Aikotoba.add_scope(:blank, authenticate_for: "")
-      assert_equal "default", Aikotoba.scope_name_for("")
-      assert_equal "default", Aikotoba.scope_name_for(nil)
-      assert_equal "admin", Aikotoba.scope_name_for("Admin")
+      assert_equal "default", Aikotoba.scopes.name_for("")
+      assert_equal "default", Aikotoba.scopes.name_for(nil)
+      assert_equal "admin", Aikotoba.scopes.name_for("Admin")
     ensure
       Aikotoba.scopes.replace(original)
     end
@@ -57,12 +57,12 @@ class AikotobaTest < ActiveSupport::TestCase
     end
   end
 
-  test "validate_scopes! catches a duplicate made after add_scope" do
+  test "scopes.validate! catches a duplicate made after add_scope" do
     original = Aikotoba.scopes.deep_dup
     begin
-      Aikotoba.validate_scopes!
+      Aikotoba.scopes.validate!
       Aikotoba.default_scope = {authenticate_for: "Admin"}
-      assert_raises(Aikotoba::Errors::InvalidScopeConfiguration) { Aikotoba.validate_scopes! }
+      assert_raises(Aikotoba::Errors::InvalidScopeConfiguration) { Aikotoba.scopes.validate! }
     ensure
       Aikotoba.scopes.replace(original)
     end

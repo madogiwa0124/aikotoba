@@ -3,6 +3,7 @@
 require "aikotoba/version"
 require "aikotoba/engine"
 require "aikotoba/errors"
+require "aikotoba/scopes"
 
 module Aikotoba
   mattr_accessor(:parent_controller) { "ApplicationController" }
@@ -47,7 +48,7 @@ module Aikotoba
   mattr_accessor(:encrypted_token) { false }
 
   mattr_accessor(:scopes) {
-    HashWithIndifferentAccess.new({
+    Scopes.new({
       default: {
         authenticate_for: nil,
         root_path: "/",
@@ -69,7 +70,7 @@ module Aikotoba
   }
 
   def self.default_scope
-    scopes[:default]
+    scopes.default
   end
 
   # NOTE: Merge configuration into default scope (does not replace, merges with existing keys)
@@ -79,48 +80,6 @@ module Aikotoba
   end
 
   def self.add_scope(name, config = {})
-    scope_config = default_scope.merge(config)
-    validate_scopes!(scopes.merge(name => scope_config))
-    scopes[name] = scope_config
+    scopes.add(name, config)
   end
-
-  # NOTE: Each authenticate_for may belong to one scope only, so an account's type maps to
-  #       exactly one scope (see scope_name_for). Checked by add_scope, and again after
-  #       initialization (Engine), to catch default_scope= or direct edits made afterwards.
-  def self.validate_scopes!(scopes_to_check = scopes)
-    shared = scopes_to_check
-      .select { |_, config| config[:authenticate_for].present? }
-      .group_by { |_, config| config[:authenticate_for].to_s }
-      .select { |_, entries| entries.size > 1 }
-    return if shared.empty?
-
-    details = shared.map { |type, entries| "#{type} (#{entries.map(&:first).join(", ")})" }.join("; ")
-    raise Errors::InvalidScopeConfiguration,
-      "authenticate_for must be unique per scope, but is shared: #{details}. " \
-      "add_scope copies authenticate_for from the default scope unless you set it, so set it " \
-      "explicitly on the added scope (nil for an unrestricted scope)."
-  end
-
-  # NOTE: The scope whose links an account's emails use: the scope whose authenticate_for
-  #       matches the account's target type (unique, see validate_scopes!), else the default.
-  #       Emails are rendered in a job, with no request to tell which scope was used.
-  def self.scope_name_for(target_type_name)
-    name, _ = scopes.find { |_, config| scope_for?(config, target_type_name) }
-    name || "default"
-  end
-
-  # NOTE: A scope restricted by authenticate_for gets no sign-up: its accounts need an
-  #       authenticate_target of that type, which the generic sign-up form can't create.
-  #       Routes and the sign-in page's sign-up link both read this, so they can't disagree.
-  #       blank? (not nil?) matches Account.for_target_type, which treats "" as unrestricted.
-  def self.registerable_scope?(scope_config)
-    scope_config[:authenticate_for].blank?
-  end
-
-  # NOTE: Whether the scope is the one set up for this target type (authenticate_for: "Admin"
-  #       for "Admin"). An unrestricted scope also signs Admins in, but isn't "for" them.
-  def self.scope_for?(scope_config, target_type_name)
-    scope_config[:authenticate_for].present? && scope_config[:authenticate_for].to_s == target_type_name.to_s
-  end
-  private_class_method :scope_for?
 end
