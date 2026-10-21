@@ -19,7 +19,7 @@ module Aikotoba
     private
 
     def aikotoba_authenticate_target
-      aikotoba_scope_config[:authenticate_for]
+      aikotoba_scope_config.authenticate_for
     end
 
     def aikotoba_calc_scope_from(request_path)

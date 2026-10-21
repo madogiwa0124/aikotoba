@@ -45,7 +45,7 @@ class Aikotoba::AccountMailerTest < ActionMailer::TestCase
 
   test "refuses to call anything but an engine route helper" do
     Aikotoba::Account::Confirmation.create_token!(account: @account, notify: false)
-    Aikotoba.stub(:scope_name_for, "unknown") do
+    Aikotoba.scopes.stub(:name_for, "unknown") do
       error = assert_raises(ArgumentError) do
         Aikotoba::AccountMailer.with(account: @account).confirm.deliver_now
       end
