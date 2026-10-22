@@ -25,16 +25,12 @@ module Aikotoba
     def aikotoba_calc_scope_from(request_path)
       scope = :default
       Aikotoba.scopes.except(:default).each do |name, config|
-        if aikotoba_from_scope_path?(config[:root_path])
+        if config.covers?(request_path)
           scope = name
           break # NOTE: Adopt the first matching scope
         end
       end
       scope
-    end
-
-    def aikotoba_from_scope_path?(scope_root_path)
-      request.path == scope_root_path || request.path.start_with?("#{scope_root_path}/")
     end
   end
 end
