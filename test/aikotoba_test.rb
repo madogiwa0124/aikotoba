@@ -18,7 +18,7 @@ class AikotobaTest < ActiveSupport::TestCase
 
     original = Aikotoba.scopes.deep_dup
     begin
-      Aikotoba.add_scope(:blank, authenticate_for: "")
+      Aikotoba.add_scope(:blank, root_path: "/blank", authenticate_for: "")
       assert_equal "default", Aikotoba.scopes.name_for("")
       assert_equal "default", Aikotoba.scopes.name_for(nil)
       assert_equal "admin", Aikotoba.scopes.name_for("Admin")
@@ -52,6 +52,25 @@ class AikotobaTest < ActiveSupport::TestCase
       end
       Aikotoba.add_scope(:mobile, root_path: "/mobile", authenticate_for: nil)
       assert_nil Aikotoba.scopes[:mobile][:authenticate_for]
+    ensure
+      Aikotoba.scopes.replace(original)
+    end
+  end
+
+  test "add_scope rejects a root_path of \"/\", set or inherited" do
+    original = Aikotoba.scopes.deep_dup
+    begin
+      error = assert_raises(Aikotoba::Errors::InvalidScopeConfiguration) do
+        Aikotoba.add_scope(:staff, authenticate_for: "Staff")
+      end
+      assert_match %(on: staff ("/")), error.message
+      assert_raises(Aikotoba::Errors::InvalidScopeConfiguration) do
+        Aikotoba.add_scope(:staff, authenticate_for: "Staff", root_path: "/")
+      end
+      assert_not Aikotoba.scopes.key?(:staff)
+
+      Aikotoba.scopes[:admin][:root_path] = "/"
+      assert_raises(Aikotoba::Errors::InvalidScopeConfiguration) { Aikotoba.scopes.validate! }
     ensure
       Aikotoba.scopes.replace(original)
     end

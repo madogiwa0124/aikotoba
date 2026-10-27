@@ -10,46 +10,46 @@ require "aikotoba/constraints/api_authenticatable_constraint"
 Aikotoba::Engine.routes.draw do
   Aikotoba.scopes.each do |scope_name, config|
     scope as: ((scope_name == "default") ? nil : scope_name) do
-      get(config[:sign_in_path], to: "sessions#new", as: :new_session)
-      post(config[:sign_in_path], to: "sessions#create", as: :create_session)
-      delete(config[:sign_out_path], to: "sessions#destroy", as: :destroy_session)
+      get(config.route_path(:sign_in_path), to: "sessions#new", as: :new_session)
+      post(config.route_path(:sign_in_path), to: "sessions#create", as: :create_session)
+      delete(config.route_path(:sign_out_path), to: "sessions#destroy", as: :destroy_session)
 
       if config.registerable?
         constraints(Aikotoba::RegisterableConstraint) do
-          get(config[:sign_up_path], to: "accounts#new", as: :new_account)
-          post(config[:sign_up_path], to: "accounts#create", as: :create_account)
+          get(config.route_path(:sign_up_path), to: "accounts#new", as: :new_account)
+          post(config.route_path(:sign_up_path), to: "accounts#create", as: :create_account)
         end
       end
 
       constraints(Aikotoba::ConfirmableConstraint) do
-        get(config[:confirm_path], to: "confirms#new", as: :new_confirmation_token)
-        post(config[:confirm_path], to: "confirms#create", as: :create_confirmation_token)
-        get(File.join(config[:confirm_path], ":token"), to: "confirms#update", as: :confirm_account)
+        get(config.route_path(:confirm_path), to: "confirms#new", as: :new_confirmation_token)
+        post(config.route_path(:confirm_path), to: "confirms#create", as: :create_confirmation_token)
+        get(File.join(config.route_path(:confirm_path), ":token"), to: "confirms#update", as: :confirm_account)
       end
 
       constraints(Aikotoba::LockableConstraint) do
-        get(config[:unlock_path], to: "unlocks#new", as: :new_unlock_token)
-        post(config[:unlock_path], to: "unlocks#create", as: :create_unlock_token)
-        get(File.join(config[:unlock_path], ":token"), to: "unlocks#update", as: :unlock_account)
+        get(config.route_path(:unlock_path), to: "unlocks#new", as: :new_unlock_token)
+        post(config.route_path(:unlock_path), to: "unlocks#create", as: :create_unlock_token)
+        get(File.join(config.route_path(:unlock_path), ":token"), to: "unlocks#update", as: :unlock_account)
       end
 
       constraints(Aikotoba::RecoverableConstraint) do
-        get(config[:recover_path], to: "recoveries#new", as: :new_recovery_token)
-        post(config[:recover_path], to: "recoveries#create", as: :create_recovery_token)
-        get(File.join(config[:recover_path], ":token"), to: "recoveries#edit", as: :edit_account_password)
-        patch(File.join(config[:recover_path], ":token"), to: "recoveries#update", as: :update_account_password)
+        get(config.route_path(:recover_path), to: "recoveries#new", as: :new_recovery_token)
+        post(config.route_path(:recover_path), to: "recoveries#create", as: :create_recovery_token)
+        get(File.join(config.route_path(:recover_path), ":token"), to: "recoveries#edit", as: :edit_account_password)
+        patch(File.join(config.route_path(:recover_path), ":token"), to: "recoveries#update", as: :update_account_password)
       end
 
       constraints(Aikotoba::MagicLinkAuthenticatableConstraint) do
-        get(config[:magic_link_path], to: "magic_links#new", as: :new_magic_link)
-        post(config[:magic_link_path], to: "magic_links#create", as: :create_magic_link)
-        get(File.join(config[:magic_link_path], ":token"), to: "magic_links#update", as: :authenticate_via_magic_link)
+        get(config.route_path(:magic_link_path), to: "magic_links#new", as: :new_magic_link)
+        post(config.route_path(:magic_link_path), to: "magic_links#create", as: :create_magic_link)
+        get(File.join(config.route_path(:magic_link_path), ":token"), to: "magic_links#update", as: :authenticate_via_magic_link)
       end
 
       constraints(Aikotoba::ApiAuthenticatableConstraint) do
-        post(config[:api_sign_in_path], to: "api/sessions#create", as: :api_create_session)
-        post(config[:api_refresh_path], to: "api/refresh_tokens#create", as: :api_refresh_session)
-        delete(config[:api_sign_out_path], to: "api/sessions#destroy", as: :api_destroy_session)
+        post(config.route_path(:api_sign_in_path), to: "api/sessions#create", as: :api_create_session)
+        post(config.route_path(:api_refresh_path), to: "api/refresh_tokens#create", as: :api_refresh_session)
+        delete(config.route_path(:api_sign_out_path), to: "api/sessions#destroy", as: :api_destroy_session)
       end
     end
   end
