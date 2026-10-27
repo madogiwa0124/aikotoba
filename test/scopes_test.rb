@@ -36,6 +36,14 @@ class Aikotoba::ScopesTest < ActiveSupport::TestCase
     assert_instance_of Hash, Aikotoba.scopes.to_hash["default"]
   end
 
+  test "Hash behavior survives: a missing key is nil, copies can be filtered" do
+    assert_nil Aikotoba.scopes[:missing]
+    assert_nil Aikotoba.scopes.deep_dup[:missing]
+    assert_equal ["admin"], Aikotoba.scopes.except(:default).select { |_, scope| scope.authenticate_for }.keys
+    assert_equal ["admin"], Aikotoba.scopes.except(:default).reject { |_, scope| scope.registerable? }.keys
+    assert_equal Aikotoba.scopes[:default], Aikotoba.scopes.default_scope
+  end
+
   test "documented hash access still works" do
     Aikotoba.default_scope[:sign_in_path] = "/login"
     assert_equal "/login", Aikotoba.scopes[:default][:sign_in_path]

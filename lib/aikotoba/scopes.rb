@@ -7,12 +7,16 @@ module Aikotoba
   # NOTE: All scopes, keyed by name. Still a HashWithIndifferentAccess, so Aikotoba.scopes
   #       keeps its documented Hash behavior; the cross-scope rules live here.
   class Scopes < ActiveSupport::HashWithIndifferentAccess
-    def default
+    # NOTE: Not named default: that would override Hash#default(key = nil), which Hash calls
+    #       with the key on every miss (scopes[:typo] raised ArgumentError), and which
+    #       HashWithIndifferentAccess copies into every dup (select, reject, deep_dup), turning
+    #       the default scope into the copy's fallback value for missing keys.
+    def default_scope
       self[:default]
     end
 
     def add(name, config = {})
-      scope = default.merge(config)
+      scope = default_scope.merge(config)
       validate!(merge(name => scope))
       self[name] = scope
     end
@@ -36,7 +40,7 @@ module Aikotoba
           path = scope[key]
           rewritten = !scope.covers?(path)
           absolute = path.start_with?("/")
-          same_as_default = path == default[key]
+          same_as_default = path == default_scope[key]
           next unless rewritten && absolute && !same_as_default
 
           route = scope.route_path(key)
@@ -60,10 +64,10 @@ module Aikotoba
     #       leave its own pages to the default scope. add_scope copies root_path "/" from the
     #       default scope unless it is set.
     def validate_root_paths!(scopes)
-      invalid = scopes.except(:default).filter_map { |name, scope| name unless scope.valid_root_path? }
+      invalid = scopes.except(:default).reject { |_, scope| scope.valid_root_path? }
       return if invalid.empty?
 
-      details = invalid.map { |name| "#{name} (#{scopes[name][:root_path].inspect})" }.join(", ")
+      details = invalid.map { |name, scope| "#{name} (#{scope[:root_path].inspect})" }.join(", ")
       raise Errors::InvalidScopeConfiguration,
         "root_path of an added scope must be an absolute path other than \"/\", like \"/admin\", but is not on: " \
         "#{details}. add_scope copies root_path \"/\" from the default scope unless you set it."

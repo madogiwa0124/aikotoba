@@ -70,7 +70,7 @@ module Aikotoba
   }
 
   def self.default_scope
-    scopes.default
+    scopes.default_scope
   end
 
   # NOTE: Merge configuration into default scope (does not replace, merges with existing keys)
