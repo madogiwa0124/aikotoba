@@ -55,22 +55,11 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_21_000001) do
     t.index ["token"], name: "index_aikotoba_account_recovery_tokens_on_token", unique: true
   end
 
-  create_table "aikotoba_account_refresh_tokens", force: :cascade do |t|
-    t.integer "aikotoba_account_session_id", null: false
-    t.datetime "created_at", null: false
-    t.datetime "expired_at", precision: nil, null: false
-    t.string "token", null: false
-    t.datetime "updated_at", null: false
-    t.index ["aikotoba_account_session_id"], name: "idx_aikotoba_refresh_tokens_on_session_id", unique: true
-    t.index ["token"], name: "index_aikotoba_account_refresh_tokens_on_token", unique: true
-  end
-
   create_table "aikotoba_account_sessions", force: :cascade do |t|
     t.integer "aikotoba_account_id", null: false
     t.datetime "created_at", null: false
     t.datetime "expired_at", precision: nil, null: false
     t.string "ip_address"
-    t.string "origin", default: "browser", null: false
     t.string "token", null: false
     t.datetime "updated_at", null: false
     t.string "user_agent"
@@ -111,7 +100,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_21_000001) do
   add_foreign_key "aikotoba_account_magic_link_tokens", "aikotoba_accounts"
   add_foreign_key "aikotoba_account_password_hashes", "aikotoba_accounts"
   add_foreign_key "aikotoba_account_recovery_tokens", "aikotoba_accounts"
-  add_foreign_key "aikotoba_account_refresh_tokens", "aikotoba_account_sessions"
   add_foreign_key "aikotoba_account_sessions", "aikotoba_accounts"
   add_foreign_key "aikotoba_account_unlock_tokens", "aikotoba_accounts"
 end

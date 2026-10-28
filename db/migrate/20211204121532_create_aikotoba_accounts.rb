@@ -1,10 +1,10 @@
 class CreateAikotobaAccounts < ActiveRecord::Migration[6.1]
   # NOTE: The tables below the "optional features" marker belong to features that are
   #       disabled by default (Aikotoba.confirmable / .lockable / .recoverable /
-  #       .magic_link_authenticatable / .api_authenticatable all default to false), so
-  #       they ship commented out. Uncomment the block for each feature you enable --
-  #       before running db:migrate on a fresh install, or in a new migration of your
-  #       own if you enable the feature later.
+  #       .magic_link_authenticatable all default to false), so they ship commented out.
+  #       Uncomment the block for each feature you enable -- before running db:migrate
+  #       on a fresh install, or in a new migration of your own if you enable the
+  #       feature later.
   #
   #       Leaving them commented out is safe: Aikotoba never queries a feature's table
   #       while that table does not exist, including on Account#destroy! and session
@@ -35,7 +35,6 @@ class CreateAikotobaAccounts < ActiveRecord::Migration[6.1]
     create_table :aikotoba_account_sessions do |t|
       t.belongs_to :aikotoba_account, null: false, foreign_key: true
       t.string :token, null: false, index: {unique: true}
-      t.string :origin, null: false, default: "browser"
       t.string :ip_address
       t.string :user_agent
       t.datetime :expired_at, null: false
@@ -97,19 +96,6 @@ class CreateAikotobaAccounts < ActiveRecord::Migration[6.1]
     #     null: false, foreign_key: true,
     #     index: {unique: true, name: "index_account_magic_link_tokens_on_account_id"}
     #   )
-    #   t.string :token, null: false, index: {unique: true}
-    #   t.datetime :expired_at, null: false
-    #
-    #   t.timestamps
-    # end
-
-    # Aikotoba.api_authenticatable = true
-    #
-    # create_table :aikotoba_account_refresh_tokens do |t|
-    #   t.belongs_to :aikotoba_account_session,
-    #     null: false,
-    #     foreign_key: true,
-    #     index: {unique: true, name: "idx_aikotoba_refresh_tokens_on_session_id"}
     #   t.string :token, null: false, index: {unique: true}
     #   t.datetime :expired_at, null: false
     #

@@ -7,7 +7,6 @@ Aikotoba.configure do |config|
   # config.lockable = true
   # config.recoverable = true
   # config.max_failed_attempts = 2
-  config.api_authenticatable = true
 
   config.add_scope(:admin, {
     authenticate_for: "Admin",
@@ -23,9 +22,6 @@ Aikotoba.configure do |config|
     recover_path: "/admin/recover",
     # NOTE: magic_link_path is left unset on purpose: the "/magic_link" it inherits from the
     #       default scope is drawn under root_path, as "/admin/magic_link".
-    api_sign_in_path: "/admin/api/sessions",
-    api_refresh_path: "/admin/api/sessions/refresh",
-    api_sign_out_path: "/admin/api/sessions/current"
   })
 end
 

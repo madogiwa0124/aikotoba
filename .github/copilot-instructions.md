@@ -63,10 +63,9 @@ credential's presence the same way, on its own terms.
 
 ### Optional-feature schema: per-feature migrations and destroy-safety
 
-Confirmable/Lockable/Recoverable/MagicLinkAuthenticatable/API Token Authenticatable
-each own one table (`aikotoba_account_confirmation_tokens` /
-`_unlock_tokens` / `_recovery_tokens` / `_magic_link_tokens` /
-`_refresh_tokens`). Two related but separate conventions apply to them:
+Confirmable/Lockable/Recoverable/MagicLinkAuthenticatable each own one table
+(`aikotoba_account_confirmation_tokens` / `_unlock_tokens` / `_recovery_tokens` /
+`_magic_link_tokens`). Two related but separate conventions apply to them:
 
 **Migration layout**: everything stays in the single canonical
 [db/migrate/20211204121532_create_aikotoba_accounts.rb](../db/migrate/20211204121532_create_aikotoba_accounts.rb),
@@ -90,7 +89,7 @@ matching what the engine ships.
 
 **Destroy-safety**: `Account`'s optional `has_one` associations
 (`confirmation_token`, `unlock_token`, `recovery_token`, `magic_link_token`)
-and `Account::Session#refresh_token` are declared **without**
+are declared **without**
 `dependent: :destroy`. Each instead has a guarded `before_destroy`. This is
 deliberate, not an oversight — `dependent: :destroy` registers an
 *unconditional* Rails callback that queries the association's table on every
@@ -107,33 +106,17 @@ a host app that used a feature and later switched its flag off still has rows
 in that table, and skipping the cleanup strands them, so `Account#destroy!`
 raises `ActiveRecord::InvalidForeignKey` (`PG::ForeignKeyViolation`) on the
 orphaned child — something `dependent: :destroy` handled fine. The guards
-therefore key off what actually determines whether there is anything to clean
-up:
-
-- `Account` declares each one with `optional_has_one :confirmation_token,
-  foreign_key: "aikotoba_account_id", dependent: :destroy`, the macro from
-  [app/models/concerns/aikotoba/optional_association.rb](../app/models/concerns/aikotoba/optional_association.rb).
-  It resolves the table name off the association's reflection (no hardcoded
-  strings) and gates on a `schema_cache.data_source_exists?` lookup: table
-  missing ⇒ nothing was ever written, skip without querying; table present ⇒
-  clean up, flag or no flag. Being schema-cached (negative results included)
-  it costs at most one query per process — and, like anything schema-cached,
-  a process that was already running when the migration was applied needs a
-  restart to see the new table.
-- `Account::Session` uses `origin_api?` instead, which is sharper: it is the
-  exact mirror of `Session.start!`'s `session.build_refresh_token if
-  session.origin_api?`, the only place a refresh token is ever created. A
-  browser session therefore never touches `aikotoba_account_refresh_tokens`
-  at all, and an api session always cleans its token up. Don't "simplify"
-  this to `Aikotoba.api_authenticatable` — that reintroduces the stranded-row
-  bug above, and refresh tokens live 30 days by default. Don't fold it into
-  `optional_has_one` either, for consistency's sake: the
-  macro only skips when the *table* is missing, so it would load the
-  association on every browser sign-out to find nothing, and the case it
-  additionally guards ("api session exists, its table doesn't") is
-  unreachable because `start!` creates both in the same save. `Account` has
-  no such invariant — an account legitimately has no token row — which is
-  exactly why it needs the table lookup and `Session` doesn't.
+therefore key off whether the table exists: `Account` declares each one with
+`optional_has_one :confirmation_token, foreign_key: "aikotoba_account_id",
+dependent: :destroy`, the macro from
+[app/models/concerns/aikotoba/optional_association.rb](../app/models/concerns/aikotoba/optional_association.rb).
+It resolves the table name off the association's reflection (no hardcoded
+strings) and gates on a `schema_cache.data_source_exists?` lookup: table
+missing ⇒ nothing was ever written, skip without querying; table present ⇒
+clean up, flag or no flag. Being schema-cached (negative results included) it
+costs at most one query per process — and, like anything schema-cached, a
+process that was already running when the migration was applied needs a
+restart to see the new table.
 
 `test/models/aikotoba/account_test.rb`'s `DestroyingOptionalTokens` class
 guards all three properties (cleanup happens, cleanup survives a flag being

@@ -426,7 +426,6 @@ class Aikotoba::AccountTest < ActiveSupport::TestCase
       aikotoba_account_unlock_tokens
       aikotoba_account_recovery_tokens
       aikotoba_account_magic_link_tokens
-      aikotoba_account_refresh_tokens
     ].freeze
 
     def setup
@@ -441,7 +440,7 @@ class Aikotoba::AccountTest < ActiveSupport::TestCase
       Aikotoba::Account::Lock.create_unlock_token!(account: @account, notify: false)
       Aikotoba::Account::Recovery.create_token!(account: @account, notify: false)
       Aikotoba::Account::MagicLink.create_token!(account: @account, notify: false)
-      Aikotoba::Account::Session.start!(account: @account, origin: :api)
+      Aikotoba::Account::Session.start!(account: @account)
     end
 
     def sql_statements_while
@@ -458,7 +457,6 @@ class Aikotoba::AccountTest < ActiveSupport::TestCase
         "Aikotoba::Account::UnlockToken.count",
         "Aikotoba::Account::RecoveryToken.count",
         "Aikotoba::Account::MagicLinkToken.count",
-        "Aikotoba::Account::RefreshToken.count",
         "Aikotoba::Account::Session.count"
       ], -1 do
         Aikotoba::Account.find(@account.id).destroy!
@@ -480,7 +478,7 @@ class Aikotoba::AccountTest < ActiveSupport::TestCase
       # NOTE: The actual bug this whole arrangement exists for -- a host app with a
       #       feature disabled and its migration never run used to hit PG::UndefinedTable
       #       on every Account#destroy!.
-      session = Aikotoba::Account::Session.start!(account: @account, origin: :browser)
+      session = Aikotoba::Account::Session.start!(account: @account)
       with_optional_token_tables_dropped do
         statements = sql_statements_while do
           session.revoke!
@@ -497,8 +495,7 @@ class Aikotoba::AccountTest < ActiveSupport::TestCase
         confirmable: Aikotoba.confirmable,
         lockable: Aikotoba.lockable,
         recoverable: Aikotoba.recoverable,
-        magic_link_authenticatable: Aikotoba.magic_link_authenticatable,
-        api_authenticatable: Aikotoba.api_authenticatable
+        magic_link_authenticatable: Aikotoba.magic_link_authenticatable
       }
       previous.each_key { |feature| Aikotoba.config.public_send(:"#{feature}=", false) }
       yield

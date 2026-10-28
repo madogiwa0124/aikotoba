@@ -7,12 +7,6 @@ en:
         password_hash: Password
       aikotoba/account/password_hash:
         plaintext: Password
-    errors:
-      models:
-        aikotoba/account/refresh_token:
-          attributes:
-            session:
-              must_be_api_origin: "must be api origin"
     models:
       aikotoba/account: Account
   aikotoba:

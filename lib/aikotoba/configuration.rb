@@ -10,7 +10,6 @@ module Aikotoba
     SETTINGS = %i[
       parent_controller parent_mailer mailer_sender email_format password_pepper
       password_length_range session_expiry
-      api_authenticatable api_parent_controller api_access_token_expiry api_refresh_token_expiry
       registerable
       confirmable confirmation_token_expiry confirmation_rate_limit_options
       lockable max_failed_attempts unlock_token_expiry unlock_rate_limit_options
@@ -30,12 +29,6 @@ module Aikotoba
       @password_pepper = "aikotoba-default-pepper"
       @password_length_range = 8..100
       @session_expiry = 7.days
-
-      # for API Token Authentication
-      @api_authenticatable = false
-      @api_parent_controller = "ApplicationController"
-      @api_access_token_expiry = 15.minutes
-      @api_refresh_token_expiry = 30.days
 
       # for Registerable
       @registerable = true
@@ -77,10 +70,7 @@ module Aikotoba
           confirm_path: "/confirm",
           unlock_path: "/unlock",
           recover_path: "/recover",
-          magic_link_path: "/magic_link",
-          api_sign_in_path: "/api/sessions",
-          api_refresh_path: "/api/sessions/refresh",
-          api_sign_out_path: "/api/sessions/current"
+          magic_link_path: "/magic_link"
         }
       })
     end
