@@ -2,7 +2,15 @@
 
 ## Unreleased
 
-- The migration no longer creates the unused `origin` column on `aikotoba_account_sessions`. Nothing in Aikotoba reads or writes it, so an existing database can keep it or drop it with `remove_column :aikotoba_account_sessions, :origin, :string, null: false, default: "browser"`.
+- **Breaking**: Remove the `origin` column from `aikotoba_account_sessions`. Nothing in Aikotoba reads or writes it, and the canonical migration no longer creates it. Existing installs should drop it with a migration of their own:
+
+  ```ruby
+  class RemoveOriginFromAikotobaAccountSessions < ActiveRecord::Migration[8.1]
+    def change
+      remove_column :aikotoba_account_sessions, :origin, :string, null: false, default: "browser"
+    end
+  end
+  ```
 
 - **Deprecated**: the `Aikotoba.xxx = ...` writers, `Aikotoba.add_scope` and `Aikotoba.default_scope=`. They still work, but log a deprecation warning and will be removed in 1.0. Set the same values in `Aikotoba.configure` instead (`config.xxx = ...`, `config.add_scope`, `config.default_scope =`). The warnings go through `Aikotoba.deprecator`, registered as `Rails.application.deprecators[:aikotoba]`, so its behavior follows your app's deprecation settings.
 
