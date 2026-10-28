@@ -35,7 +35,7 @@ Add this line to your application's Gemfile:
 gem 'aikotoba'
 ```
 
-Aikotoba requires Rails 7.2 or later.
+Aikotoba requires Rails 8.1 or later.
 
 Emails (confirmation, unlock, password recovery, magic link) are sent with `deliver_later` after the surrounding transaction commits. Configure a persistent Active Job backend in production: the default `:async` adapter loses queued emails when the process restarts.
 
@@ -363,9 +363,9 @@ The access token must be sent in the `Authorization` header:
 Authorization: Bearer <access_token>
 ```
 
-### Rate Limiting (Rails 8+ only)
+### Rate Limiting
 
-Aikotoba provides built-in rate limiting for email-sending endpoints to prevent email bombing attacks. This feature requires **Rails 8.0 or later**.
+Aikotoba provides built-in rate limiting for email-sending endpoints to prevent email bombing attacks.
 
 Rate limiting is available for:
 
@@ -495,7 +495,7 @@ Aikotoba.configure do |config|
   config.magic_link_token_expiry = 15.minutes
 
   # ============================================
-  # Rate Limiting (Rails 8+ required)
+  # Rate Limiting
   # ============================================
   # Rate limiting protects email-sending endpoints (confirm, unlock, recover) from email bombing attacks.
   # Default (empty hash): no rate limiting

@@ -12,9 +12,6 @@ jobs:
     strategy:
       matrix:
         ruby: ["3.3", "3.4", "4.0"]
-        gemfile: ["Gemfile", "gemfiles/rails_7_2.gemfile"]
-    env:
-      BUNDLE_GEMFILE: ${{ matrix.gemfile }}
     steps:
       - uses: actions/checkout@v2
       - uses: ruby/setup-ruby@v1

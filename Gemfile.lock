@@ -3,7 +3,7 @@ PATH
   specs:
     aikotoba (0.2.0)
       argon2 (~> 2.1)
-      rails (>= 7.2)
+      rails (>= 8.1)
 
 GEM
   remote: https://rubygems.org/

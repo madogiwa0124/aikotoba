@@ -182,8 +182,8 @@ ignoring them would be worse.
 The upshot is that `build_x_token` + `save!` behaves like a normal `has_one`
 again, so each owning class's `create_token!` (`Confirmation`, `Lock`,
 `Recovery`, `MagicLink`) stays plain Rails and there is no special
-`rebuild_`/`recreate_` verb to remember. Verified on both CI Rails versions
-(7.2 and 8.1); `Aikotoba::AccountTest::OptionalHasOne` plus the four
+`rebuild_`/`recreate_` verb to remember. Verified on Rails 8.1 (the
+minimum supported version); `Aikotoba::AccountTest::OptionalHasOne` plus the four
 "regenerated token" controller tests are what catch it if a future Rails stops
 honouring a post-declaration option.
 
@@ -211,7 +211,7 @@ safe either way.
 
 ## Developer Workflows
 
-- Dependencies: Ruby on Rails `>= 7.2`; Argon2; optional Active Record Encryption (Rails 7+). Gem dependencies are declared in [aikotoba.gemspec](../aikotoba.gemspec) and dev/test gems in [Gemfile](../Gemfile).
+- Dependencies: Ruby on Rails `>= 8.1`; Argon2; optional Active Record Encryption. Gem dependencies are declared in [aikotoba.gemspec](../aikotoba.gemspec) and dev/test gems in [Gemfile](../Gemfile).
 - Lunch dummy app: Use the engine-mounted dummy app under [test/dummy](../test/dummy). To start the server:
 
   ```sh

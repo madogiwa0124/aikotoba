@@ -91,8 +91,8 @@ module Aikotoba
 
     # NOTE: HashWithIndifferentAccess turns every Hash it stores into a plain
     #       HashWithIndifferentAccess; store a Scope instead, so a scope assigned directly
-    #       (scopes[:name] = {...}) still answers registerable? / for?. Same private hook and
-    #       signature in Rails 7.2 and 8.1. :to_hash is the conversion back to a plain Hash.
+    #       (scopes[:name] = {...}) still answers registerable? / for?. :to_hash is the
+    #       conversion back to a plain Hash.
     def convert_value(value, conversion: nil)
       return Scope.new(value) if value.is_a?(Hash) && !value.is_a?(Scope) && conversion != :to_hash
 

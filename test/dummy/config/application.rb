@@ -35,10 +35,8 @@ module Dummy
       config.active_record.database_resolver = ActiveRecord::Middleware::DatabaseSelector::Resolver
       config.active_record.database_resolver_context = ActiveRecord::Middleware::DatabaseSelector::Resolver::Session
     end
-    if ActiveRecord::VERSION::MAJOR >= 7
-      config.active_record.encryption.primary_key = "foo"
-      config.active_record.encryption.deterministic_key = "bar"
-      config.active_record.encryption.key_derivation_salt = "baz"
-    end
+    config.active_record.encryption.primary_key = "foo"
+    config.active_record.encryption.deterministic_key = "bar"
+    config.active_record.encryption.key_derivation_salt = "baz"
   end
 end
