@@ -14,11 +14,15 @@ module Aikotoba
     end
 
     def aikotoba_sign_in(account)
-      start_new_aikotoba_session_for(account)
+      start_new_aikotoba_session_for(account).tap do |session|
+        Events.report_after_commit(:sign_in, **session.event_payload, scope: aikotoba_scope.to_s)
+      end
     end
 
     def aikotoba_sign_out
+      session = @aikotoba_current_session
       terminate_aikotoba_session
+      Events.report_after_commit(:sign_out, **session.event_payload, scope: aikotoba_scope.to_s) if session
     end
 
     private

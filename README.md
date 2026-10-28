@@ -628,6 +628,51 @@ Rails.application.config.to_prepare do
 end
 ```
 
+### Events
+
+Aikotoba reports authentication events through Rails' structured event reporter, [`Rails.event`](https://rubyonrails.org/2025/10/22/rails-8-1), so you can track them (audit logs, metrics, alerts) without overriding any controller.
+
+```ruby
+# config/initializers/aikotoba_events.rb
+class AuthEventSubscriber
+  def emit(event)
+    AuthEventJob.perform_later(event[:name], event[:payload], event[:context])
+  end
+end
+
+Rails.event.subscribe(AuthEventSubscriber.new) { |event| event[:name].start_with?("aikotoba.") }
+```
+
+| Event                                                                                         | Reported when                                                                   | Payload                                         |
+| --------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------- | ----------------------------------------------- |
+| `aikotoba.sign_in`                                                                            | a session starts (`aikotoba_sign_in`), by any method                            | `account_id`, `session_id`, `scope`             |
+| `aikotoba.sign_out`                                                                           | a session is revoked (`aikotoba_sign_out`)                                      | `account_id`, `session_id`, `scope`             |
+| `aikotoba.sign_in_failed`                                                                     | a password sign in fails (`Aikotoba::Account::PasswordHash.authenticate_by`)    | `email`, `account_id`, `target_type_name`       |
+| `aikotoba.account_registered`                                                                 | `Aikotoba::Account#register!` saves an account                                  | `account_id`                                    |
+| `aikotoba.account_confirmed`                                                                  | an account is confirmed                                                          | `account_id`                                    |
+| `aikotoba.account_locked`                                                                     | an account is locked after too many failed sign ins                              | `account_id`                                    |
+| `aikotoba.account_unlocked`                                                                   | an account is unlocked                                                           | `account_id`                                    |
+| `aikotoba.password_recovered`                                                                 | a password is reset through a recovery token                                     | `account_id`                                    |
+| `aikotoba.confirmation_token_sent`, `aikotoba.unlock_token_sent`, `aikotoba.recovery_token_sent` | an email with that token is queued                                             | `account_id`                                    |
+
+- Payloads hold plain values, not records, so a subscriber can serialize them as is. `scope` is the scope's name (`"default"`, `"admin"`).
+- `sign_in_failed`'s `account_id` is `nil` when no account that can sign in to the scope has that email, so you can tell an unknown email from a wrong password. The response to the user is the same either way.
+- `Rails.event` masks payload keys that match `config.filter_parameters`. New apps filter `:email`, so `sign_in_failed`'s `email` is reported as `"[FILTERED]"` unless you change that filter.
+- Request details such as the IP address are not in the payloads, since the models that report them don't see the request. Put them in `Rails.event`'s context, which every event carries and Rails clears between requests:
+
+  ```ruby
+  class ApplicationController < ActionController::Base
+    before_action { Rails.event.set_context(ip_address: request.remote_ip, user_agent: request.user_agent) }
+  end
+  ```
+
+  For `sign_in`, the session record (`Aikotoba::Account::Session.find_by(id: session_id)`) also has them until it ends. A `sign_out`'s session is already deleted when the event is reported, so use the context there.
+- The events are reported from the models and the sign in helpers, not the controllers, so your own controllers built on them report the same events. That includes the console and rake tasks: unlocking an account from the console reports `account_unlocked`.
+- Every event except `sign_in_failed` is reported after the database transaction commits, the caller's own included, and not at all if it rolls back, so a subscriber never sees a change that didn't persist. `sign_in_failed` is reported right away.
+- Subscribers run synchronously in the request, so keep them fast and enqueue a job for anything slow. `Rails.event` reports an exception raised by a subscriber to `Rails.error` instead of failing the request, except where `config.consider_all_requests_local` is set (development and test by default), where it raises.
+- In tests, use Rails' `assert_event_reported("aikotoba.sign_in")` and friends.
+- Not covered yet: magic link events. A magic link sign in does report `sign_in`, since it goes through `aikotoba_sign_in`.
+
 ### Using encrypted token
 
 Tokens can be encrypted using Active Record Encryption, introduced in Active Record 7 and later.

@@ -17,7 +17,10 @@ module Aikotoba
     def create_token!(notify:)
       ActiveRecord::Base.transaction do
         @account.build_confirmation_token.save!
-        @account.confirmation_token.notify if notify
+        if notify
+          @account.confirmation_token.notify
+          Events.report_after_commit(:confirmation_token_sent, account_id: @account.id)
+        end
       end
     end
 
@@ -25,6 +28,7 @@ module Aikotoba
       ActiveRecord::Base.transaction do
         @account.confirm!
         @account.confirmation_token&.destroy!
+        Events.report_after_commit(:account_confirmed, account_id: @account.id)
       end
     end
   end

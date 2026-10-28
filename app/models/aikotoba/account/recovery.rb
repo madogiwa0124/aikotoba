@@ -26,7 +26,10 @@ module Aikotoba
     def create_token!(notify:)
       ActiveRecord::Base.transaction do
         @account.build_recovery_token.save!
-        @account.recovery_token.notify if notify
+        if notify
+          @account.recovery_token.notify
+          Events.report_after_commit(:recovery_token_sent, account_id: @account.id)
+        end
       end
     end
 
@@ -43,6 +46,7 @@ module Aikotoba
       ActiveRecord::Base.transaction do
         @account.password_hash.recover!(new_password)
         @account.recovery_token&.destroy!
+        Events.report_after_commit(:password_recovered, account_id: @account.id)
       end
     rescue ActiveRecord::RecordInvalid => e
       raise if e.record == @account

@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Report authentication events through `Rails.event`: `aikotoba.sign_in`, `aikotoba.sign_out`, `aikotoba.sign_in_failed`, `aikotoba.account_registered`, `aikotoba.account_confirmed`, `aikotoba.account_locked`, `aikotoba.account_unlocked`, `aikotoba.password_recovered`, and `aikotoba.confirmation_token_sent` / `unlock_token_sent` / `recovery_token_sent`. Payloads hold ids and names, not records. They are reported from the models and the sign in helpers, so custom controllers built on them report them too, and every event but `sign_in_failed` waits for the transaction to commit. See the README's Events section.
+
 - **Breaking**: Remove the `origin` column from `aikotoba_account_sessions`. Nothing in Aikotoba reads or writes it, and the canonical migration no longer creates it. Existing installs should drop it with a migration of their own:
 
   ```ruby
