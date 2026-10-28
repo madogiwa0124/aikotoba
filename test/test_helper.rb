@@ -24,8 +24,6 @@ end
 require "capybara/rails"
 Capybara.server = :webrick, {Silent: true} # To clean up your test output
 require "aikotoba/test/authentication_helper"
-require "committee/rails"
-require "support/api_committee_helper"
 
 # NOTE: Every test starts from the configuration the dummy app booted with, whatever earlier
 #       tests set. Swapped in after_teardown, so a test's own teardown still sees its settings.

@@ -7,12 +7,6 @@ en:
         password_hash: Password
       aikotoba/account/password_hash:
         plaintext: Password
-    errors:
-      models:
-        aikotoba/account/refresh_token:
-          attributes:
-            session:
-              must_be_api_origin: "must be api origin"
     models:
       aikotoba/account: Account
   aikotoba:
@@ -62,26 +56,3 @@ en:
       magic_link:
         sent: Sign in url has been sent to your email address (if user with that email address exists).
         failed: Oops. Sign in link is invalid or has expired.
-
-    api:
-      messages:
-        authentication:
-          failed: Oops. Signed in failed.
-        refresh:
-          failed: Oops. Session refresh failed.
-      errors:
-        unauthorized:
-          title: Unauthorized
-          detail: Authentication required. Please provide a valid access token.
-        invalid_request:
-          title: Invalid Request
-          detail: The request could not be understood. Please check the parameters and try again.
-        not_found:
-          title: Not Found
-          detail: The requested resource could not be found.
-        unprocessable_entity:
-          title: Unprocessable Entity
-          detail: The request was well-formed but could not be processed. Please check the provided data.
-        internal_server_error:
-          title: Internal Server Error
-          detail: An unexpected error occurred on the server. Please try again later.

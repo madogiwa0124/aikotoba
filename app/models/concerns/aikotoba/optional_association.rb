@@ -30,12 +30,6 @@ module Aikotoba
       #       values would have to be forwarded to has_one to work, which would register
       #       the unconditional callback this exists to avoid, so they raise rather than
       #       silently doing nothing.
-      #
-      #       Not every optional association wants the callback. Where the owner already
-      #       carries a cheaper invariant that decides whether a child can exist at all,
-      #       guard on that instead -- Account::Session#refresh_token declares its has_one
-      #       by hand and guards on origin_api?, which skips the association load entirely
-      #       rather than only skipping it when the table is missing. See the NOTE there.
       def optional_has_one(name, **options)
         dependent = options.delete(:dependent)
         unless SUPPORTED_DEPENDENT_OPTIONS.include?(dependent)
