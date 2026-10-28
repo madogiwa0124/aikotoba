@@ -4,19 +4,13 @@ require "test_helper"
 
 class Aikotoba::Api::AuthenticationTest < ActionDispatch::IntegrationTest
   def setup
-    Aikotoba.api_authenticatable = true
+    Aikotoba.config.api_authenticatable = true
     ActionController::Base.allow_forgery_protection = false
 
     @email = "api_user@example.com"
     @password = "secured_password"
     @account = ::Aikotoba::Account.build_by(attributes: {email: @email, password: @password})
     @account.save!
-  end
-
-  def teardown
-    Aikotoba.api_authenticatable = false
-    Aikotoba.confirmable = false
-    Aikotoba.lockable = false
   end
 
   # ===========================================================================
@@ -265,7 +259,7 @@ class Aikotoba::Api::AuthenticationTest < ActionDispatch::IntegrationTest
   # ===========================================================================
 
   test "unconfirmed account cannot sign in when Confirmable is enabled" do
-    Aikotoba.confirmable = true
+    Aikotoba.config.confirmable = true
     @account.update!(confirmed: false)
 
     post aikotoba.api_create_session_path,
@@ -276,7 +270,7 @@ class Aikotoba::Api::AuthenticationTest < ActionDispatch::IntegrationTest
   end
 
   test "locked account cannot sign in when Lockable is enabled" do
-    Aikotoba.lockable = true
+    Aikotoba.config.lockable = true
     @account.update!(locked: true)
 
     post aikotoba.api_create_session_path,
@@ -287,7 +281,7 @@ class Aikotoba::Api::AuthenticationTest < ActionDispatch::IntegrationTest
   end
 
   test "sign in is not available when api_authenticatable is disabled" do
-    Aikotoba.api_authenticatable = false
+    Aikotoba.config.api_authenticatable = false
 
     post aikotoba.api_create_session_path,
       params: {account: {email: @email, password: @password}},

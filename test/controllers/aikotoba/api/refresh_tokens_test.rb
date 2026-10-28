@@ -6,7 +6,7 @@ class Aikotoba::Api::RefreshTokensTest < ActionDispatch::IntegrationTest
   include ApiCommitteeHelper
 
   def setup
-    Aikotoba.api_authenticatable = true
+    Aikotoba.config.api_authenticatable = true
     @email = "email@example.com"
     @password = "password"
     @account = Aikotoba::Account.build_by(attributes: {email: @email, password: @password})
@@ -15,10 +15,6 @@ class Aikotoba::Api::RefreshTokensTest < ActionDispatch::IntegrationTest
     body = JSON.parse(response.body)
     @access_token = body["access_token"]
     @refresh_token = body["refresh_token"]
-  end
-
-  def teardown
-    Aikotoba.api_authenticatable = false
   end
 
   test "POST api_refresh_session_path with valid refresh token returns 200 and new tokens" do

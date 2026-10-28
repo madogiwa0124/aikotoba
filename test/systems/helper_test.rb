@@ -6,7 +6,7 @@ class HelperTest < ActionDispatch::SystemTestCase
   driven_by :rack_test
 
   def setup
-    Aikotoba.confirmable = false
+    Aikotoba.config.confirmable = false
     email, @password = ["email@example.com", "password"]
     @account = ::Aikotoba::Account.build_by(attributes: {email: email, password: @password})
     @account.save

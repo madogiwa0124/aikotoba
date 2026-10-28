@@ -8,25 +8,24 @@ class RateLimitTest < ActionDispatch::SystemTestCase
 
   def setup
     skip unless self.class.available_rails_rate_limiting?
-    Aikotoba.confirmable = true
-    Aikotoba.lockable = true
-    Aikotoba.recoverable = true
-    Aikotoba.confirmation_rate_limit_options = {to: 3, within: 1.minute, by: -> { request.params.dig(:account, :email).presence }, only: :create}
-    Aikotoba.unlock_rate_limit_options = {to: 3, within: 1.minute, by: -> { request.params.dig(:account, :email).presence }, only: :create}
-    Aikotoba.recovery_rate_limit_options = {to: 3, within: 1.minute, by: -> { request.params.dig(:account, :email).presence }, only: :create}
+    Aikotoba.config.confirmable = true
+    Aikotoba.config.lockable = true
+    Aikotoba.config.recoverable = true
+    Aikotoba.config.confirmation_rate_limit_options = {to: 3, within: 1.minute, by: -> { request.params.dig(:account, :email).presence }, only: :create}
+    Aikotoba.config.unlock_rate_limit_options = {to: 3, within: 1.minute, by: -> { request.params.dig(:account, :email).presence }, only: :create}
+    Aikotoba.config.recovery_rate_limit_options = {to: 3, within: 1.minute, by: -> { request.params.dig(:account, :email).presence }, only: :create}
     # Reload controllers to pick up new rate limit settings
     reload_controllers_with_rate_limit
     # Clear cache before each test to reset rate limit counters
     Rails.cache.clear
   end
 
+  # NOTE: The controllers read their rate limit options when they are loaded, which happens
+  #       here, before test_helper restores the configuration, so clear them first.
   def teardown
-    Aikotoba.confirmable = false
-    Aikotoba.lockable = false
-    Aikotoba.recoverable = false
-    Aikotoba.confirmation_rate_limit_options = {}
-    Aikotoba.unlock_rate_limit_options = {}
-    Aikotoba.recovery_rate_limit_options = {}
+    Aikotoba.config.confirmation_rate_limit_options = {}
+    Aikotoba.config.unlock_rate_limit_options = {}
+    Aikotoba.config.recovery_rate_limit_options = {}
     reload_controllers_with_rate_limit
     Rails.cache.clear
   end

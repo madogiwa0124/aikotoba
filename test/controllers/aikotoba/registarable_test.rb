@@ -5,12 +5,8 @@ require "minitest/autorun"
 
 class Aikotoba::RegisterableTest < ActionDispatch::IntegrationTest
   def setup
-    Aikotoba.registerable = true
+    Aikotoba.config.registerable = true
     ActionController::Base.allow_forgery_protection = false
-  end
-
-  def teardown
-    Aikotoba.registerable = false
   end
 
   test "success GET new_account_path" do
@@ -56,11 +52,11 @@ class Aikotoba::RegisterableTest < ActionDispatch::IntegrationTest
   end
 
   test "Registerable path to 404 when Aikotoba.registerable is false" do
-    Aikotoba.registerable = false
+    Aikotoba.config.registerable = false
     get aikotoba.new_account_path
     assert_equal 404, status
     post aikotoba.create_account_path, params: {account: {email: "test@example.com", password: "password"}}
     assert_equal 404, status
-    Aikotoba.registerable = true
+    Aikotoba.config.registerable = true
   end
 end

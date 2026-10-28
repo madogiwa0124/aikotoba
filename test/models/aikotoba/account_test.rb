@@ -4,14 +4,6 @@ require "test_helper"
 
 class Aikotoba::AccountTest < ActiveSupport::TestCase
   class Registrable < ActiveSupport::TestCase
-    def setup
-      @original_confirmable = Aikotoba.confirmable
-    end
-
-    def teardown
-      Aikotoba.confirmable = @original_confirmable
-    end
-
     test "build_by creates account with email and password" do
       account = Aikotoba::Account.build_by(attributes: {
         email: "user@example.com",
@@ -49,7 +41,7 @@ class Aikotoba::AccountTest < ActiveSupport::TestCase
     end
 
     test "register! creates confirmation token when confirmable" do
-      Aikotoba.confirmable = true
+      Aikotoba.config.confirmable = true
       account = Aikotoba::Account.build_by(attributes: {
         email: "user@example.com",
         password: "Password1!"
@@ -60,7 +52,7 @@ class Aikotoba::AccountTest < ActiveSupport::TestCase
     end
 
     test "register! does not create confirmation token when not confirmable" do
-      Aikotoba.confirmable = false
+      Aikotoba.config.confirmable = false
       account = Aikotoba::Account.build_by(attributes: {
         email: "user@example.com",
         password: "Password1!"
@@ -159,8 +151,6 @@ class Aikotoba::AccountTest < ActiveSupport::TestCase
 
   class Authenticatable < ActiveSupport::TestCase
     def setup
-      @original_confirmable = Aikotoba.confirmable
-      @original_lockable = Aikotoba.lockable
       @account = Aikotoba::Account.create_by!(attributes: {
         email: "user@example.com",
         password: "Password1!",
@@ -168,11 +158,6 @@ class Aikotoba::AccountTest < ActiveSupport::TestCase
         locked: false,
         failed_attempts: 0
       })
-    end
-
-    def teardown
-      Aikotoba.confirmable = @original_confirmable
-      Aikotoba.lockable = @original_lockable
     end
 
     test "authentication_failed! increments failed_attempts" do
@@ -188,8 +173,8 @@ class Aikotoba::AccountTest < ActiveSupport::TestCase
     end
 
     test "authenticatable scope returns all accounts when features disabled" do
-      Aikotoba.confirmable = false
-      Aikotoba.lockable = false
+      Aikotoba.config.confirmable = false
+      Aikotoba.config.lockable = false
       accounts = Aikotoba::Account.authenticatable
       assert_includes accounts.to_a, @account
     end
@@ -208,8 +193,8 @@ class Aikotoba::AccountTest < ActiveSupport::TestCase
     end
 
     test "authenticatable scope filters confirmed accounts when confirmable" do
-      Aikotoba.confirmable = true
-      Aikotoba.lockable = true
+      Aikotoba.config.confirmable = true
+      Aikotoba.config.lockable = true
       unconfirmed = Aikotoba::Account.create_by!(attributes: {
         email: "unconfirmed@example.com",
         password: "Password1!",
@@ -515,10 +500,10 @@ class Aikotoba::AccountTest < ActiveSupport::TestCase
         magic_link_authenticatable: Aikotoba.magic_link_authenticatable,
         api_authenticatable: Aikotoba.api_authenticatable
       }
-      previous.each_key { |feature| Aikotoba.public_send(:"#{feature}=", false) }
+      previous.each_key { |feature| Aikotoba.config.public_send(:"#{feature}=", false) }
       yield
     ensure
-      previous.each { |feature, value| Aikotoba.public_send(:"#{feature}=", value) }
+      previous.each { |feature, value| Aikotoba.config.public_send(:"#{feature}=", value) }
     end
 
     # NOTE: SQLite (the test adapter) has transactional DDL, so the drops roll back with

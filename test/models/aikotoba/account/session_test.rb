@@ -29,7 +29,6 @@ class Aikotoba::Account::SessionTest < ActiveSupport::TestCase
 
   class Scopes < ActiveSupport::TestCase
     def setup
-      @original_confirmable = Aikotoba.confirmable
       @account = Aikotoba::Account.create_by!(attributes: {
         email: "user@example.com",
         password: "Password1!",
@@ -37,10 +36,6 @@ class Aikotoba::Account::SessionTest < ActiveSupport::TestCase
         locked: false,
         failed_attempts: 0
       })
-    end
-
-    def teardown
-      Aikotoba.confirmable = @original_confirmable
     end
 
     test "active scope returns non-expired sessions" do
@@ -53,7 +48,7 @@ class Aikotoba::Account::SessionTest < ActiveSupport::TestCase
     end
 
     test "authenticatable scope filters via account confirmed/unlocked" do
-      Aikotoba.confirmable = true
+      Aikotoba.config.confirmable = true
       unconfirmed = Aikotoba::Account.create_by!(attributes: {
         email: "locked@example.com",
         password: "Password1!",
@@ -69,8 +64,7 @@ class Aikotoba::Account::SessionTest < ActiveSupport::TestCase
   end
 
   def setup
-    @original_confirmable = Aikotoba.confirmable
-    Aikotoba.api_authenticatable = true
+    Aikotoba.config.api_authenticatable = true
     @account = Aikotoba::Account.create_by!(attributes: {
       email: "user@example.com",
       password: "Password1!",
@@ -78,11 +72,6 @@ class Aikotoba::Account::SessionTest < ActiveSupport::TestCase
       locked: false,
       failed_attempts: 0
     })
-  end
-
-  def teardown
-    Aikotoba.api_authenticatable = false
-    Aikotoba.confirmable = @original_confirmable
   end
 
   test "revoke! destroys the session" do
@@ -147,7 +136,7 @@ class Aikotoba::Account::SessionTest < ActiveSupport::TestCase
   end
 
   test "find_by_token returns active authenticatable session" do
-    Aikotoba.confirmable = true
+    Aikotoba.config.confirmable = true
     s = Aikotoba::Account::Session.create!(account: @account)
     assert_equal s, Aikotoba::Account::Session.find_by_token(s.token)
 

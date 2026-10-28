@@ -45,7 +45,6 @@ class Aikotoba::Account::PasswordHashTest < ActiveSupport::TestCase
 
   class AuthenticateBy < ActiveSupport::TestCase
     def setup
-      @original_lockable = Aikotoba.lockable
       @account = Aikotoba::Account.create_by!(attributes: {
         email: "user@example.com",
         password: "Password1!",
@@ -53,10 +52,6 @@ class Aikotoba::Account::PasswordHashTest < ActiveSupport::TestCase
         locked: false,
         failed_attempts: 0
       })
-    end
-
-    def teardown
-      Aikotoba.lockable = @original_lockable
     end
 
     test "authenticate_by returns account for valid credentials" do
@@ -102,7 +97,7 @@ class Aikotoba::Account::PasswordHashTest < ActiveSupport::TestCase
     end
 
     test "authenticate_by locks account when max attempts exceeded" do
-      Aikotoba.lockable = true
+      Aikotoba.config.lockable = true
       account = Aikotoba::Account.create_by!(attributes: {
         email: "locktest@example.com",
         password: "Password1!",

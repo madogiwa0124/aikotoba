@@ -26,3 +26,22 @@ Capybara.server = :webrick, {Silent: true} # To clean up your test output
 require "aikotoba/test/authentication_helper"
 require "committee/rails"
 require "support/api_committee_helper"
+
+# NOTE: Every test starts from the configuration the dummy app booted with, whatever earlier
+#       tests set. Swapped in after_teardown, so a test's own teardown still sees its settings.
+module AikotobaConfigurationReset
+  def before_setup
+    @aikotoba_booted_config = Aikotoba.config.dup
+    super
+  end
+
+  def after_teardown
+    super
+    Aikotoba.instance_variable_set(:@config, @aikotoba_booted_config)
+  end
+end
+ActiveSupport::TestCase.include AikotobaConfigurationReset
+
+# NOTE: The engine's own code and tests must not use the deprecated Aikotoba.xxx= writers;
+#       ConfigurationTest checks them with assert_deprecated, which collects instead.
+Aikotoba.deprecator.behavior = :raise

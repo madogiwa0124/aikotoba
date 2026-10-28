@@ -5,19 +5,13 @@ require "minitest/autorun"
 
 class Aikotoba::ConfirmableTest < ActionDispatch::IntegrationTest
   def setup
-    @original_registerable = Aikotoba.registerable
-    Aikotoba.confirmable = true
+    Aikotoba.config.confirmable = true
     ActionController::Base.allow_forgery_protection = false
     @password = "password"
     @account = ::Aikotoba::Account.build_by(attributes: {email: "email@example.com", password: @password})
     @account.confirmed = false
     @account.save!
     Aikotoba::Account::Confirmation.create_token!(account: @account, notify: false)
-  end
-
-  def teardown
-    Aikotoba.confirmable = false
-    Aikotoba.registerable = @original_registerable
   end
 
   test "success GET new_confirmation_token" do
@@ -95,7 +89,7 @@ class Aikotoba::ConfirmableTest < ActionDispatch::IntegrationTest
   end
 
   test "success POST create_account_path with comfirm token send" do
-    Aikotoba.registerable = true
+    Aikotoba.config.registerable = true
     assert_emails 1 do
       post aikotoba.create_account_path, params: {account: {email: "bar@example.com", password: "password"}}
     end
@@ -123,7 +117,7 @@ class Aikotoba::ConfirmableTest < ActionDispatch::IntegrationTest
   end
 
   test "Confirmable path to 404 when Aikotoba.confirmable is false" do
-    Aikotoba.confirmable = false
+    Aikotoba.config.confirmable = false
     get aikotoba.new_confirmation_token_path
     assert_equal 404, status
     get aikotoba.confirm_account_path(token: @account.confirmation_token)

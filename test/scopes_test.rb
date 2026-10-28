@@ -3,20 +3,12 @@
 require "test_helper"
 
 class Aikotoba::ScopesTest < ActiveSupport::TestCase
-  def setup
-    @original = Aikotoba.scopes.deep_dup
-  end
-
-  def teardown
-    Aikotoba.scopes.replace(@original)
-  end
-
   test "every stored scope is a Scope, however it got there" do
     assert_instance_of Aikotoba::Scopes, Aikotoba.scopes
     assert_instance_of Aikotoba::Scope, Aikotoba.default_scope
     assert_instance_of Aikotoba::Scope, Aikotoba.scopes[:admin]
 
-    Aikotoba.add_scope(:added, root_path: "/added")
+    Aikotoba.config.add_scope(:added, root_path: "/added")
     assert_instance_of Aikotoba::Scope, Aikotoba.scopes[:added]
 
     Aikotoba.scopes[:assigned] = {root_path: "/assigned"}
@@ -49,7 +41,7 @@ class Aikotoba::ScopesTest < ActiveSupport::TestCase
     assert_equal "/login", Aikotoba.scopes[:default][:sign_in_path]
     assert_equal "/login", Aikotoba.scopes["default"]["sign_in_path"]
 
-    Aikotoba.default_scope = {sign_out_path: "/logout"}
+    Aikotoba.config.default_scope = {sign_out_path: "/logout"}
     assert_equal "/logout", Aikotoba.default_scope[:sign_out_path]
     assert_equal "/login", Aikotoba.default_scope[:sign_in_path]
   end

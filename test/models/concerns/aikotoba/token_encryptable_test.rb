@@ -7,7 +7,7 @@ class Aikotoba::TokenEncryptableTest < ActiveSupport::TestCase
   include Aikotoba::TokenEncryptable::ClassMethods
 
   def setup
-    Aikotoba.encrypted_token = true
+    Aikotoba.config.encrypted_token = true
     skip unless available_active_record_encryption?
     reload_confirmation_token_class
     email, password = ["email@example.com", "password"]
@@ -15,8 +15,10 @@ class Aikotoba::TokenEncryptableTest < ActiveSupport::TestCase
     @account.save
   end
 
+  # NOTE: The class reads encrypted_token when it is loaded, which happens here, before
+  #       test_helper restores the configuration, so turn it off first.
   def teardown
-    Aikotoba.encrypted_token = false
+    Aikotoba.config.encrypted_token = false
     reload_confirmation_token_class
   end
 

@@ -3,83 +3,49 @@
 require "aikotoba/version"
 require "aikotoba/engine"
 require "aikotoba/errors"
-require "aikotoba/scopes"
+require "aikotoba/configuration"
 
 module Aikotoba
-  mattr_accessor(:parent_controller) { "ApplicationController" }
-  mattr_accessor(:parent_mailer) { "ActionMailer::Base" }
-  mattr_accessor(:mailer_sender) { "from@example.com" }
-  mattr_accessor(:email_format) { /\A[^\s]+@[^\s]+\z/ }
-  mattr_accessor(:password_pepper) { "aikotoba-default-pepper" }
-  mattr_accessor(:password_length_range) { 8..100 }
-  mattr_accessor(:session_expiry) { 7.days }
-
-  # for API Token Authentication
-  mattr_accessor(:api_authenticatable) { false }
-  mattr_accessor(:api_parent_controller) { "ApplicationController" }
-  mattr_accessor(:api_access_token_expiry) { 15.minutes }
-  mattr_accessor(:api_refresh_token_expiry) { 30.days }
-
-  # for Registerable
-  mattr_accessor(:registerable) { true }
-
-  # for Confirmable
-  mattr_accessor(:confirmable) { false }
-  mattr_accessor(:confirmation_token_expiry) { 1.day }
-  mattr_accessor(:confirmation_rate_limit_options) { {} }
-
-  # for Lockable
-  mattr_accessor(:lockable) { false }
-  mattr_accessor(:max_failed_attempts) { 10 }
-  mattr_accessor(:unlock_token_expiry) { 1.day }
-  mattr_accessor(:unlock_rate_limit_options) { {} }
-
-  # for Recoverable
-  mattr_accessor(:recoverable) { false }
-  mattr_accessor(:recovery_token_expiry) { 4.hours }
-  mattr_accessor(:recovery_rate_limit_options) { {} }
-
-  # for MagicLinkAuthenticatable
-  mattr_accessor(:magic_link_authenticatable) { false }
-  mattr_accessor(:magic_link_token_expiry) { 15.minutes }
-  mattr_accessor(:magic_link_rate_limit_options) { {} }
-
-  # for encrypt token
-  mattr_accessor(:encrypted_token) { false }
-
-  mattr_accessor(:scopes) {
-    Scopes.new({
-      default: {
-        authenticate_for: nil,
-        root_path: "/",
-        session_key: "aikotoba_session_token",
-        sign_in_path: "/sign_in",
-        sign_out_path: "/sign_out",
-        after_sign_in_path: "/",
-        after_sign_out_path: "/sign_in",
-        sign_up_path: "/sign_up",
-        confirm_path: "/confirm",
-        unlock_path: "/unlock",
-        recover_path: "/recover",
-        magic_link_path: "/magic_link",
-        api_sign_in_path: "/api/sessions",
-        api_refresh_path: "/api/sessions/refresh",
-        api_sign_out_path: "/api/sessions/current"
-      }
-    })
-  }
-
-  def self.default_scope
-    scopes.default_scope
+  # NOTE: Set every setting in one place:
+  #       Aikotoba.configure do |config|
+  #         config.confirmable = true
+  #         config.add_scope(:admin, { root_path: "/admin", authenticate_for: "Admin" })
+  #       end
+  #       The scopes are checked once the block has set everything, feature flags included.
+  def self.configure
+    yield config
+    scopes.validate!
   end
 
-  # NOTE: Merge configuration into default scope (does not replace, merges with existing keys)
-  #       Example: Aikotoba.default_scope = { sign_in_path: "/custom" }
-  def self.default_scope=(hash)
-    default_scope.merge!(hash)
+  def self.config
+    @config ||= Configuration.new
   end
 
-  def self.add_scope(name, config = {})
-    scopes.add(name, config)
+  def self.deprecator
+    @deprecator ||= ActiveSupport::Deprecation.new("1.0", "Aikotoba")
+  end
+
+  # NOTE: Read a setting with Aikotoba.xxx. The Aikotoba.xxx= writers, add_scope and
+  #       default_scope= still work for initializers written before configure existed, but
+  #       are deprecated and will be removed in 1.0.
+  class << self
+    delegate(*Configuration::SETTINGS, :default_scope, to: :config)
+
+    Configuration::SETTINGS.each do |name|
+      define_method(:"#{name}=") do |value|
+        deprecator.warn("Aikotoba.#{name}= is deprecated. Set config.#{name} in Aikotoba.configure instead.")
+        config.public_send(:"#{name}=", value)
+      end
+    end
+
+    def default_scope=(hash)
+      deprecator.warn("Aikotoba.default_scope= is deprecated. Set config.default_scope in Aikotoba.configure instead.")
+      config.default_scope = hash
+    end
+
+    def add_scope(name, scope_config = {})
+      deprecator.warn("Aikotoba.add_scope is deprecated. Call config.add_scope in Aikotoba.configure instead.")
+      config.add_scope(name, scope_config)
+    end
   end
 end

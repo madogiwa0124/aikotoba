@@ -147,10 +147,12 @@ page that *linked to* the protected page rather than the protected page itself.
 
 ### Registrable
 
-To enable it, set `Aikotoba.registerable` to `true`. (It is enabled by default.)
+To enable it, set `config.registerable` to `true` in `Aikotoba.configure`. (It is enabled by default.)
 
 ```ruby
-Aikotoba.registerable = true
+Aikotoba.configure do |config|
+  config.registerable = true
+end
 ```
 
 Register an account using email and password.
@@ -191,10 +193,12 @@ The password is stored as a hash in [Argon2](https://github.com/technion/ruby-ar
 
 ### Confirmable
 
-To enable it, set `Aikotoba.confirmable` to `true`.
+To enable it, set `config.confirmable` to `true` in `Aikotoba.configure`.
 
 ```ruby
-Aikotoba.confirmable = true
+Aikotoba.configure do |config|
+  config.confirmable = true
+end
 ```
 
 Aikotoba enable routes for confirmation account. Also, when account registers, a confirmation email is sent to the email address. Only accounts that are confirmed will be authenticated.
@@ -207,10 +211,12 @@ Aikotoba enable routes for confirmation account. Also, when account registers, a
 
 ### Lockable
 
-To enable it, set `Aikotoba.lockable` to `true`.
+To enable it, set `config.lockable` to `true` in `Aikotoba.configure`.
 
 ```ruby
-Aikotoba.lockable = true
+Aikotoba.configure do |config|
+  config.lockable = true
+end
 ```
 
 Aikotoba enables a route to unlock an account. Also, if the authentication fails a certain number of times, the account will be locked. Only accounts that are not locked will be authenticated.
@@ -223,10 +229,12 @@ Aikotoba enables a route to unlock an account. Also, if the authentication fails
 
 ### Recoverable
 
-To enable it, set `Aikotoba.recoverable` to `true`.
+To enable it, set `config.recoverable` to `true` in `Aikotoba.configure`.
 
 ```ruby
-Aikotoba.recoverable = true
+Aikotoba.configure do |config|
+  config.recoverable = true
+end
 ```
 
 Aikotoba enables a route to recover an account by password reset.
@@ -240,10 +248,12 @@ Aikotoba enables a route to recover an account by password reset.
 
 ### (Experimental) MagicLinkAuthenticatable
 
-To enable it, set `Aikotoba.magic_link_authenticatable` to `true`.
+To enable it, set `config.magic_link_authenticatable` to `true` in `Aikotoba.configure`.
 
 ```ruby
-Aikotoba.magic_link_authenticatable = true
+Aikotoba.configure do |config|
+  config.magic_link_authenticatable = true
+end
 ```
 
 Aikotoba enables a route to sign in via a one-time link sent by email —
@@ -262,10 +272,12 @@ submitting the sign-in form.
 
 ### (Experimental) API Token Authenticatable
 
-To enable it, set `Aikotoba.api_authenticatable` to `true`.
+To enable it, set `config.api_authenticatable` to `true` in `Aikotoba.configure`.
 
 ```ruby
-Aikotoba.api_authenticatable = true
+Aikotoba.configure do |config|
+  config.api_authenticatable = true
+end
 ```
 
 Aikotoba provides stateless token-based authentication for API clients.
@@ -364,12 +376,14 @@ Rate limiting is available for:
 By default, rate limiting is disabled (empty configuration). To enable it, configure the respective options:
 
 ```ruby
-Aikotoba.confirmation_rate_limit_options = {
-  to: 10,
-  within: 1.hour,
-  by: -> { request.params.dig(:account, :email).presence || request.remote_ip },
-  only: :create
-}
+Aikotoba.configure do |config|
+  config.confirmation_rate_limit_options = {
+    to: 10,
+    within: 1.hour,
+    by: -> { request.params.dig(:account, :email).presence || request.remote_ip },
+    only: :create
+  }
+end
 ```
 
 When rate limiting is triggered, requests that exceed the limit will receive a 429 (Too Many Requests) response.
@@ -380,25 +394,27 @@ For detailed configuration examples and options, see the [Configuration](#config
 
 Aikotoba supports multiple scopes.
 
-You can add a scope by `Aikotoba.add_scope` method. For example, the following code adds an `admin` scope. Unspecified values will be copied from the `default` scope.
+You can add a scope with `config.add_scope` in `Aikotoba.configure`. For example, the following code adds an `admin` scope. Unspecified values will be copied from the `default` scope.
 
 ```ruby
-Aikotoba.add_scope(:admin, {
-  session_key: "aikotoba_admin_session_token",
-  root_path: "/admin",
-  sign_in_path: "/admin/sign_in",
-  sign_up_path: "/admin/sign_up",
-  after_sign_in_path: "/admin/sensitives",
-  after_sign_out_path: "/admin/sign_in",
-  sign_out_path: "/admin/sign_out",
-  confirm_path: "/admin/confirm",
-  unlock_path: "/admin/unlock",
-  recover_path: "/admin/recover",
-  magic_link_path: "/admin/magic_link",
-  api_sign_in_path: "/admin/api/sessions",
-  api_refresh_path: "/admin/api/sessions/refresh",
-  api_sign_out_path: "/admin/api/sessions/current"
-})
+Aikotoba.configure do |config|
+  config.add_scope(:admin, {
+    session_key: "aikotoba_admin_session_token",
+    root_path: "/admin",
+    sign_in_path: "/admin/sign_in",
+    sign_up_path: "/admin/sign_up",
+    after_sign_in_path: "/admin/sensitives",
+    after_sign_out_path: "/admin/sign_in",
+    sign_out_path: "/admin/sign_out",
+    confirm_path: "/admin/confirm",
+    unlock_path: "/admin/unlock",
+    recover_path: "/admin/recover",
+    magic_link_path: "/admin/magic_link",
+    api_sign_in_path: "/admin/api/sessions",
+    api_refresh_path: "/admin/api/sessions/refresh",
+    api_sign_out_path: "/admin/api/sessions/current"
+  })
+end
 ```
 
 As shown below, you can perform separate authentication with `/sign_in` and `/admin/sign_in`.
@@ -427,170 +443,180 @@ aikotoba_scoped_path(:new_session)
 
 ## Configuration
 
-The following configuration parameters are supported. You can override it. (ex. `initializers/aikotoba.rb`)
+Configure Aikotoba in one `Aikotoba.configure` block, in an initializer such as `config/initializers/aikotoba.rb`. Once the block has run, Aikotoba checks the scopes against every setting it made (see [Scope Configuration Details](#scope-configuration-details)). Read a setting with `Aikotoba.xxx`, e.g. `Aikotoba.confirmable`.
+
+Write `authenticate_for` as a string (`"Admin"`, not `Admin`): your app's classes can't be autoloaded while initializers run.
+
+The `Aikotoba.xxx = ...`, `Aikotoba.add_scope` and `Aikotoba.default_scope=` writers used before `configure` existed still work, but are deprecated and will be removed in 1.0: each call logs a deprecation warning through `Aikotoba.deprecator`, which is registered in `Rails.application.deprecators`. Move them into `Aikotoba.configure`.
+
+The following configuration parameters are supported:
 
 ```ruby
 require 'aikotoba'
 
-# ============================================
-# Global settings
-# ============================================
+Aikotoba.configure do |config|
+  # ============================================
+  # Global settings
+  # ============================================
 
-Aikotoba.parent_controller = "ApplicationController"
-Aikotoba.parent_mailer = "ActionMailer::Base"
-Aikotoba.mailer_sender = "from@example.com"
-Aikotoba.email_format = /\A[^\s]+@[^\s]+\z/
-Aikotoba.password_pepper = "aikotoba-default-pepper"
-Aikotoba.password_length_range = 8..100
-Aikotoba.session_expiry = 7.days
+  config.parent_controller = "ApplicationController"
+  config.parent_mailer = "ActionMailer::Base"
+  config.mailer_sender = "from@example.com"
+  config.email_format = /\A[^\s]+@[^\s]+\z/
+  config.password_pepper = "aikotoba-default-pepper"
+  config.password_length_range = 8..100
+  config.session_expiry = 7.days
 
-# for API Token Authentication
-Aikotoba.api_authenticatable = false
-Aikotoba.api_parent_controller = "ApplicationController"
-Aikotoba.api_access_token_expiry = 15.minutes
-Aikotoba.api_refresh_token_expiry = 30.days
+  # for API Token Authentication
+  config.api_authenticatable = false
+  config.api_parent_controller = "ApplicationController"
+  config.api_access_token_expiry = 15.minutes
+  config.api_refresh_token_expiry = 30.days
 
 
-# for registerable
-Aikotoba.registerable = true
+  # for registerable
+  config.registerable = true
 
-# for confirmable
-Aikotoba.confirmable = false
-Aikotoba.confirmation_token_expiry = 1.day
+  # for confirmable
+  config.confirmable = false
+  config.confirmation_token_expiry = 1.day
 
-# for lockable
-Aikotoba.lockable = false
-Aikotoba.max_failed_attempts = 10
-Aikotoba.unlock_token_expiry = 1.day
+  # for lockable
+  config.lockable = false
+  config.max_failed_attempts = 10
+  config.unlock_token_expiry = 1.day
 
-# for Recoverable
-Aikotoba.recoverable = false
-Aikotoba.recovery_token_expiry = 4.hours
+  # for Recoverable
+  config.recoverable = false
+  config.recovery_token_expiry = 4.hours
 
-# for (Experimental) MagicLinkAuthenticatable
-Aikotoba.magic_link_authenticatable = false
-Aikotoba.magic_link_token_expiry = 15.minutes
+  # for (Experimental) MagicLinkAuthenticatable
+  config.magic_link_authenticatable = false
+  config.magic_link_token_expiry = 15.minutes
 
-# ============================================
-# Rate Limiting (Rails 8+ required)
-# ============================================
-# Rate limiting protects email-sending endpoints (confirm, unlock, recover) from email bombing attacks.
-# Default (empty hash): no rate limiting
+  # ============================================
+  # Rate Limiting (Rails 8+ required)
+  # ============================================
+  # Rate limiting protects email-sending endpoints (confirm, unlock, recover) from email bombing attacks.
+  # Default (empty hash): no rate limiting
 
-# Requires Rails 8.0+ to use the built-in rate_limit feature.
-#
-# Configuration format: { to: <max_requests>, within: <time_duration>, by: <identifier_proc>, only: <action> }
-#
-# SECURITY RECOMMENDATION:
-# Use .dig() with fallback to prevent nil errors and ensure rate limiting always works:
-#   by: -> { request.params.dig(:account, :email).presence || request.remote_ip }
-#
-# This ensures:
-# - Invalid or missing email params don't bypass rate limiting
-# - Fallback to IP address when email is not provided
-# - Repeated emails to the same address are throttled (this keys on the email, so it does not limit
-#   requests spread across many different addresses)
-#
-# Examples:
+  # Requires Rails 8.0+ to use the built-in rate_limit feature.
+  #
+  # Configuration format: { to: <max_requests>, within: <time_duration>, by: <identifier_proc>, only: <action> }
+  #
+  # SECURITY RECOMMENDATION:
+  # Use .dig() with fallback to prevent nil errors and ensure rate limiting always works:
+  #   by: -> { request.params.dig(:account, :email).presence || request.remote_ip }
+  #
+  # This ensures:
+  # - Invalid or missing email params don't bypass rate limiting
+  # - Fallback to IP address when email is not provided
+  # - Repeated emails to the same address are throttled (this keys on the email, so it does not limit
+  #   requests spread across many different addresses)
+  #
+  # Examples:
 
-# Limit confirmation token requests to 10 per hour, per email address (with IP fallback)
-Aikotoba.confirmation_rate_limit_options = {
-  to: 10,
-  within: 1.hour,
-  by: -> { request.params.dig(:account, :email).presence || request.remote_ip },
-  only: :create
-}
+  # Limit confirmation token requests to 10 per hour, per email address (with IP fallback)
+  config.confirmation_rate_limit_options = {
+    to: 10,
+    within: 1.hour,
+    by: -> { request.params.dig(:account, :email).presence || request.remote_ip },
+    only: :create
+  }
 
-# Limit unlock token requests to 5 per hour, per email address (stricter for security)
-Aikotoba.unlock_rate_limit_options = {
-  to: 5,
-  within: 1.hour,
-  by: -> { request.params.dig(:account, :email).presence || request.remote_ip },
-  only: :create
-}
+  # Limit unlock token requests to 5 per hour, per email address (stricter for security)
+  config.unlock_rate_limit_options = {
+    to: 5,
+    within: 1.hour,
+    by: -> { request.params.dig(:account, :email).presence || request.remote_ip },
+    only: :create
+  }
 
-# Limit recovery token requests to 3 per hour, per email address (most strict for password recovery)
-Aikotoba.recovery_rate_limit_options = {
-  to: 3,
-  within: 1.hour,
-  by: -> { request.params.dig(:account, :email).presence || request.remote_ip },
-  only: :create
-}
+  # Limit recovery token requests to 3 per hour, per email address (most strict for password recovery)
+  config.recovery_rate_limit_options = {
+    to: 3,
+    within: 1.hour,
+    by: -> { request.params.dig(:account, :email).presence || request.remote_ip },
+    only: :create
+  }
 
-# Limit magic link requests to 5 per hour, per email address
-Aikotoba.magic_link_rate_limit_options = {
-  to: 5,
-  within: 1.hour,
-  by: -> { request.params.dig(:account, :email).presence || request.remote_ip },
-  only: :create
-}
+  # Limit magic link requests to 5 per hour, per email address
+  config.magic_link_rate_limit_options = {
+    to: 5,
+    within: 1.hour,
+    by: -> { request.params.dig(:account, :email).presence || request.remote_ip },
+    only: :create
+  }
 
-# Rate limiting by IP address only (simpler, but less precise)
-# Aikotoba.confirmation_rate_limit_options = {
-#   to: 20,
-#   within: 1.hour,
-#   by: -> { request.remote_ip },
-#   only: :create
-# }
+  # Rate limiting by IP address only (simpler, but less precise)
+  # config.confirmation_rate_limit_options = {
+  #   to: 20,
+  #   within: 1.hour,
+  #   by: -> { request.remote_ip },
+  #   only: :create
+  # }
 
-# ============================================
-# Scope settings
-# ============================================
+  # ============================================
+  # Scope settings
+  # ============================================
 
-# for Default Scope
-# You can override only the necessary keys.
-Aikotoba.default_scope = {
-  authenticate_for: nil,  # No restriction for default scope
-  session_key: "aikotoba_session_token",
-  root_path: "/",
-  sign_in_path: "/sign_in",
-  sign_out_path: "/sign_out",
-  sign_up_path: "/sign_up",
-  confirm_path: "/confirm",
-  unlock_path: "/unlock",
-  recover_path: "/recover",
-  magic_link_path: "/magic_link",
-  after_sign_in_path: "/sensitives",
-  after_sign_out_path: "/sign_in",
-  api_sign_in_path: "/api/sessions",
-  api_refresh_path: "/api/sessions/refresh",
-  api_sign_out_path: "/api/sessions/current"
-}
+  # for Default Scope
+  # You can override only the necessary keys.
+  config.default_scope = {
+    authenticate_for: nil,  # No restriction for default scope
+    session_key: "aikotoba_session_token",
+    root_path: "/",
+    sign_in_path: "/sign_in",
+    sign_out_path: "/sign_out",
+    sign_up_path: "/sign_up",
+    confirm_path: "/confirm",
+    unlock_path: "/unlock",
+    recover_path: "/recover",
+    magic_link_path: "/magic_link",
+    after_sign_in_path: "/sensitives",
+    after_sign_out_path: "/sign_in",
+    api_sign_in_path: "/api/sessions",
+    api_refresh_path: "/api/sessions/refresh",
+    api_sign_out_path: "/api/sessions/current"
+  }
 
-# for Additional Scopes
-Aikotoba.add_scope(:admin, {
-  authenticate_for: "Admin",  # Restrict authentication to Admin accounts
-  session_key: "aikotoba_admin_session_token",
-  root_path: "/admin",
-  sign_in_path: "/admin/sign_in",
-  sign_out_path: "/admin/sign_out",
-  confirm_path: "/admin/confirm",
-  unlock_path: "/admin/unlock",
-  recover_path: "/admin/recover",
-  magic_link_path: "/admin/magic_link",
-  after_sign_in_path: "/admin/sensitives",
-  after_sign_out_path: "/admin/sign_in",
-  # API Token Authentication paths for admin scope
-  api_sign_in_path: "/admin/api/sessions",
-  api_refresh_path: "/admin/api/sessions/refresh",
-  api_sign_out_path: "/admin/api/sessions/current"
-})
+  # for Additional Scopes
+  config.add_scope(:admin, {
+    authenticate_for: "Admin",  # Restrict authentication to Admin accounts
+    session_key: "aikotoba_admin_session_token",
+    root_path: "/admin",
+    sign_in_path: "/admin/sign_in",
+    sign_out_path: "/admin/sign_out",
+    confirm_path: "/admin/confirm",
+    unlock_path: "/admin/unlock",
+    recover_path: "/admin/recover",
+    magic_link_path: "/admin/magic_link",
+    after_sign_in_path: "/admin/sensitives",
+    after_sign_out_path: "/admin/sign_in",
+    # API Token Authentication paths for admin scope
+    api_sign_in_path: "/admin/api/sessions",
+    api_refresh_path: "/admin/api/sessions/refresh",
+    api_sign_out_path: "/admin/api/sessions/current"
+  })
+end
 ```
 
 ### Scope Configuration Details
 
-`Aikotoba.default_scope=` **merges** the provided hash into the existing default scope (does not replace):
+`config.default_scope=` **merges** the provided hash into the existing default scope (does not replace):
 
 ```ruby
-# Single key update
-Aikotoba.default_scope[:sign_in_path] = "/custom"
+Aikotoba.configure do |config|
+  # Single key update
+  config.default_scope[:sign_in_path] = "/custom"
 
-# Multiple keys update (recommended for bulk changes)
-Aikotoba.default_scope = {
-  sign_in_path: "/custom_sign_in",
-  after_sign_in_path: "/dashboard"
-}
-# Other keys (root_path, session_key, etc.) remain unchanged
+  # Multiple keys update (recommended for bulk changes)
+  config.default_scope = {
+    sign_in_path: "/custom_sign_in",
+    after_sign_in_path: "/dashboard"
+  }
+  # Other keys (root_path, session_key, etc.) remain unchanged
+end
 ```
 
 Both approaches are valid. Use direct key assignment for single changes, or use `default_scope=` for updating multiple keys at once.
@@ -600,12 +626,14 @@ Both approaches are valid. Use direct key assignment for single changes, or use 
 You can restrict authentication to specific target types by setting `authenticate_for`:
 
 ```ruby
-Aikotoba.add_scope(:admin, {
-  authenticate_for: "Admin",  # Only Admin accounts can sign in to this scope
-  root_path: "/admin",
-  sign_in_path: "/admin/sign_in",
-  # ...
-})
+Aikotoba.configure do |config|
+  config.add_scope(:admin, {
+    authenticate_for: "Admin",  # Only Admin accounts can sign in to this scope
+    root_path: "/admin",
+    sign_in_path: "/admin/sign_in",
+    # ...
+  })
+end
 ```
 
 When `authenticate_for` is set, only accounts with matching `authenticate_target_type` will authenticate successfully in that scope.
@@ -717,7 +745,9 @@ Tokens can be encrypted using Active Record Encryption, introduced in Active Rec
 To use it, enable Aikotoba.encipted_token in the initializer.
 
 ```ruby
-Aikotoba.encrypted_token = true
+Aikotoba.configure do |config|
+  config.encrypted_token = true
+end
 ```
 
 ### How to identify the controller provided.
