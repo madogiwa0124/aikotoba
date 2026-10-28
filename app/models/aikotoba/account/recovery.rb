@@ -27,6 +27,7 @@ module Aikotoba
       ActiveRecord::Base.transaction do
         @account.build_recovery_token.save!
         @account.recovery_token.notify if notify
+        Event::RecoveryTokenIssued.report(account_id: @account.id, notified: notify)
       end
     end
 
@@ -43,6 +44,7 @@ module Aikotoba
       ActiveRecord::Base.transaction do
         @account.password_hash.recover!(new_password)
         @account.recovery_token&.destroy!
+        Event::PasswordRecovered.report(account_id: @account.id)
       end
     rescue ActiveRecord::RecordInvalid => e
       raise if e.record == @account
