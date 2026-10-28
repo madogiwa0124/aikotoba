@@ -41,3 +41,7 @@ module AikotobaConfigurationReset
   end
 end
 ActiveSupport::TestCase.include AikotobaConfigurationReset
+
+# NOTE: The engine's own code and tests must not use the deprecated Aikotoba.xxx= writers;
+#       ConfigurationTest checks them with assert_deprecated, which collects instead.
+Aikotoba.deprecator.behavior = :raise

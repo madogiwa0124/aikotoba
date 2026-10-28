@@ -7,19 +7,12 @@ require "test_helper"
 class Aikotoba::ScopedTokenFlowsTest < ActionDispatch::IntegrationTest
   def setup
     ActionController::Base.allow_forgery_protection = false
-    Aikotoba.confirmable = true
-    Aikotoba.lockable = true
-    Aikotoba.recoverable = true
-    Aikotoba.magic_link_authenticatable = true
+    Aikotoba.config.confirmable = true
+    Aikotoba.config.lockable = true
+    Aikotoba.config.recoverable = true
+    Aikotoba.config.magic_link_authenticatable = true
     @user_account = Aikotoba::Account.create_by!(attributes: {email: "scoped_user@example.com", password: "password"})
     @admin_account = Aikotoba::Account.create_by!(attributes: {email: "scoped_admin@example.com", password: "password", authenticate_target: Admin.create!(nickname: "scoped")})
-  end
-
-  def teardown
-    Aikotoba.confirmable = false
-    Aikotoba.lockable = false
-    Aikotoba.recoverable = false
-    Aikotoba.magic_link_authenticatable = false
   end
 
   {

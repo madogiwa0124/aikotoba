@@ -6,17 +6,11 @@ class Aikotoba::Api::SessionsTest < ActionDispatch::IntegrationTest
   include ApiCommitteeHelper
 
   def setup
-    Aikotoba.api_authenticatable = true
+    Aikotoba.config.api_authenticatable = true
     @email = "email@example.com"
     @password = "password"
     @account = Aikotoba::Account.build_by(attributes: {email: @email, password: @password})
     @account.save!
-  end
-
-  def teardown
-    Aikotoba.api_authenticatable = false
-    Aikotoba.confirmable = false
-    Aikotoba.lockable = false
   end
 
   # POST create
@@ -46,7 +40,7 @@ class Aikotoba::Api::SessionsTest < ActionDispatch::IntegrationTest
   end
 
   test "POST api_create_session_path with unconfirmed account returns 401" do
-    Aikotoba.confirmable = true
+    Aikotoba.config.confirmable = true
     @account.update!(confirmed: false)
     post aikotoba.api_create_session_path, params: {account: {email: @email, password: @password}}, as: :json
     assert_equal 401, status
@@ -54,7 +48,7 @@ class Aikotoba::Api::SessionsTest < ActionDispatch::IntegrationTest
   end
 
   test "POST api_create_session_path with locked account returns 401" do
-    Aikotoba.lockable = true
+    Aikotoba.config.lockable = true
     Aikotoba::Account::Lock.lock!(account: @account)
     post aikotoba.api_create_session_path, params: {account: {email: @email, password: @password}}, as: :json
     assert_equal 401, status

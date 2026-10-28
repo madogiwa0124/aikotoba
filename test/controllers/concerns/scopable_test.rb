@@ -5,10 +5,8 @@ require "test_helper"
 class Aikotoba::ScopableTest < ActionDispatch::IntegrationTest
   def setup
     ActionController::Base.allow_forgery_protection = false
-    @original_registerable = Aikotoba.registerable
-    @original_confirmable = Aikotoba.confirmable
-    Aikotoba.registerable = true
-    Aikotoba.confirmable = false
+    Aikotoba.config.registerable = true
+    Aikotoba.config.confirmable = false
     @password = "password"
     @account = ::Aikotoba::Account.build_by(attributes: {email: "scope@example.com", password: @password})
     @account.save!
@@ -17,11 +15,6 @@ class Aikotoba::ScopableTest < ActionDispatch::IntegrationTest
     @admin_account.authenticate_target = admin
     admin.save!
     @admin_account.save!
-  end
-
-  def teardown
-    Aikotoba.registerable = @original_registerable
-    Aikotoba.confirmable = @original_confirmable
   end
 
   test "default scope: path helpers resolved by aikotoba_scoped_path in views" do

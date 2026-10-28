@@ -5,18 +5,6 @@ class NavigationTest < ActionDispatch::SystemTestCase
 
   driven_by :rack_test
 
-  FEATURE_FLAGS = %i[registerable confirmable lockable recoverable magic_link_authenticatable].freeze
-
-  # NOTE: Feature flags are process-wide, so restore them even when a test fails midway;
-  #       otherwise a flag left on breaks unrelated tests that happen to run next.
-  setup do
-    @original_feature_flags = FEATURE_FLAGS.index_with { |flag| Aikotoba.public_send(flag) }
-  end
-
-  teardown do
-    @original_feature_flags.each { |flag, value| Aikotoba.public_send(:"#{flag}=", value) }
-  end
-
   # Default namespace tests
   test "[default] create Aikotoba::Account -> sign_in -> sign_out" do
     Aikotoba::Account.create_by!(attributes: {email: "default1@example.com", password: "password"})
@@ -42,7 +30,7 @@ class NavigationTest < ActionDispatch::SystemTestCase
   end
 
   test "[default] (Registerable) sign_up -> sign_in -> sign_out" do
-    Aikotoba.registerable = true
+    Aikotoba.config.registerable = true
     visit "/sign_up"
     fill_in "Email", with: "default2@example.com"
     fill_in "Password", with: "password"
@@ -56,7 +44,7 @@ class NavigationTest < ActionDispatch::SystemTestCase
   end
 
   test "[default] (Confirmable) sign_up -> generate confirm token -> confirm -> sign_in -> sign_out" do
-    Aikotoba.confirmable = true
+    Aikotoba.config.confirmable = true
     Aikotoba::Account.create_by!(attributes: {email: "default3@example.com", password: "password"})
     visit "/sign_in"
     fill_in "Email", with: "default3@example.com"
@@ -83,7 +71,7 @@ class NavigationTest < ActionDispatch::SystemTestCase
   end
 
   test "[default] (Lockable) sign_up -> sign_in -> locked -> generate unlock token -> unlock -> sign_in -> sign_out" do
-    Aikotoba.lockable = true
+    Aikotoba.config.lockable = true
     Aikotoba::Account.create_by!(attributes: {email: "default4@example.com", password: "password"})
     visit "/sign_in"
     11.times do
@@ -115,7 +103,7 @@ class NavigationTest < ActionDispatch::SystemTestCase
   end
 
   test "[default] (Recoverable) sign_up -> sign_in -> generate recover token -> password reset -> sign_in -> sign_out" do
-    Aikotoba.recoverable = true
+    Aikotoba.config.recoverable = true
     Aikotoba::Account.create_by!(attributes: {email: "default5@example.com", password: "password"})
     visit "/sign_in"
     click_on "Send password reset token"
@@ -139,7 +127,7 @@ class NavigationTest < ActionDispatch::SystemTestCase
   end
 
   test "[default] (MagicLinkAuthenticatable) sign_in -> request sign in link -> sign in via link -> sign out" do
-    Aikotoba.magic_link_authenticatable = true
+    Aikotoba.config.magic_link_authenticatable = true
     Aikotoba::Account.create_by!(attributes: {email: "default6@example.com", password: "password"})
     visit "/sign_in"
     click_on "Send sign in link"
@@ -158,10 +146,10 @@ class NavigationTest < ActionDispatch::SystemTestCase
 
   test "[default] (ALL) sign_up -> confirm -> sign_in -> lock -> unlock -> sign_in -> recover -> sign_in -> sign_out" do
     # Enable all features
-    Aikotoba.registerable = true
-    Aikotoba.confirmable = true
-    Aikotoba.recoverable = true
-    Aikotoba.lockable = true
+    Aikotoba.config.registerable = true
+    Aikotoba.config.confirmable = true
+    Aikotoba.config.recoverable = true
+    Aikotoba.config.lockable = true
 
     # Sign up
     visit "/sign_up"
@@ -253,7 +241,7 @@ class NavigationTest < ActionDispatch::SystemTestCase
   end
 
   test "[admin] (Registerable) sign_in page offers no sign_up, since the scope sets authenticate_for" do
-    Aikotoba.registerable = true
+    Aikotoba.config.registerable = true
     visit "/admin/sign_in"
     assert_no_link I18n.t(".aikotoba.accounts.new")
     visit "/sign_in"
@@ -261,7 +249,7 @@ class NavigationTest < ActionDispatch::SystemTestCase
   end
 
   test "[admin] (Confirmable) sign_up -> generate confirm token -> confirm -> sign_in -> sign_out" do
-    Aikotoba.confirmable = true
+    Aikotoba.config.confirmable = true
     admin = Admin.create(nickname: "admin_foo")
     Aikotoba::Account.create_by!(attributes: {email: "admin3@example.com", password: "password", authenticate_target: admin})
     visit "/admin/sign_in"
@@ -289,7 +277,7 @@ class NavigationTest < ActionDispatch::SystemTestCase
   end
 
   test "[admin] (Lockable) sign_up -> sign_in -> locked -> generate unlock token -> unlock -> sign_in -> sign_out" do
-    Aikotoba.lockable = true
+    Aikotoba.config.lockable = true
     admin = Admin.create(nickname: "admin_foo")
     Aikotoba::Account.create_by!(attributes: {email: "admin4@example.com", password: "password", authenticate_target: admin})
     visit "/admin/sign_in"
@@ -322,7 +310,7 @@ class NavigationTest < ActionDispatch::SystemTestCase
   end
 
   test "[admin] (Recoverable) sign_up -> sign_in -> generate recover token -> password reset -> sign_in -> sign_out" do
-    Aikotoba.recoverable = true
+    Aikotoba.config.recoverable = true
     admin = Admin.create(nickname: "admin_foo")
     Aikotoba::Account.create_by!(attributes: {email: "admin5@example.com", password: "password", authenticate_target: admin})
     visit "/admin/sign_in"
@@ -348,10 +336,10 @@ class NavigationTest < ActionDispatch::SystemTestCase
 
   test "[admin] (ALL) create Aikotoba::Account -> confirm -> sign_in -> lock -> unlock -> sign_in -> recover -> sign_in -> sign_out" do
     # Enable all features
-    Aikotoba.registerable = true
-    Aikotoba.confirmable = true
-    Aikotoba.recoverable = true
-    Aikotoba.lockable = true
+    Aikotoba.config.registerable = true
+    Aikotoba.config.confirmable = true
+    Aikotoba.config.recoverable = true
+    Aikotoba.config.lockable = true
 
     # NOTE: The admin scope sets authenticate_for, so it has no sign-up; create the account directly.
     admin = Admin.create(nickname: "admin_foo")

@@ -32,12 +32,20 @@ class Aikotoba::ConfigurationTest < ActiveSupport::TestCase
     assert Aikotoba.scopes[:staff].for?("Staff")
   end
 
-  test "the Aikotoba.xxx writers still set the configuration" do
-    Aikotoba.lockable = true
-    Aikotoba.add_scope(:staff, root_path: "/staff", authenticate_for: "Staff")
+  test "the Aikotoba.xxx writers still set the configuration, with a deprecation warning" do
+    assert_deprecated(/Aikotoba.lockable= is deprecated/, Aikotoba.deprecator) { Aikotoba.lockable = true }
+    assert_deprecated(/Aikotoba.default_scope= is deprecated/, Aikotoba.deprecator) { Aikotoba.default_scope = {sign_in_path: "/login"} }
+    assert_deprecated(/Aikotoba.add_scope is deprecated/, Aikotoba.deprecator) do
+      Aikotoba.add_scope(:staff, root_path: "/staff", authenticate_for: "Staff")
+    end
 
     assert Aikotoba.config.lockable
+    assert_equal "/login", Aikotoba.default_scope[:sign_in_path]
     assert Aikotoba.config.scopes.key?(:staff)
+  end
+
+  test "the deprecator is registered with the app" do
+    assert_same Aikotoba.deprecator, Rails.application.deprecators[:aikotoba]
   end
 
   test "a new configuration has the documented defaults" do
@@ -50,6 +58,14 @@ class Aikotoba::ConfigurationTest < ActiveSupport::TestCase
     assert_equal({}, config.confirmation_rate_limit_options)
     assert_equal "/", config.default_scope[:root_path]
     assert_equal ["default"], config.scopes.keys
+  end
+
+  # NOTE: attr_accessor doesn't check that initialize sets each setting. A setting with no
+  #       default would read as nil, and a default missing from SETTINGS would get no reader
+  #       and be shared, not deep-copied, by initialize_copy.
+  test "initialize sets exactly the SETTINGS" do
+    assert_equal Aikotoba::Configuration::SETTINGS.map { |name| :"@#{name}" }.sort,
+      Aikotoba::Configuration.new.instance_variables.sort
   end
 
   test "a copy shares no mutable value with the original" do
@@ -66,10 +82,10 @@ class Aikotoba::ConfigurationTest < ActiveSupport::TestCase
     assert_instance_of Aikotoba::Scopes, copy.scopes
   end
 
-  test "every setting is readable and writable through Aikotoba" do
+  test "every setting is readable through Aikotoba and writable through config" do
     Aikotoba::Configuration::SETTINGS.each do |name|
       assert_respond_to Aikotoba, name
-      assert_respond_to Aikotoba, :"#{name}="
+      assert_respond_to Aikotoba.config, :"#{name}="
     end
   end
 end

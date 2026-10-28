@@ -5,13 +5,9 @@ require "minitest/autorun"
 
 class Aikotoba::MagicLinkableTest < ActionDispatch::IntegrationTest
   def setup
-    Aikotoba.magic_link_authenticatable = true
+    Aikotoba.config.magic_link_authenticatable = true
     ActionController::Base.allow_forgery_protection = false
     @account = ::Aikotoba::Account.create!(email: "email@example.com", confirmed: true)
-  end
-
-  def teardown
-    Aikotoba.magic_link_authenticatable = false
   end
 
   test "account has no password" do
@@ -103,7 +99,7 @@ class Aikotoba::MagicLinkableTest < ActionDispatch::IntegrationTest
   end
 
   test "MagicLinkAuthenticatable path returns 404 when Aikotoba.magic_link_authenticatable is false" do
-    Aikotoba.magic_link_authenticatable = false
+    Aikotoba.config.magic_link_authenticatable = false
     get aikotoba.new_magic_link_path
     assert_equal 404, status
     Aikotoba::Account::MagicLink.create_token!(account: @account, notify: false)

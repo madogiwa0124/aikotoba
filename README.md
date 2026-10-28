@@ -447,7 +447,7 @@ Configure Aikotoba in one `Aikotoba.configure` block, in an initializer such as 
 
 Write `authenticate_for` as a string (`"Admin"`, not `Admin`): your app's classes can't be autoloaded while initializers run.
 
-The `Aikotoba.xxx = ...`, `Aikotoba.add_scope` and `Aikotoba.default_scope=` writers used before `configure` existed still work, but are planned for deprecation; prefer `configure`.
+The `Aikotoba.xxx = ...`, `Aikotoba.add_scope` and `Aikotoba.default_scope=` writers used before `configure` existed still work, but are deprecated and will be removed in 1.0: each call logs a deprecation warning through `Aikotoba.deprecator`, which is registered in `Rails.application.deprecators`. Move them into `Aikotoba.configure`.
 
 The following configuration parameters are supported:
 

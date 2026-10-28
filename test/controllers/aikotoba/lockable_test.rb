@@ -6,15 +6,11 @@ require "minitest/autorun"
 class Aikotoba::LockableTest < ActionDispatch::IntegrationTest
   def setup
     ActionController::Base.allow_forgery_protection = false
-    Aikotoba.lockable = true
-    Aikotoba.max_failed_attempts = 2
+    Aikotoba.config.lockable = true
+    Aikotoba.config.max_failed_attempts = 2
     email, password = ["email@example.com", "password"]
     @account = ::Aikotoba::Account.build_by(attributes: {email: email, password: password})
     @account.save!
-  end
-
-  def teardown
-    Aikotoba.lockable = false
   end
 
   test "success GET new_unlock_token_path" do

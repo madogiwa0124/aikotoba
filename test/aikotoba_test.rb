@@ -16,103 +16,68 @@ class AikotobaTest < ActiveSupport::TestCase
     assert Aikotoba::Scope.new(authenticate_for: nil).registerable?
     assert_not Aikotoba::Scope.new(authenticate_for: "Admin").registerable?
 
-    original = Aikotoba.scopes.deep_dup
-    begin
-      Aikotoba.add_scope(:blank, root_path: "/blank", authenticate_for: "")
-      assert_equal "default", Aikotoba.scopes.name_for("")
-      assert_equal "default", Aikotoba.scopes.name_for(nil)
-      assert_equal "admin", Aikotoba.scopes.name_for("Admin")
-    ensure
-      Aikotoba.scopes.replace(original)
-    end
+    Aikotoba.config.add_scope(:blank, root_path: "/blank", authenticate_for: "")
+    assert_equal "default", Aikotoba.scopes.name_for("")
+    assert_equal "default", Aikotoba.scopes.name_for(nil)
+    assert_equal "admin", Aikotoba.scopes.name_for("Admin")
   end
 
   test "add_scope rejects an authenticate_for another scope already has" do
-    original = Aikotoba.scopes.deep_dup
-    begin
-      error = assert_raises(Aikotoba::Errors::InvalidScopeConfiguration) do
-        Aikotoba.add_scope(:staff, authenticate_for: "Admin", root_path: "/staff")
-      end
-      assert_match "Admin (admin, staff)", error.message
-      assert_not Aikotoba.scopes.key?(:staff)
-
-      Aikotoba.add_scope(:public, root_path: "/public")
-      assert_nil Aikotoba.scopes[:public][:authenticate_for]
-    ensure
-      Aikotoba.scopes.replace(original)
+    error = assert_raises(Aikotoba::Errors::InvalidScopeConfiguration) do
+      Aikotoba.config.add_scope(:staff, authenticate_for: "Admin", root_path: "/staff")
     end
+    assert_match "Admin (admin, staff)", error.message
+    assert_not Aikotoba.scopes.key?(:staff)
+
+    Aikotoba.config.add_scope(:public, root_path: "/public")
+    assert_nil Aikotoba.scopes[:public][:authenticate_for]
   end
 
   test "add_scope rejects inheriting the default scope's authenticate_for" do
-    original = Aikotoba.scopes.deep_dup
-    begin
-      Aikotoba.default_scope[:authenticate_for] = "User"
-      assert_raises(Aikotoba::Errors::InvalidScopeConfiguration) do
-        Aikotoba.add_scope(:mobile, root_path: "/mobile")
-      end
-      Aikotoba.add_scope(:mobile, root_path: "/mobile", authenticate_for: nil)
-      assert_nil Aikotoba.scopes[:mobile][:authenticate_for]
-    ensure
-      Aikotoba.scopes.replace(original)
+    Aikotoba.default_scope[:authenticate_for] = "User"
+    assert_raises(Aikotoba::Errors::InvalidScopeConfiguration) do
+      Aikotoba.config.add_scope(:mobile, root_path: "/mobile")
     end
+    Aikotoba.config.add_scope(:mobile, root_path: "/mobile", authenticate_for: nil)
+    assert_nil Aikotoba.scopes[:mobile][:authenticate_for]
   end
 
   test "add_scope rejects a root_path of \"/\", set or inherited" do
-    original = Aikotoba.scopes.deep_dup
-    begin
-      error = assert_raises(Aikotoba::Errors::InvalidScopeConfiguration) do
-        Aikotoba.add_scope(:staff, authenticate_for: "Staff")
-      end
-      assert_match %(on: staff ("/")), error.message
-      assert_raises(Aikotoba::Errors::InvalidScopeConfiguration) do
-        Aikotoba.add_scope(:staff, authenticate_for: "Staff", root_path: "/")
-      end
-      assert_not Aikotoba.scopes.key?(:staff)
-
-      Aikotoba.scopes[:admin][:root_path] = "/"
-      assert_raises(Aikotoba::Errors::InvalidScopeConfiguration) { Aikotoba.scopes.validate! }
-    ensure
-      Aikotoba.scopes.replace(original)
+    error = assert_raises(Aikotoba::Errors::InvalidScopeConfiguration) do
+      Aikotoba.config.add_scope(:staff, authenticate_for: "Staff")
     end
+    assert_match %(on: staff ("/")), error.message
+    assert_raises(Aikotoba::Errors::InvalidScopeConfiguration) do
+      Aikotoba.config.add_scope(:staff, authenticate_for: "Staff", root_path: "/")
+    end
+    assert_not Aikotoba.scopes.key?(:staff)
+
+    Aikotoba.scopes[:admin][:root_path] = "/"
+    assert_raises(Aikotoba::Errors::InvalidScopeConfiguration) { Aikotoba.scopes.validate! }
   end
 
   test "scopes.validate! catches a duplicate made after add_scope" do
-    original = Aikotoba.scopes.deep_dup
-    begin
-      Aikotoba.scopes.validate!
-      Aikotoba.default_scope = {authenticate_for: "Admin"}
-      assert_raises(Aikotoba::Errors::InvalidScopeConfiguration) { Aikotoba.scopes.validate! }
-    ensure
-      Aikotoba.scopes.replace(original)
-    end
+    Aikotoba.scopes.validate!
+    Aikotoba.config.default_scope = {authenticate_for: "Admin"}
+    assert_raises(Aikotoba::Errors::InvalidScopeConfiguration) { Aikotoba.scopes.validate! }
   end
 
   test "default_scope= merges into default_scope" do
-    original = Aikotoba.scopes.deep_dup
-    begin
-      assert_equal "/sign_in", Aikotoba.default_scope[:sign_in_path]
+    assert_equal "/sign_in", Aikotoba.default_scope[:sign_in_path]
 
-      Aikotoba.default_scope = {sign_in_path: "/custom_sign_in"}
+    Aikotoba.config.default_scope = {sign_in_path: "/custom_sign_in"}
 
-      assert_equal "/custom_sign_in", Aikotoba.default_scope[:sign_in_path]
-    ensure
-      Aikotoba.scopes.replace(original)
-    end
+    assert_equal "/custom_sign_in", Aikotoba.default_scope[:sign_in_path]
   end
 
   test "add_scope merges defaults with overrides" do
-    original = Aikotoba.scopes.deep_dup
-    begin
-      Aikotoba.add_scope(:admin, root_path: "/admin", sign_in_path: "/admin/sign_in")
+    Aikotoba.config.add_scope(:admin, root_path: "/admin", sign_in_path: "/admin/sign_in")
 
-      admin = Aikotoba.scopes[:admin]
-      assert_equal "/admin", admin[:root_path]
-      assert_equal "/admin/sign_in", admin[:sign_in_path]
-      # Inherit unspecified keys from default
-      assert_equal Aikotoba.default_scope[:sign_out_path], admin[:sign_out_path]
-    ensure
-      Aikotoba.scopes.replace(original)
-    end
+    admin = Aikotoba.scopes[:admin]
+    assert_equal "/admin", admin[:root_path]
+    assert_equal "/admin/sign_in", admin[:sign_in_path]
+    # Inherit unspecified keys from default
+    assert_equal Aikotoba.default_scope[:sign_out_path], admin[:sign_out_path]
   end
 
   test "default_scope contains all expected keys" do
