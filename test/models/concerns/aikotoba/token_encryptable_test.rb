@@ -4,11 +4,8 @@ require "test_helper"
 require "minitest/autorun"
 
 class Aikotoba::TokenEncryptableTest < ActiveSupport::TestCase
-  include Aikotoba::TokenEncryptable::ClassMethods
-
   def setup
     Aikotoba.config.encrypted_token = true
-    skip unless available_active_record_encryption?
     reload_confirmation_token_class
     email, password = ["email@example.com", "password"]
     @account = ::Aikotoba::Account.build_by(attributes: {email: email, password: password})

@@ -4,10 +4,8 @@ require "test_helper"
 
 class RateLimitTest < ActionDispatch::SystemTestCase
   driven_by :rack_test
-  include Aikotoba::Protection::RateLimiting
 
   def setup
-    skip unless self.class.available_rails_rate_limiting?
     Aikotoba.config.confirmable = true
     Aikotoba.config.lockable = true
     Aikotoba.config.recoverable = true

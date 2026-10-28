@@ -11,6 +11,6 @@ Gem::Specification.new do |spec|
   spec.metadata["source_code_uri"] = "https://github.com/madogiwa0124/aikotoba"
   spec.files = Dir["{app,config,db,lib}/**/*", "MIT-LICENSE", "Rakefile", "README.md"]
 
-  spec.add_dependency "rails", ">= 7.2"
+  spec.add_dependency "rails", ">= 8.1"
   spec.add_dependency "argon2", "~> 2.1"
 end
