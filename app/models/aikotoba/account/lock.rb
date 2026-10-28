@@ -22,6 +22,7 @@ module Aikotoba
       ActiveRecord::Base.transaction do
         @account.lock!
         create_unlock_token!(notify: notify)
+        Events.report_after_commit(:account_locked, account_id: @account.id)
       end
     end
 
@@ -29,13 +30,17 @@ module Aikotoba
       ActiveRecord::Base.transaction do
         @account.unlock!
         @account.unlock_token&.destroy!
+        Events.report_after_commit(:account_unlocked, account_id: @account.id)
       end
     end
 
     def create_unlock_token!(notify:)
       ActiveRecord::Base.transaction do
         @account.build_unlock_token.save!
-        @account.unlock_token.notify if notify
+        if notify
+          @account.unlock_token.notify
+          Events.report_after_commit(:unlock_token_sent, account_id: @account.id)
+        end
       end
     end
   end

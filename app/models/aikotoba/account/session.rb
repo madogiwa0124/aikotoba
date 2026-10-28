@@ -26,6 +26,11 @@ module Aikotoba
       destroy!
     end
 
+    # NOTE: What the sign_in / sign_out events report about the session (see Aikotoba::Events).
+    def event_payload
+      {account_id: aikotoba_account_id, session_id: id}
+    end
+
     class << self
       def start!(account:, **params)
         account.sessions.create!(

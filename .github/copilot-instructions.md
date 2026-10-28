@@ -181,6 +181,10 @@ runs, by design (see the migration-layout paragraph above and the README's
 Getting Start section). `Account#destroy!` is the one operation that stays
 safe either way.
 
+### Events
+
+Authentication events are `aikotoba.<event>` structured events reported through `Rails.event`, via [lib/aikotoba/events.rb](../lib/aikotoba/events.rb). The README's Events section lists them and their payloads. Report them from the model method that makes the change (`register!`, `Lock#lock!`, ...) or from the sign in helpers (`aikotoba_sign_in` / `aikotoba_sign_out`), never from an engine controller, so an app's own controller built on those methods reports the same events. `sign_in` / `sign_out` come from the helpers rather than `Session.start!` / `#revoke!` because the payload carries the scope, which only the request knows. Payloads hold plain values (`account_id`, not the account), since subscribers serialize them; `Session#event_payload` is the shared shape for sign in / sign out. Use `Events.report_after_commit` for something that happened (it waits for every open transaction and is dropped on rollback, like the token emails) and `Events.report` only for a failed attempt, which has nothing to commit. Request details belong in `Rails.event`'s context, set by the host app, not in payloads. Tests (`test/events_test.rb`) use `assert_event_reported` / `assert_no_event_reported`, always with an event name, since Rails itself reports `action_controller.*` events.
+
 ## Controller Conventions
 
 - Base controller: All engine controllers inherit from [app/controllers/aikotoba/application_controller.rb](../app/controllers/aikotoba/application_controller.rb) which includes `EnabledFeatureCheckable` and `Scopable` and defines `aikotoba_controller?`.

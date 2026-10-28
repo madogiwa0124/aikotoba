@@ -4,6 +4,7 @@ require "aikotoba/version"
 require "aikotoba/engine"
 require "aikotoba/errors"
 require "aikotoba/configuration"
+require "aikotoba/events"
 
 module Aikotoba
   # NOTE: Set every setting in one place:

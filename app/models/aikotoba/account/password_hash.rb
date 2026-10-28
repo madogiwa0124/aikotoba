@@ -49,7 +49,7 @@ module Aikotoba
         #       blank, and returning instantly regardless of account state leaks nothing.
         #       This also means `password` is guaranteed non-blank below, so it's safe to
         #       use as the dummy digest's seed (see prevent_timing_attack).
-        return nil if password.blank?
+        return sign_in_failed(email: email, account: nil, target_type_name: target_type_name) if password.blank?
 
         account = Account.find_by_identifier(email, target_type_name: target_type_name)
 
@@ -62,7 +62,7 @@ module Aikotoba
           prevent_timing_attack(password)
           false
         end
-        return nil unless account
+        return sign_in_failed(email: email, account: nil, target_type_name: target_type_name) unless account
 
         ActiveRecord::Base.transaction do
           if matched
@@ -72,10 +72,19 @@ module Aikotoba
             Account::Lock.lock!(account: account, notify: true) if account.lockable? && account.should_lock?
           end
         end
-        matched ? account : nil
+        matched ? account : sign_in_failed(email: email, account: account, target_type_name: target_type_name)
       end
 
       private
+
+      # NOTE: account_id is nil when no account matched the email (or none that can sign in
+      #       to this target type), so subscribers can tell a wrong password from an unknown
+      #       email; the response to the user stays the same either way. Rails.event masks
+      #       email with the app's filter_parameters, which include :email by default.
+      def sign_in_failed(email:, account:, target_type_name:)
+        Events.report(:sign_in_failed, email: email, account_id: account&.id, target_type_name: target_type_name)
+        nil
+      end
 
       # NOTE: Seeds the dummy digest from the caller's own (guaranteed non-blank, per the
       #       guard in authenticate_by) password, so `generate` always pays full Argon2
