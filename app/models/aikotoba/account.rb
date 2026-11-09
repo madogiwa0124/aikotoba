@@ -133,6 +133,7 @@ module Aikotoba
         ActiveRecord::Base.transaction do
           save!
           Confirmation.create_token!(account: self, notify: true) if confirmable?
+          Event::AccountRegistered.report(account_id: id)
         end
       end
     end

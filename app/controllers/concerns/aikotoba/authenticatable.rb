@@ -14,11 +14,17 @@ module Aikotoba
     end
 
     def aikotoba_sign_in(account)
-      start_new_aikotoba_session_for(account)
+      start_new_aikotoba_session_for(account).tap do |session|
+        Event::SignIn.report(**session.event_payload, scope: aikotoba_scope.to_s)
+      end
     end
 
+    # NOTE: Loads the session from the cookie when nothing has read it yet, so the session is
+    #       revoked (and sign_out reported) however early an app's own action calls this.
     def aikotoba_sign_out
+      session = aikotoba_current_session
       terminate_aikotoba_session
+      Event::SignOut.report(**session.event_payload, scope: aikotoba_scope.to_s) if session
     end
 
     private

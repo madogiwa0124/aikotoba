@@ -18,6 +18,7 @@ module Aikotoba
       ActiveRecord::Base.transaction do
         @account.build_confirmation_token.save!
         @account.confirmation_token.notify if notify
+        Event::ConfirmationTokenIssued.report(account_id: @account.id, notified: notify)
       end
     end
 
@@ -25,6 +26,7 @@ module Aikotoba
       ActiveRecord::Base.transaction do
         @account.confirm!
         @account.confirmation_token&.destroy!
+        Event::AccountConfirmed.report(account_id: @account.id)
       end
     end
   end
