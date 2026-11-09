@@ -24,14 +24,3 @@ Aikotoba.configure do |config|
     #       default scope is drawn under root_path, as "/admin/magic_link".
   })
 end
-
-Rails.application.config.to_prepare do
-  Aikotoba::AccountsController.class_eval do
-    def after_create_account_process
-      user = User.new(nickname: "foo")
-      @account.authenticate_target = user
-      user.save!
-      @account.save!
-    end
-  end
-end

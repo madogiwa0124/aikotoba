@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- **Breaking**: Remove the overridable `before_*_process` / `after_*_process` / `failed_*_process` hook methods from every controller (sessions, sign up, confirm, unlock, recovery and magic link). Overriding them with `class_eval` no longer has any effect. Instead:
+  - to react to something that happened (logging, audit trails, alerts), subscribe to the `aikotoba.*` events (see the README's Events section). That covers the `after_*` hooks and `failed_sign_in_process` (`sign_in_failed`);
+  - to stop a request before Aikotoba handles it (what most `before_*` hooks were for), add a `before_action` to your `ApplicationController`, which Aikotoba's controllers inherit, limited to them with `if: -> { is_a?(Aikotoba::ApplicationController) }` (see the README);
+  - to change a flow or do more in the same transaction, such as creating a profile with the account (what `after_create_account_process` was usually overridden for), checking an account after its password matched, handling a validation error on sign up or password reset (`failed_create_account_process` / `failed_recover_process`), or doing something when a token is requested for an email with no account (`failed_send_*_token_process`), write your own controller on the model methods, as in the README's Registrable example.
+
 - **Breaking**: Rename `Aikotoba::Account::Lock.create_unlock_token!` to `Aikotoba::Account::Lock.create_token!`, the name `Confirmation`, `Recovery` and `MagicLink` already use. The old name is removed, so replace any call to it with `create_token!`; the arguments are unchanged.
 
 - Fix `aikotoba_sign_out` leaving the session record behind when nothing had read the current account or session first in that request, as in an app's own sign out action that calls it straight away. The cookie was deleted, but the session stayed valid in the database until it expired. It now loads the session from the cookie itself, so it is always revoked.

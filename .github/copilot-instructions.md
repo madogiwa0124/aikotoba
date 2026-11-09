@@ -188,7 +188,7 @@ Authentication events are `aikotoba.<event>` structured events reported through 
 ## Controller Conventions
 
 - Base controller: All engine controllers inherit from [app/controllers/aikotoba/application_controller.rb](../app/controllers/aikotoba/application_controller.rb) which includes `EnabledFeatureCheckable` and `Scopable` and defines `aikotoba_controller?`.
-- Overridable hooks: Session flow in [app/controllers/aikotoba/sessions_controller.rb](../app/controllers/aikotoba/sessions_controller.rb) exposes hook methods `before_sign_in_process`, `after_sign_in_process`, and `failed_sign_in_process` that apps can override via `config.to_prepare`.
+- No overridable hooks: the engine's controllers have no `before_/after_/failed_*_process` methods any more. Don't add new override points to them. An app that needs to react to something subscribes to the events (see [Events](#events)); one that needs to stop a request first adds a `before_action` to its own `ApplicationController`, which the engine's controllers inherit (`test/dummy`'s `reject_blocked_ip`, covered by `test/controllers/before_aikotoba_action_test.rb`; keep the README's example in step with it); one that needs to change a flow or extend its transaction writes its own controller on the same model methods and sign in helpers, which is why events are reported from those and not from controllers. `test/dummy`'s `SignUpsController` and `SignOutsController` are such controllers, covered by `test/controllers/custom_sign_up_test.rb` and `test/events_test.rb`; keep the README's Registrable example in step with `SignUpsController`.
 - App-side example: The README shows aliasing `aikotoba_current_account` and implementing `authenticate_account!` in the host app controller.
 
 ## i18n

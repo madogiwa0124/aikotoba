@@ -17,21 +17,17 @@ module Aikotoba
 
     def create
       account = find_by_send_token_account!(unlock_accounts_params)
-      before_send_unlock_token_process
       send_token_account!(account)
-      after_send_unlock_token_process
-    rescue ActiveRecord::RecordNotFound => e
-      failed_send_unlock_token_process(e)
+    rescue ActiveRecord::RecordNotFound
+      # NOTE: An unknown email gets the same response as a known one, to avoid account
+      #       enumeration.
     ensure
-      # NOTE: Always show success message to avoid account enumeration.
       redirect_to success_send_unlock_token_path, flash: {notice: success_send_unlock_token_message}
     end
 
     def update
       account = find_by_has_token_account!(params)
-      before_unlock_process
       unlock_account!(account)
-      after_unlock_process
       redirect_to after_unlocked_path, flash: {notice: unlocked_message}
     end
 
@@ -78,26 +74,6 @@ module Aikotoba
 
     def success_send_unlock_token_message
       I18n.t(".aikotoba.messages.unlocking.sent")
-    end
-
-    # NOTE: Methods to override if you want to do something before send unlock token.
-    def before_send_unlock_token_process
-    end
-
-    # NOTE: Methods to override if you want to do something after send unlock token.
-    def after_send_unlock_token_process
-    end
-
-    # NOTE: Methods to override if you want to do something failed send unlock token.
-    def failed_send_unlock_token_process(e)
-    end
-
-    # NOTE: Methods to override if you want to do something before unlock.
-    def before_unlock_process
-    end
-
-    # NOTE: Methods to override if you want to do something after unlock.
-    def after_unlock_process
     end
   end
 end

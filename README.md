@@ -574,22 +574,9 @@ account.update_by!(attributes: {email: "new@example.com", password: "new_passwor
 
 ### Create other model with `Aikotoba::Account`.
 
-You can override `Aikotoba::AccountsController#after_create_account_process` to create the other models together. Sign up only exists in scopes without `authenticate_for` (see [Filtering by authenticate target type](#filtering-by-authenticate-target-type)).
+`Aikotoba::Account` belongs to any model of yours through `authenticate_target`. To create that model together with the account, in the same transaction, write your own sign up controller on the model methods, as shown in [Registrable](#registrable). Sign up only exists in scopes without `authenticate_for` (see [Filtering by authenticate target type](#filtering-by-authenticate-target-type)).
 
 ```ruby
-require 'aikotoba'
-
-Rails.application.config.to_prepare do
-  Aikotoba::AccountsController.class_eval do
-    def after_create_account_process
-      user = User.new(nickname: "foo")
-      @account.authenticate_target = user
-      user.save!
-      @account.save!
-    end
-  end
-end
-
 class Profile < ApplicationRecord
   has_one :account, class_name: 'Aikotoba::Account', as: :authenticate_target
 end
@@ -610,23 +597,28 @@ current_account.admin #=> Admin instance
 admin.account #=> Aikotoba::Account instance
 ```
 
-### Do something on before, after, failure.
+### Do something before, after, or on failure
 
-Controllers provides methods to execute the overridden process.
+Aikotoba's controllers have no methods to override. Pick the tool by what you need:
 
-For example, if you want to record an error log when the account creation fails, you can do the following.
+- **React to something that happened** (log it, send it to an audit trail, alert on it): subscribe to the [Events](#events). They are reported from every caller, so you don't need to touch any controller. A failed sign in is one too (`sign_in_failed`).
+- **Stop a request before Aikotoba handles it** (block an IP, require a feature flag): add a `before_action` to your `ApplicationController`. Aikotoba's controllers inherit it (`config.parent_controller`), so it runs before them. `is_a?(Aikotoba::ApplicationController)` limits it to Aikotoba's pages, sign in, sign up, magic links and the token pages alike:
 
-```ruby
-require 'aikotoba'
+  ```ruby
+  class ApplicationController < ActionController::Base
+    before_action :reject_blocked_ip, if: -> { is_a?(Aikotoba::ApplicationController) }
 
-Rails.application.config.to_prepare do
-  Aikotoba::AccountsController.class_eval do
-    def failed_create_account_process(e)
-      logger.error(e)
+    private
+
+    def reject_blocked_ip
+      head :forbidden if BlockedIp.exists?(address: request.remote_ip)
     end
   end
-end
-```
+  ```
+
+  Keep the condition this broad unless you mean one page only: you can sign in with a password or a magic link, and an email address is taken by the sign in page and by every token request, so a check on one action leaves the others open.
+
+- **Change the flow itself, or do more in the same transaction** (create a profile with the account, check the account after its password matched, show your own response to a validation error or to a token request for an email with no account): write your own controller on the model methods Aikotoba's controllers use, such as `Aikotoba::Account.build_by` / `#register!`, `Aikotoba::Account::PasswordHash.authenticate_by` and `aikotoba_sign_in` / `aikotoba_sign_out`. [Registrable](#registrable) shows a sign up controller. Your controller reports the same events, since the model methods and the sign in helpers report them.
 
 ### Events
 

@@ -12,12 +12,9 @@ module Aikotoba
     def create
       @account = authenticate_account(session_params.to_h.symbolize_keys)
       if @account
-        before_sign_in_process
         aikotoba_sign_in(@account)
-        after_sign_in_process
         redirect_to after_sign_in_path, notice: successed_message
       else
-        failed_sign_in_process
         @account = build_account({email: "", password: ""})
         flash[:alert] = failed_message
         render :new, status: :unprocessable_entity
@@ -61,18 +58,6 @@ module Aikotoba
 
     def signed_out_message
       I18n.t(".aikotoba.messages.authentication.sign_out")
-    end
-
-    # NOTE: Methods to override if you want to do something before sign in.
-    def before_sign_in_process
-    end
-
-    # NOTE: Methods to override if you want to do something after sign in.
-    def after_sign_in_process
-    end
-
-    # NOTE: Methods to override if you want to do something failed sign in.
-    def failed_sign_in_process(e = nil)
     end
   end
 end
