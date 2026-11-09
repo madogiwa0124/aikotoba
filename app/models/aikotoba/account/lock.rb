@@ -14,12 +14,6 @@ module Aikotoba
       new(account: account).create_token!(notify: notify)
     end
 
-    # NOTE: Deprecated, and will be removed in 1.0. Use create_token!, the name the other token classes use.
-    def self.create_unlock_token!(account:, notify: false)
-      Aikotoba.deprecator.warn("Aikotoba::Account::Lock.create_unlock_token! is deprecated. Use Aikotoba::Account::Lock.create_token! instead.")
-      create_token!(account: account, notify: notify)
-    end
-
     def initialize(account:)
       @account = account
     end

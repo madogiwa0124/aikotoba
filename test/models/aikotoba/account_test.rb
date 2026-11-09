@@ -345,19 +345,6 @@ class Aikotoba::AccountTest < ActiveSupport::TestCase
       assert_not account.reload.locked?
       assert_equal account.failed_attempts, 0
     end
-
-    test "Lock.create_unlock_token! still issues an unlock token, with a deprecation warning" do
-      account = Aikotoba::Account.create_by!(attributes: {
-        email: "user@example.com",
-        password: "Password1!"
-      })
-      assert_deprecated(/Aikotoba::Account::Lock.create_unlock_token! is deprecated/, Aikotoba.deprecator) do
-        assert_event_reported("aikotoba.unlock_token_issued", payload: {account_id: account.id, notified: false}) do
-          Aikotoba::Account::Lock.create_unlock_token!(account: account)
-        end
-      end
-      assert account.reload.unlock_token.present?
-    end
   end
 
   class DefaultAttributes < ActiveSupport::TestCase

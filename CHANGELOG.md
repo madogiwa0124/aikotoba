@@ -2,7 +2,7 @@
 
 ## Unreleased
 
-- **Deprecated**: `Aikotoba::Account::Lock.create_unlock_token!`. Use `Aikotoba::Account::Lock.create_token!` instead, the name `Confirmation`, `Recovery` and `MagicLink` already use. The old name still works, but logs a warning through `Aikotoba.deprecator` and will be removed in 1.0.
+- **Breaking**: Rename `Aikotoba::Account::Lock.create_unlock_token!` to `Aikotoba::Account::Lock.create_token!`, the name `Confirmation`, `Recovery` and `MagicLink` already use. The old name is removed, so replace any call to it with `create_token!`; the arguments are unchanged.
 
 - Fix `aikotoba_sign_out` leaving the session record behind when nothing had read the current account or session first in that request, as in an app's own sign out action that calls it straight away. The cookie was deleted, but the session stayed valid in the database until it expired. It now loads the session from the cookie itself, so it is always revoked.
 
