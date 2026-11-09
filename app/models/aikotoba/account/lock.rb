@@ -10,8 +10,8 @@ module Aikotoba
       new(account: account).unlock!
     end
 
-    def self.create_unlock_token!(account:, notify: false)
-      new(account: account).create_unlock_token!(notify: notify)
+    def self.create_token!(account:, notify: false)
+      new(account: account).create_token!(notify: notify)
     end
 
     def initialize(account:)
@@ -21,7 +21,7 @@ module Aikotoba
     def lock!(notify:)
       ActiveRecord::Base.transaction do
         @account.lock!
-        create_unlock_token!(notify: notify)
+        create_token!(notify: notify)
         Event::AccountLocked.report(account_id: @account.id)
       end
     end
@@ -34,7 +34,7 @@ module Aikotoba
       end
     end
 
-    def create_unlock_token!(notify:)
+    def create_token!(notify:)
       ActiveRecord::Base.transaction do
         @account.build_unlock_token.save!
         @account.unlock_token.notify if notify

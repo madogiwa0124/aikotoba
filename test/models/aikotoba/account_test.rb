@@ -437,7 +437,7 @@ class Aikotoba::AccountTest < ActiveSupport::TestCase
 
     def build_every_optional_token!
       Aikotoba::Account::Confirmation.create_token!(account: @account, notify: false)
-      Aikotoba::Account::Lock.create_unlock_token!(account: @account, notify: false)
+      Aikotoba::Account::Lock.create_token!(account: @account, notify: false)
       Aikotoba::Account::Recovery.create_token!(account: @account, notify: false)
       Aikotoba::Account::MagicLink.create_token!(account: @account, notify: false)
       Aikotoba::Account::Session.start!(account: @account)

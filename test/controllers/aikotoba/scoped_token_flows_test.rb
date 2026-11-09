@@ -51,7 +51,7 @@ class Aikotoba::ScopedTokenFlowsTest < ActionDispatch::IntegrationTest
     assert_not @user_account.reload.confirmed?
 
     @user_account.lock!
-    Aikotoba::Account::Lock.create_unlock_token!(account: @user_account)
+    Aikotoba::Account::Lock.create_token!(account: @user_account)
     get "/admin/unlock/#{@user_account.unlock_token.token}"
     assert_equal 404, status
     assert @user_account.reload.locked?
