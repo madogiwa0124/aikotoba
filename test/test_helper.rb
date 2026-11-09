@@ -38,6 +38,7 @@ module AikotobaConfigurationReset
 
   def after_teardown
     super
+  ensure
     ActionController::Base.allow_forgery_protection = @aikotoba_allow_forgery_protection
     Aikotoba.instance_variable_set(:@config, @aikotoba_booted_config)
   end
