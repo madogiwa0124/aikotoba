@@ -23,7 +23,7 @@ class Aikotoba::AccountMailerTest < ActionMailer::TestCase
   end
 
   test "unlock sends nothing once the token is gone" do
-    Aikotoba::Account::Lock.create_unlock_token!(account: @account, notify: false)
+    Aikotoba::Account::Lock.create_token!(account: @account, notify: false)
     @account.unlock_token.destroy!
     assert_no_emails do
       Aikotoba::AccountMailer.with(account: @account.reload).unlock.deliver_now

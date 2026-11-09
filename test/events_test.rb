@@ -141,7 +141,7 @@ class Aikotoba::EventsTest < ActiveSupport::TestCase
     ]) do
       Aikotoba::Account::Confirmation.create_token!(account: account)
       Aikotoba::Account::Recovery.create_token!(account: account, notify: true)
-      Aikotoba::Account::Lock.create_unlock_token!(account: account, notify: true)
+      Aikotoba::Account::Lock.create_token!(account: account, notify: true)
     end
   end
 

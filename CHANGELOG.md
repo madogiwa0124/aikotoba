@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- **Deprecated**: `Aikotoba::Account::Lock.create_unlock_token!`. Use `Aikotoba::Account::Lock.create_token!` instead, the name `Confirmation`, `Recovery` and `MagicLink` already use. The old name still works, but logs a warning through `Aikotoba.deprecator` and will be removed in 1.0.
+
 - Fix `aikotoba_sign_out` leaving the session record behind when nothing had read the current account or session first in that request, as in an app's own sign out action that calls it straight away. The cookie was deleted, but the session stayed valid in the database until it expired. It now loads the session from the cookie itself, so it is always revoked.
 
 - Report authentication events through `Rails.event`: `aikotoba.sign_in`, `aikotoba.sign_out`, `aikotoba.sign_in_failed`, `aikotoba.account_registered`, `aikotoba.account_confirmed`, `aikotoba.account_locked`, `aikotoba.account_unlocked`, `aikotoba.password_recovered`, and `aikotoba.confirmation_token_issued` / `unlock_token_issued` / `recovery_token_issued` (with `notified`, whether the email was sent). Payloads hold ids and names, not records. They are reported from the models and the sign in helpers, so custom controllers built on them report them too, and every event but `sign_in_failed` waits for the transaction to commit. See the README's Events section.

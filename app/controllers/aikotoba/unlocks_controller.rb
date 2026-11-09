@@ -50,7 +50,7 @@ module Aikotoba
     end
 
     def send_token_account!(account)
-      Account::Lock.create_unlock_token!(account: account, notify: true)
+      Account::Lock.create_token!(account: account, notify: true)
     end
 
     def find_by_has_token_account!(params)
