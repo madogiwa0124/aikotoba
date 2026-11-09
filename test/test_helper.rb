@@ -27,14 +27,18 @@ require "aikotoba/test/authentication_helper"
 
 # NOTE: Every test starts from the configuration the dummy app booted with, whatever earlier
 #       tests set. Swapped in after_teardown, so a test's own teardown still sees its settings.
+#       ActionController::Base.allow_forgery_protection is process-wide too (many integration
+#       tests turn it off in setup), so it is put back the same way.
 module AikotobaConfigurationReset
   def before_setup
     @aikotoba_booted_config = Aikotoba.config.dup
+    @aikotoba_allow_forgery_protection = ActionController::Base.allow_forgery_protection
     super
   end
 
   def after_teardown
     super
+    ActionController::Base.allow_forgery_protection = @aikotoba_allow_forgery_protection
     Aikotoba.instance_variable_set(:@config, @aikotoba_booted_config)
   end
 end
