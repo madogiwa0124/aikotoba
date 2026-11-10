@@ -29,6 +29,19 @@ module Aikotoba
       name || "default"
     end
 
+    # NOTE: The scope a path (relative to the engine's mount point) belongs to: the first added
+    #       scope whose root_path covers it, else the default. Scopable resolves requests with
+    #       this.
+    def name_for_path(path)
+      return "default" if path.nil?
+
+      each do |name, scope|
+        next if name == "default"
+        return name if scope.covers?(path)
+      end
+      "default"
+    end
+
     # NOTE: Run by the Engine after initialization. route_path prefixes any path outside
     #       root_path; for one inherited from the default scope or written relative that is
     #       the intent, but an absolute path set on the scope itself was probably meant as is.

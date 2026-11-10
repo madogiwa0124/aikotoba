@@ -332,6 +332,8 @@ Routes for Aikotoba::Engine:
 
 The scope is determined dynamically by the root path. For example, when accessing `/admin/sign_in`, the `admin` scope is selected.
 
+`root_path`, like every route path of a scope, is relative to where `Aikotoba::Engine` is mounted. With `mount Aikotoba::Engine => "/auth"`, the `admin` scope above serves `/auth/admin/sign_in`. The same holds for your app's own controllers that include `Aikotoba::Authenticatable`: a page at `/auth/admin/sensitives` is in the `admin` scope, and one at `/admin/sensitives`, outside the mount point, is in the `default` scope. Redirect targets such as `after_sign_in_path` are paths in your app, not relative to the mount point.
+
 To automatically switch scopes and get paths, use the `Aikotoba::Scopable#aikotoba_scoped_path` helper method.
 
 ```ruby

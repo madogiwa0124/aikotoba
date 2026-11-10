@@ -62,6 +62,14 @@ class Aikotoba::ScopesTest < ActiveSupport::TestCase
     assert_not scope.covers?("/magic_link")
   end
 
+  test "name_for_path picks the first added scope covering the path, else default" do
+    assert_equal "admin", Aikotoba.scopes.name_for_path("/admin")
+    assert_equal "admin", Aikotoba.scopes.name_for_path("/admin/sign_in")
+    assert_equal "default", Aikotoba.scopes.name_for_path("/administrator")
+    assert_equal "default", Aikotoba.scopes.name_for_path("/sign_in")
+    assert_equal "default", Aikotoba.scopes.name_for_path(nil)
+  end
+
   test "Scope#valid_root_path? accepts an absolute path with segments only" do
     ["/admin", "/admin/", "/a/b"].each do |root_path|
       assert Aikotoba::Scope.new(root_path: root_path).valid_root_path?, root_path
