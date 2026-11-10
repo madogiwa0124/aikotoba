@@ -9,8 +9,8 @@ module Aikotoba
   class Configuration
     SETTINGS = %i[
       parent_controller parent_mailer mailer_sender email_format password_pepper
-      password_length_range session_expiry
-      registerable
+      password_length_range session_expiry sign_in_rate_limit_options
+      registerable registration_rate_limit_options
       confirmable confirmation_token_expiry confirmation_rate_limit_options
       lockable max_failed_attempts unlock_token_expiry unlock_rate_limit_options
       recoverable recovery_token_expiry recovery_rate_limit_options
@@ -29,9 +29,11 @@ module Aikotoba
       @password_pepper = "aikotoba-default-pepper"
       @password_length_range = 8..100
       @session_expiry = 7.days
+      @sign_in_rate_limit_options = {}
 
       # for Registerable
       @registerable = true
+      @registration_rate_limit_options = {}
 
       # for Confirmable
       @confirmable = false

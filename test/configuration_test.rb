@@ -56,6 +56,8 @@ class Aikotoba::ConfigurationTest < ActiveSupport::TestCase
     assert config.registerable
     assert_not config.confirmable
     assert_equal({}, config.confirmation_rate_limit_options)
+    assert_equal({}, config.sign_in_rate_limit_options)
+    assert_equal({}, config.registration_rate_limit_options)
     assert_equal "/", config.default_scope[:root_path]
     assert_equal ["default"], config.scopes.keys
   end

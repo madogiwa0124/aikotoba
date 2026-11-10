@@ -2,6 +2,15 @@
 
 module Aikotoba
   class AccountsController < ApplicationController
+    include Protection::RateLimiting
+
+    def self.registration_rate_limit_options
+      Aikotoba.registration_rate_limit_options
+    end
+    private_class_method :registration_rate_limit_options
+
+    aikotoba_rate_limit(registration_rate_limit_options)
+
     def new
       @account = build_account({email: "", password: ""})
     end
