@@ -665,6 +665,13 @@ Rails.event.subscribe(AuthEventSubscriber.new) { |event| event[:name].start_with
 - In tests, use Rails' `assert_event_reported("aikotoba.sign_in")` and friends.
 - Not covered yet: sending a magic link and a failed magic link sign in. A successful magic link sign in reports `sign_in`.
 
+### Logs
+
+Aikotoba writes a few lines of its own to `Rails.logger`, each prefixed with `[Aikotoba]`, so you can find them among your app's:
+
+- at boot, a warning when an absolute path you set on an added scope is drawn under its `root_path` (see [Filtering by authenticate target type](#filtering-by-authenticate-target-type));
+- at the `info` level, when a confirmation, unlock, password reset or magic link email is not sent because no account matches the email. The user sees the same page either way, so this line is how you tell why an email never arrived. It names the scope but not the email, since `config.filter_parameters` doesn't mask a log message.
+
 ### Using encrypted token
 
 Tokens can be encrypted using Active Record Encryption, introduced in Active Record 7 and later.

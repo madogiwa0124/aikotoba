@@ -18,9 +18,13 @@ module Aikotoba
 
     def create
       # NOTE: An unknown email gets the same response as a known one, to avoid account
-      #       enumeration.
+      #       enumeration. The log line leaves the email out, which filter_parameters can't mask.
       account = find_by_send_token_account(magic_link_accounts_params)
-      send_magic_link_token!(account) if account
+      if account
+        send_magic_link_token!(account)
+      else
+        Aikotoba.logger.info { "Magic link not sent: no account with that email in the #{aikotoba_scope} scope." }
+      end
       redirect_to success_send_magic_link_token_path, flash: {notice: success_send_magic_link_token_message}
     end
 

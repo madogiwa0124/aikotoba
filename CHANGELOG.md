@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Log an `info` line, prefixed `[Aikotoba]`, when a confirmation, unlock, password reset or magic link email is not sent because no account matches the email. The user sees the same page either way, so before this nothing told an unsent email from a sent one. The line names the scope but not the email, which `filter_parameters` can't mask in a log message. Aikotoba's log lines now all go through `Aikotoba.logger`, which writes to `Rails.logger` with that prefix.
+
 - Report the `email` of `aikotoba.sign_in_failed` normalized the way accounts are looked up (stripped and lowercased), instead of as submitted. A subscriber counting failures per address no longer sees `"Victim@x.com"`, `"victim@x.com "` and `"VICTIM@x.com"` as three addresses. `filter_parameters` masking still applies.
 
 - **Breaking**: Remove the overridable `before_*_process` / `after_*_process` / `failed_*_process` hook methods from every controller (sessions, sign up, confirm, unlock, recovery and magic link). Overriding them with `class_eval` no longer has any effect. Instead:

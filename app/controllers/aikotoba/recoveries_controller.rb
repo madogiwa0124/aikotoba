@@ -17,9 +17,13 @@ module Aikotoba
 
     def create
       # NOTE: An unknown email gets the same response as a known one, to avoid account
-      #       enumeration.
+      #       enumeration. The log line leaves the email out, which filter_parameters can't mask.
       account = find_by_send_token_account(send_recovery_token_params)
-      send_recovery_token!(account) if account
+      if account
+        send_recovery_token!(account)
+      else
+        Aikotoba.logger.info { "Password reset email not sent: no account with that email in the #{aikotoba_scope} scope." }
+      end
       redirect_to success_send_recovery_token_path, flash: {notice: success_send_recovery_token_message}
     end
 
