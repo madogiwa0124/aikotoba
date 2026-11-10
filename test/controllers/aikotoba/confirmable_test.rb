@@ -54,6 +54,15 @@ class Aikotoba::ConfirmableTest < ActionDispatch::IntegrationTest
     assert_equal I18n.t(".aikotoba.messages.confirmation.sent"), flash[:notice]
   end
 
+  test "POST create_confirmation_token_path does not swallow RecordNotFound raised while issuing the token" do
+    raise_not_found = ->(**) { raise ActiveRecord::RecordNotFound, "raised while issuing the token" }
+    Aikotoba::Account::Confirmation.stub(:create_token!, raise_not_found) do
+      post aikotoba.create_confirmation_token_path, params: {account: {email: @account.email}}
+    end
+    assert_response :not_found
+    assert_nil flash[:notice]
+  end
+
   test "failed POST create_confirmation_token_path by confirmed account" do
     @account.confirm!
     assert_emails 0 do

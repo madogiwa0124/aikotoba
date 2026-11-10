@@ -51,6 +51,15 @@ class Aikotoba::RecoverableTest < ActionDispatch::IntegrationTest
     assert_equal I18n.t(".aikotoba.messages.recovery.sent"), flash[:notice]
   end
 
+  test "POST create_recovery_token_path does not swallow RecordNotFound raised while issuing the token" do
+    raise_not_found = ->(**) { raise ActiveRecord::RecordNotFound, "raised while issuing the token" }
+    Aikotoba::Account::Recovery.stub(:create_token!, raise_not_found) do
+      post aikotoba.create_recovery_token_path, params: {account: {email: @account.email}}
+    end
+    assert_response :not_found
+    assert_nil flash[:notice]
+  end
+
   test "success GET edit_account_password_path by active token" do
     Aikotoba::Account::Recovery.create_token!(account: @account, notify: false)
     get aikotoba.edit_account_password_path(token: @account.recovery_token.token)

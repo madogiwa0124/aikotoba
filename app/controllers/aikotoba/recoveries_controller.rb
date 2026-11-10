@@ -16,12 +16,10 @@ module Aikotoba
     end
 
     def create
-      account = find_by_send_token_account!(send_recovery_token_params)
-      send_recovery_token!(account)
-    rescue ActiveRecord::RecordNotFound
       # NOTE: An unknown email gets the same response as a known one, to avoid account
       #       enumeration.
-    ensure
+      account = find_by_send_token_account(send_recovery_token_params)
+      send_recovery_token!(account) if account
       redirect_to success_send_recovery_token_path, flash: {notice: success_send_recovery_token_message}
     end
 
@@ -52,8 +50,8 @@ module Aikotoba
       Account.build_by(attributes: params)
     end
 
-    def find_by_send_token_account!(params)
-      Account.for_target_type(aikotoba_authenticate_target).find_by!(email: params[:email])
+    def find_by_send_token_account(params)
+      Account.for_target_type(aikotoba_authenticate_target).find_by(email: params[:email])
     end
 
     def find_by_has_token_account!(params)
