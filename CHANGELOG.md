@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Report `aikotoba.magic_link_token_issued` (`account_id`, `notified`), like the other `*_token_issued` events, and `aikotoba.magic_link_sign_in_failed` (`target_type_name`) when a magic link matches no active token for an account that can sign in to the scope: unknown, expired or already used. The failed sign in is reported right away, like `sign_in_failed`, and carries neither the token, a credential, nor an `account_id`.
+
 - Log an `info` line, prefixed `[Aikotoba]`, when a confirmation, unlock, password reset or magic link email is not sent because no account matches the email. The user sees the same page either way, so before this nothing told an unsent email from a sent one. The line names the scope but not the email, which `filter_parameters` can't mask in a log message. Aikotoba's log lines now all go through `Aikotoba.logger`, which writes to `Rails.logger` with that prefix.
 
 - Report the `email` of `aikotoba.sign_in_failed` normalized the way accounts are looked up (stripped and lowercased), instead of as submitted. A subscriber counting failures per address no longer sees `"Victim@x.com"`, `"victim@x.com "` and `"VICTIM@x.com"` as three addresses. `filter_parameters` masking still applies.

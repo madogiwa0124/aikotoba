@@ -11,7 +11,10 @@ module Aikotoba
         .joins(:magic_link_token)
         .merge(Account::MagicLinkToken.active.where(token: token))
         .first
-      return unless account
+      unless account
+        Event::MagicLinkSignInFailed.report(target_type_name: target_type_name)
+        return
+      end
 
       new(account: account).authenticate!
     end
@@ -24,6 +27,7 @@ module Aikotoba
       ActiveRecord::Base.transaction do
         @account.build_magic_link_token.save!
         @account.magic_link_token.notify if notify
+        Event::MagicLinkTokenIssued.report(account_id: @account.id, notified: notify)
       end
     end
 

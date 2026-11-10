@@ -15,12 +15,12 @@ class Aikotoba::EventsTest < ActiveSupport::TestCase
     Aikotoba::Account.create_by!(attributes: {email: @email, password: @password})
   end
 
-  test "every event is named after its constant, and only sign_in_failed skips the commit wait" do
+  test "every event is named after its constant, and only the failed sign ins skip the commit wait" do
     events = Aikotoba::Event.constants.map { |name| Aikotoba::Event.const_get(name) }
     events.each do |event|
       assert_equal "aikotoba.#{event.name.demodulize.underscore}", event.event_name
     end
-    assert_equal [Aikotoba::Event::SignInFailed], events.reject(&:after_commit?)
+    assert_equal [Aikotoba::Event::MagicLinkSignInFailed, Aikotoba::Event::SignInFailed], events.reject(&:after_commit?).sort_by(&:name)
   end
 
   test "an event raises on a missing or unknown payload key, and reports nothing" do
@@ -162,11 +162,36 @@ class Aikotoba::EventsTest < ActiveSupport::TestCase
     assert_events_reported([
       {name: "aikotoba.confirmation_token_issued", payload: {account_id: account.id, notified: false}},
       {name: "aikotoba.recovery_token_issued", payload: {account_id: account.id, notified: true}},
-      {name: "aikotoba.unlock_token_issued", payload: {account_id: account.id, notified: true}}
+      {name: "aikotoba.unlock_token_issued", payload: {account_id: account.id, notified: true}},
+      {name: "aikotoba.magic_link_token_issued", payload: {account_id: account.id, notified: true}}
     ]) do
       Aikotoba::Account::Confirmation.create_token!(account: account)
       Aikotoba::Account::Recovery.create_token!(account: account, notify: true)
       Aikotoba::Account::Lock.create_token!(account: account, notify: true)
+      Aikotoba::Account::MagicLink.create_token!(account: account, notify: true)
+    end
+  end
+
+  test "a magic link that matches no active token reports magic_link_sign_in_failed, without the token" do
+    account = create_account
+    Aikotoba::Account::MagicLink.create_token!(account: account)
+    token = account.reload.magic_link_token.token
+    event = assert_event_reported("aikotoba.magic_link_sign_in_failed", payload: {target_type_name: "Admin"}) do
+      assert_nil Aikotoba::Account::MagicLink.authenticate_by(token: token, target_type_name: "Admin")
+    end
+    assert_equal({target_type_name: "Admin"}, event[:payload])
+
+    account.magic_link_token.update!(expired_at: 1.minute.ago)
+    assert_event_reported("aikotoba.magic_link_sign_in_failed", payload: {target_type_name: nil}) do
+      assert_nil Aikotoba::Account::MagicLink.authenticate_by(token: token)
+    end
+  end
+
+  test "a magic link that signs in reports no magic_link_sign_in_failed" do
+    account = create_account
+    Aikotoba::Account::MagicLink.create_token!(account: account)
+    assert_no_event_reported("aikotoba.magic_link_sign_in_failed") do
+      assert_equal account, Aikotoba::Account::MagicLink.authenticate_by(token: account.reload.magic_link_token.token)
     end
   end
 
@@ -231,6 +256,19 @@ class Aikotoba::EventsSignInTest < ActionDispatch::IntegrationTest
       delete "/custom_sign_out"
     end
     assert_not Aikotoba::Account::Session.exists?(session_id)
+  end
+
+  test "opening a magic link reports sign_in, and a used one magic_link_sign_in_failed" do
+    Aikotoba.config.magic_link_authenticatable = true
+    Aikotoba::Account::MagicLink.create_token!(account: @account)
+    token = @account.reload.magic_link_token.token
+    assert_event_reported("aikotoba.sign_in", payload: {account_id: @account.id, scope: "default"}) do
+      get aikotoba.authenticate_via_magic_link_path(token: token)
+    end
+    assert_event_reported("aikotoba.magic_link_sign_in_failed", payload: {target_type_name: nil}) do
+      get aikotoba.authenticate_via_magic_link_path(token: token)
+    end
+    assert_response :not_found
   end
 
   test "signing out without a session reports nothing" do
