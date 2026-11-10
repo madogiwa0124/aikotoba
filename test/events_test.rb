@@ -90,6 +90,31 @@ class Aikotoba::EventsTest < ActiveSupport::TestCase
     end
   end
 
+  test "sign_in_failed reports the email normalized the way the account is looked up" do
+    account = create_account
+    assert_event_reported("aikotoba.sign_in_failed", payload: {email: @email, account_id: account.id}) do
+      Aikotoba::Account::PasswordHash.authenticate_by(attributes: {email: "  EMail@Example.COM ", password: "wrong_password"})
+    end
+    assert_event_reported("aikotoba.sign_in_failed", payload: {email: "unknown@example.com", account_id: nil}) do
+      Aikotoba::Account::PasswordHash.authenticate_by(attributes: {email: " Unknown@Example.com ", password: @password})
+    end
+    assert_event_reported("aikotoba.sign_in_failed", payload: {email: @email, account_id: nil}) do
+      Aikotoba::Account::PasswordHash.authenticate_by(attributes: {email: " EMAIL@example.com", password: ""})
+    end
+  end
+
+  test "sign_in_failed reports a nil or blank email without raising" do
+    assert_event_reported("aikotoba.sign_in_failed", payload: {email: nil, account_id: nil}) do
+      Aikotoba::Account::PasswordHash.authenticate_by(attributes: {email: nil, password: ""})
+    end
+    assert_event_reported("aikotoba.sign_in_failed", payload: {email: nil, account_id: nil}) do
+      Aikotoba::Account::PasswordHash.authenticate_by(attributes: {email: nil, password: @password})
+    end
+    assert_event_reported("aikotoba.sign_in_failed", payload: {email: "", account_id: nil}) do
+      Aikotoba::Account::PasswordHash.authenticate_by(attributes: {email: "   ", password: @password})
+    end
+  end
+
   test "sign_in_failed's email is masked by the app's filter_parameters" do
     create_account
     original = ActiveSupport.filter_parameters
