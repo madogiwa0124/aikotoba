@@ -81,10 +81,12 @@ module Aikotoba
       # NOTE: account_id is nil when no account matched the email (or none that can sign in
       #       to this target type), so subscribers can tell a wrong password from an unknown
       #       email; the response to the user stays the same either way. It is also nil for a
-      #       blank password, which is rejected before any account is looked up. Rails.event
-      #       masks email with the app's filter_parameters, which include :email by default.
+      #       blank password, which is rejected before any account is looked up. email is
+      #       normalized the way the lookup normalizes it (nil stays nil), so a subscriber
+      #       counting failures per address sees one address however it was typed. Rails.event
+      #       masks it with the app's filter_parameters, which include :email by default.
       def sign_in_failed(email:, account:, target_type_name:)
-        Event::SignInFailed.report(email: email, account_id: account&.id, target_type_name: target_type_name)
+        Event::SignInFailed.report(email: Account.normalize_value_for(:email, email), account_id: account&.id, target_type_name: target_type_name)
         nil
       end
 

@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Report the `email` of `aikotoba.sign_in_failed` normalized the way accounts are looked up (stripped and lowercased), instead of as submitted. A subscriber counting failures per address no longer sees `"Victim@x.com"`, `"victim@x.com "` and `"VICTIM@x.com"` as three addresses. `filter_parameters` masking still applies.
+
 - **Breaking**: Remove the overridable `before_*_process` / `after_*_process` / `failed_*_process` hook methods from every controller (sessions, sign up, confirm, unlock, recovery and magic link). Overriding them with `class_eval` no longer has any effect. Instead:
   - to react to something that happened (logging, audit trails, alerts), subscribe to the `aikotoba.*` events (see the README's Events section). That covers the `after_*` hooks and `failed_sign_in_process` (`sign_in_failed`);
   - to stop a request before Aikotoba handles it (what most `before_*` hooks were for), add a `before_action` to your `ApplicationController`, which Aikotoba's controllers inherit, limited to them with `if: -> { is_a?(Aikotoba::ApplicationController) }` (see the README);

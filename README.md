@@ -650,6 +650,7 @@ Rails.event.subscribe(AuthEventSubscriber.new) { |event| event[:name].start_with
 - Each event is also a constant, such as `Aikotoba::Event::SignInFailed`, whose `event_name` is `"aikotoba.sign_in_failed"`, so a subscriber can match on it instead of a string.
 - Payloads hold plain values, not records, so a subscriber can serialize them as is. `scope` is the scope's name (`"default"`, `"admin"`). `notified` is whether the token's email was queued: Aikotoba's own pages always send it, but your code may issue a token without (`notify: false`).
 - `sign_in_failed`'s `account_id` is `nil` when no account that can sign in to the scope has that email, so you can tell an unknown email from a wrong password. The response to the user is the same either way. It is also `nil` for a blank password, which is rejected before any account is looked up.
+- `sign_in_failed`'s `email` is normalized the way Aikotoba looks accounts up (surrounding spaces stripped, lowercased), so `" Victim@Example.com"` and `"victim@example.com"` are reported as the same address. A missing email is reported as `nil`.
 - `Rails.event` masks payload keys that match `config.filter_parameters`. New apps filter `:email`, so `sign_in_failed`'s `email` is reported as `"[FILTERED]"` unless you change that filter.
 - Request details such as the IP address are not in the payloads, since the models that report them don't see the request. Put them in `Rails.event`'s context, which every event carries and Rails clears between requests:
 
