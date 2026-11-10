@@ -9,7 +9,7 @@ module Aikotoba
     end
     private_class_method :unlock_rate_limit_options
 
-    rate_limit(**unlock_rate_limit_options)
+    aikotoba_rate_limit(unlock_rate_limit_options)
 
     def new
       @account = build_account({email: "", password: ""})

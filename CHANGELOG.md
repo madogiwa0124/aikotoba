@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- **Breaking**: A rate limit setting without `only:` or `except:` now limits the `create` action only. Before, it limited every action of the controller, so showing the form and following a confirmation, unlock, password reset or magic link counted against the limit and could be refused. The README's examples always set `only: :create`, which still works. To limit other actions too, set `only:` yourself. Every rate limit setting also now counts a subclass of the controller that your app routes itself against the same limit as the engine's controller, instead of a separate one, unless the options set `scope:`.
+
 - Report `aikotoba.magic_link_token_issued` (`account_id`, `notified`), like the other `*_token_issued` events, and `aikotoba.magic_link_sign_in_failed` (`target_type_name`) when a magic link matches no active token for an account that can sign in to the scope: unknown, expired or already used. The failed sign in is reported right away, like `sign_in_failed`, and carries neither the token, a credential, nor an `account_id`.
 
 - **Breaking**: Reject scope configurations that let one scope's requests or sessions reach another, with `Aikotoba::Errors::InvalidScopeConfiguration` when the scope is added or at boot:
