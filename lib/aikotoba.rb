@@ -5,6 +5,7 @@ require "aikotoba/engine"
 require "aikotoba/errors"
 require "aikotoba/configuration"
 require "aikotoba/event"
+require "aikotoba/prefixed_logger"
 
 module Aikotoba
   # NOTE: Set every setting in one place:
@@ -20,6 +21,12 @@ module Aikotoba
 
   def self.config
     @config ||= Configuration.new
+  end
+
+  # NOTE: Where Aikotoba writes its own log lines: Rails.logger, each prefixed "[Aikotoba]".
+  #       Never log an email or a token: filter_parameters doesn't mask a log message.
+  def self.logger
+    @logger ||= PrefixedLogger.new
   end
 
   def self.deprecator

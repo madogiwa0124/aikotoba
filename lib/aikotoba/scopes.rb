@@ -34,7 +34,11 @@ module Aikotoba
     #       the intent, but an absolute path set on the scope itself was probably meant as is.
     #       A value equal to the default scope's can't be told from an inherited one, so it is
     #       treated as inherited.
-    def warn_rewritten_paths(logger = Rails.logger)
+    #       A logger passed in gets the "[Aikotoba]" prefix too; nil logs nothing.
+    def warn_rewritten_paths(logger = Aikotoba.logger)
+      return if logger.nil?
+
+      logger = PrefixedLogger.new(logger) unless logger.is_a?(PrefixedLogger)
       except(:default).each do |name, scope|
         scope.route_path_keys.each do |key|
           path = scope[key]
@@ -44,7 +48,7 @@ module Aikotoba
           next unless rewritten && absolute && !same_as_default
 
           route = scope.route_path(key)
-          logger&.warn("[Aikotoba] #{name}.#{key} #{path.inspect} is drawn as #{route.inspect}; " \
+          logger.warn("#{name}.#{key} #{path.inspect} is drawn as #{route.inspect}; " \
             "write #{route.inspect} (or a relative path) to silence this.")
         end
       end

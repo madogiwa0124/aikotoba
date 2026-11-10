@@ -99,10 +99,18 @@ class Aikotoba::ScopesTest < ActiveSupport::TestCase
     Aikotoba.scopes[:admin][:confirm_path] = Aikotoba.default_scope[:confirm_path]
     Aikotoba.scopes[:admin][:after_sign_in_path] = "/"
     io = StringIO.new
-    Aikotoba.scopes.warn_rewritten_paths(ActiveSupport::Logger.new(io))
+    Aikotoba.scopes.warn_rewritten_paths(Aikotoba::PrefixedLogger.new(ActiveSupport::Logger.new(io)))
 
     assert_equal 1, io.string.lines.size
-    assert_includes io.string, %(admin.magic_link_path "/magic" is drawn as "/admin/magic"; write "/admin/magic" (or a relative path) to silence this.)
+    assert_includes io.string, %([Aikotoba] admin.magic_link_path "/magic" is drawn as "/admin/magic"; write "/admin/magic" (or a relative path) to silence this.)
+  end
+
+  test "warn_rewritten_paths prefixes a plain logger passed in, and logs nothing for nil" do
+    Aikotoba.scopes[:admin][:magic_link_path] = "/magic"
+    io = StringIO.new
+    Aikotoba.scopes.warn_rewritten_paths(ActiveSupport::Logger.new(io))
+    assert io.string.start_with?("[Aikotoba] admin.magic_link_path")
+    assert_nothing_raised { Aikotoba.scopes.warn_rewritten_paths(nil) }
   end
 
   test "Scope#route_path leaves the default scope's paths as they are" do

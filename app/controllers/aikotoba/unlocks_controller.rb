@@ -17,9 +17,13 @@ module Aikotoba
 
     def create
       # NOTE: An unknown email gets the same response as a known one, to avoid account
-      #       enumeration.
+      #       enumeration. The log line leaves the email out, which filter_parameters can't mask.
       account = find_by_send_token_account(unlock_accounts_params)
-      send_token_account!(account) if account
+      if account
+        send_token_account!(account)
+      else
+        Aikotoba.logger.info { "Unlock email not sent: no locked account with that email in the #{aikotoba_scope} scope." }
+      end
       redirect_to success_send_unlock_token_path, flash: {notice: success_send_unlock_token_message}
     end
 
