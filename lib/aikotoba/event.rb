@@ -46,6 +46,9 @@ module Aikotoba
     SignIn = define(name: :sign_in, payload: %i[account_id session_id scope])
     SignOut = define(name: :sign_out, payload: %i[account_id session_id scope])
     SignInFailed = define(name: :sign_in_failed, payload: %i[email account_id target_type_name], after_commit: false)
+    # NOTE: A magic link that matches no active token for an account that can sign in to the scope:
+    #       unknown, expired or already used. The token itself is a credential, so it is not reported.
+    MagicLinkSignInFailed = define(name: :magic_link_sign_in_failed, payload: %i[target_type_name], after_commit: false)
     AccountRegistered = define(name: :account_registered, payload: %i[account_id])
     AccountConfirmed = define(name: :account_confirmed, payload: %i[account_id])
     AccountLocked = define(name: :account_locked, payload: %i[account_id])
@@ -56,5 +59,6 @@ module Aikotoba
     ConfirmationTokenIssued = define(name: :confirmation_token_issued, payload: %i[account_id notified])
     UnlockTokenIssued = define(name: :unlock_token_issued, payload: %i[account_id notified])
     RecoveryTokenIssued = define(name: :recovery_token_issued, payload: %i[account_id notified])
+    MagicLinkTokenIssued = define(name: :magic_link_token_issued, payload: %i[account_id notified])
   end
 end
