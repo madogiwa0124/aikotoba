@@ -31,7 +31,7 @@ module Aikotoba
 
     # NOTE: The scope a path (relative to the engine's mount point) belongs to: the first added
     #       scope whose root_path covers it, else the default. Scopable resolves requests with
-    #       this.
+    #       this, and validate! checks every route with it, so the two can't disagree.
     def name_for_path(path)
       return "default" if path.nil?
 
@@ -71,7 +71,9 @@ module Aikotoba
     #       or direct edits made afterwards.
     def validate!(scopes = self)
       validate_root_paths!(scopes)
+      validate_routes_served_as_own_scope!(scopes)
       validate_unique_authenticate_for!(scopes)
+      validate_unique_session_keys!(scopes)
     end
 
     private
@@ -90,20 +92,67 @@ module Aikotoba
         "#{details}. add_scope copies root_path \"/\" from the default scope unless you set it."
     end
 
+    # NOTE: Each route a scope draws must be served as that scope, as name_for_path (what
+    #       Scopable uses) resolves it. Two added scopes at the same root_path fail it, as does
+    #       one under another added before it ("/admin/super" after "/admin"), whose routes
+    #       resolve to the earlier scope; so does a default scope path under an added
+    #       root_path (sign_in_path: "/admin/login" with an "/admin" scope).
+    def validate_routes_served_as_own_scope!(scopes)
+      misrouted = scopes.flat_map do |name, scope|
+        scope.route_path_keys.filter_map do |key|
+          drawn_path = scope.route_path(key)
+          served_as = scopes.name_for_path(drawn_path)
+          next if served_as == name
+
+          "#{name}.#{key} (#{drawn_path.inspect}, served as #{served_as})"
+        end
+      end
+      return if misrouted.empty?
+
+      raise Errors::InvalidScopeConfiguration,
+        "every route of a scope must be served as that scope, but is not on: #{misrouted.join(", ")}. " \
+        "An added scope's root_path must not be the same as, or under, an earlier added scope's, " \
+        "and no path of the default scope may be under an added scope's root_path."
+    end
+
+    # NOTE: The session cookie is named by session_key. Two scopes sharing one read each other's
+    #       cookie: an unrestricted scope accepts the other's sessions, and a restricted one
+    #       deletes the cookie of a session it doesn't accept, signing the other scope out.
+    #       add_scope copies session_key from the default scope unless it is set.
+    def validate_unique_session_keys!(scopes)
+      names_with_blank_key = scopes.select { |_, scope| scope[:session_key].blank? }.keys
+      names_by_shared_key = shared_values(scopes) { |scope| scope[:session_key] }
+      return if names_with_blank_key.empty? && names_by_shared_key.empty?
+
+      blank_details = names_with_blank_key.map { |name| "#{name} (blank)" }
+      shared_details = names_by_shared_key.map { |key, names| "#{key} (#{names.join(", ")})" }
+      details = blank_details + shared_details
+      raise Errors::InvalidScopeConfiguration,
+        "session_key must be present and unique per scope, but is not on: #{details.join("; ")}. " \
+        "add_scope copies session_key from the default scope unless you set it, so set it on the added scope."
+    end
+
     # NOTE: Each authenticate_for may belong to one scope only, so an account's type maps to
     #       exactly one scope (see name_for).
     def validate_unique_authenticate_for!(scopes)
-      shared = scopes
-        .select { |_, scope| scope.authenticate_for.present? }
-        .group_by { |_, scope| scope.authenticate_for.to_s }
-        .select { |_, entries| entries.size > 1 }
-      return if shared.empty?
+      names_by_shared_type = shared_values(scopes, &:authenticate_for)
+      return if names_by_shared_type.empty?
 
-      details = shared.map { |type, entries| "#{type} (#{entries.map(&:first).join(", ")})" }.join("; ")
+      details = names_by_shared_type.map { |type, names| "#{type} (#{names.join(", ")})" }.join("; ")
       raise Errors::InvalidScopeConfiguration,
         "authenticate_for must be unique per scope, but is shared: #{details}. " \
         "add_scope copies authenticate_for from the default scope unless you set it, so set it " \
         "explicitly on the added scope (nil for an unrestricted scope)."
+    end
+
+    # NOTE: {value => scope names} for each present value of a setting that more than one
+    #       scope has, compared as strings (so authenticate_for: Admin and "Admin" match).
+    def shared_values(scopes)
+      scopes
+        .group_by { |_, scope| yield(scope).to_s }
+        .reject { |value, _| value.blank? }
+        .transform_values { |entries| entries.map(&:first) }
+        .select { |_, names| names.size > 1 }
     end
 
     # NOTE: HashWithIndifferentAccess turns every Hash it stores into a plain

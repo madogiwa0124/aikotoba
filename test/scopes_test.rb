@@ -8,7 +8,7 @@ class Aikotoba::ScopesTest < ActiveSupport::TestCase
     assert_instance_of Aikotoba::Scope, Aikotoba.default_scope
     assert_instance_of Aikotoba::Scope, Aikotoba.scopes[:admin]
 
-    Aikotoba.config.add_scope(:added, root_path: "/added")
+    Aikotoba.config.add_scope(:added, root_path: "/added", session_key: "added_session_token")
     assert_instance_of Aikotoba::Scope, Aikotoba.scopes[:added]
 
     Aikotoba.scopes[:assigned] = {root_path: "/assigned"}

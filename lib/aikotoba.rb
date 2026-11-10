@@ -11,7 +11,7 @@ module Aikotoba
   # NOTE: Set every setting in one place:
   #       Aikotoba.configure do |config|
   #         config.confirmable = true
-  #         config.add_scope(:admin, { root_path: "/admin", authenticate_for: "Admin" })
+  #         config.add_scope(:admin, { root_path: "/admin", session_key: "aikotoba_admin_session_token", authenticate_for: "Admin" })
   #       end
   #       The scopes are checked once the block has set everything, feature flags included.
   def self.configure

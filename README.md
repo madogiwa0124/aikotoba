@@ -520,6 +520,7 @@ You can restrict authentication to specific target types by setting `authenticat
 Aikotoba.configure do |config|
   config.add_scope(:admin, {
     authenticate_for: "Admin",  # Only Admin accounts can sign in to this scope
+    session_key: "aikotoba_admin_session_token",
     root_path: "/admin",
     sign_in_path: "/admin/sign_in",
     # ...
@@ -534,7 +535,9 @@ The same rule applies to the scope's confirm, unlock, password reset and magic l
 
 The links in those emails point to the account's own scope: the scope whose `authenticate_for` matches the account's `authenticate_target_type`, or the default scope if none does. This holds wherever the email was requested from, since it is rendered in a background job with no request to tell.
 
-An added scope must set its own `root_path`: an absolute path other than `"/"`, such as `"/admin"`. Aikotoba treats every request under a scope's `root_path` as that scope's, so a scope at `"/"` would take every request, your app's own pages included, away from the default scope, and a malformed one such as `"admin"` would match none, not even its own pages. `add_scope` copies `root_path: "/"` from the default scope, so leaving it unset raises `Aikotoba::Errors::InvalidScopeConfiguration` too.
+An added scope must set its own `root_path`: an absolute path other than `"/"`, such as `"/admin"`. Aikotoba treats every request under a scope's `root_path` as that scope's, so a scope at `"/"` would take every request, your app's own pages included, away from the default scope, and a malformed one such as `"admin"` would match none, not even its own pages. `add_scope` copies `root_path: "/"` from the default scope, so leaving it unset raises `Aikotoba::Errors::InvalidScopeConfiguration` too. Requests go to the first added scope whose `root_path` covers them, and every route of a scope must be served as that scope. So an added scope may not have the same `root_path` as another, or one under a scope added before it (`"/admin/super"` added after `"/admin"`, whose requests would all go to `"/admin"`; added before it, it keeps its own). Nor may a path of the default scope be under an added scope's `root_path` (a default `sign_in_path` of `"/admin/login"` with an `"/admin"` scope).
+
+An added scope must also set its own `session_key`, the name of its session cookie, different from every other scope's. Two scopes sharing one would read each other's cookie: a scope without `authenticate_for` would accept the other's sessions, so an Admin signed in to the `admin` scope would be signed in to the default scope too, and a scope with one would delete the cookie of a session it doesn't accept, signing the account out of the other scope. `add_scope` copies `session_key` from the default scope, so leaving it unset raises `Aikotoba::Errors::InvalidScopeConfiguration`, as a blank one does.
 
 Each `authenticate_for` value may be set on only one scope, so that an account's type maps to exactly one scope. Otherwise `Aikotoba::Errors::InvalidScopeConfiguration` is raised when the scope is added, or at boot once your initializers have run. Keep in mind that `add_scope` copies unspecified keys from the default scope, including `authenticate_for`. If the default scope sets one, give every added scope its own `authenticate_for` (`nil` for an unrestricted scope).
 
