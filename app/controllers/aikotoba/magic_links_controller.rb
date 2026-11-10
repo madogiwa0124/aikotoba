@@ -10,7 +10,7 @@ module Aikotoba
     end
     private_class_method :magic_link_rate_limit_options
 
-    rate_limit(**magic_link_rate_limit_options)
+    aikotoba_rate_limit(magic_link_rate_limit_options)
 
     def new
       @account = build_account({email: ""})

@@ -114,6 +114,28 @@ class RateLimitTest < ActionDispatch::SystemTestCase
     assert has_text?("Confirm url has been sent"), "email2 should not be throttled"
   end
 
+  # NOTE: Without only:/except:, the engine limits create alone: before, every action counted, so
+  #       showing the form or following a token link could be refused.
+  test "options without only: limit create alone, not the form or the token link" do
+    Aikotoba.config.confirmation_rate_limit_options = {to: 3, within: 1.minute, by: -> { request.remote_ip }}
+    reload_controllers_with_rate_limit
+
+    5.times do
+      visit "/confirm"
+      assert_equal 200, page.status_code
+      visit "/confirm/unknown-token"
+      assert_equal 404, page.status_code
+    end
+
+    statuses = 4.times.map do
+      visit "/confirm"
+      fill_in "Email", with: "test@example.com"
+      click_on "Send confirm token"
+      page.status_code
+    end
+    assert_equal [200, 200, 200, 429], statuses
+  end
+
   test "endpoints have separate rate limits" do
     email = "test@example.com"
 

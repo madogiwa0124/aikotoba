@@ -271,30 +271,66 @@ submitting the sign-in form.
 
 ### Rate Limiting
 
-Aikotoba provides built-in rate limiting for email-sending endpoints to prevent email bombing attacks.
+Aikotoba can rate limit the endpoints anyone can call without an account, using Rails' built-in [`rate_limit`](https://api.rubyonrails.org/classes/ActionController/RateLimiting/ClassMethods.html):
 
-Rate limiting is available for:
+| Setting                            | Endpoint                 | Against                                      |
+| ---------------------------------- | ------------------------ | -------------------------------------------- |
+| `sign_in_rate_limit_options`       | `POST /sign_in`          | credential stuffing, password guessing       |
+| `registration_rate_limit_options`  | `POST /sign_up`          | probing which emails have an account         |
+| `confirmation_rate_limit_options`  | `POST /confirm`          | email bombing                                |
+| `unlock_rate_limit_options`        | `POST /unlock`           | email bombing                                |
+| `recovery_rate_limit_options`      | `POST /recover`          | email bombing                                |
+| `magic_link_rate_limit_options`    | `POST /magic_link`       | email bombing                                |
 
-- **Confirmation token requests** (`/confirm` POST endpoint)
-- **Unlock token requests** (`/unlock` POST endpoint)
-- **Password recovery token requests** (`/recover` POST endpoint)
-
-By default, rate limiting is disabled (empty configuration). To enable it, configure the respective options:
+Every setting is off (`{}`) by default. Each takes the options of `rate_limit` (`to:`, `within:`, `by:`, `with:`, `store:`, `name:`, `only:`, `except:`):
 
 ```ruby
 Aikotoba.configure do |config|
+  # Credential stuffing tries many accounts from the same addresses, so key sign in by IP.
+  config.sign_in_rate_limit_options = {to: 20, within: 10.minutes, by: -> { request.remote_ip }}
+  config.registration_rate_limit_options = {to: 10, within: 1.hour, by: -> { request.remote_ip }}
+
+  # Token emails: per address, so one inbox can't be flooded.
   config.confirmation_rate_limit_options = {
     to: 10,
     within: 1.hour,
-    by: -> { request.params.dig(:account, :email).presence || request.remote_ip },
-    only: :create
+    by: -> { request.params.dig(:account, :email).presence || request.remote_ip }
   }
 end
 ```
 
-When rate limiting is triggered, requests that exceed the limit will receive a 429 (Too Many Requests) response.
+**What `by:` keys on is a trade-off, not a detail.** A request over the limit is refused whoever sends it, so the key decides who gets blocked:
 
-For detailed configuration examples and options, see the [Configuration](#configuration) section below.
+- **By IP** (`request.remote_ip`, Rails' default) limits one client however many accounts it tries, which is what stops credential stuffing and enumeration through sign up. It doesn't stop an attacker spreading requests over many addresses (a botnet, or an IPv6 range), and it throttles everyone behind one shared address (an office NAT, a mobile carrier) together. Behind a load balancer or CDN, `remote_ip` is only the client's address if [trusted proxies](https://api.rubyonrails.org/classes/ActionDispatch/RemoteIp.html) are set up; otherwise every request counts as the proxy's.
+- **By email** limits one account however many clients try it. That is the right key for the token emails, where the victim is the inbox. For sign in it is a denial-of-service lever: anyone who knows an address can keep its owner from signing in by sending wrong passwords for it, the same lever [Lockable](#lockable) gives, and it does nothing against an attacker trying one password per account. Don't key sign in by email alone.
+- The `email.presence || remote_ip` fallback used for the token emails keeps a request without an email from skipping the limit, but still counts per address, so it does not limit requests spread across many addresses.
+
+Things to know before turning it on:
+
+- **Only `create` is limited** unless the options set `only:` or `except:`. So showing a form, signing out and following a token link are never counted or blocked. Sign in counts every attempt, successful ones included, so leave room for users who mistype.
+- **A limited request raises `ActionController::TooManyRequests`** on every endpoint, which Rails answers with a 429. Those who see that page are mostly not attackers but users caught by the limit: everyone behind an IP an attacker uses, or the owner of an inbox someone is flooding who asks for their own reset. **Rails doesn't generate a `public/429.html`**, so in production, where the error page comes from `public/`, they get an empty page unless you add one. Add `public/429.html`, or answer them from your `ApplicationController`, which Aikotoba's controllers inherit, so one handler covers every endpoint (and your own controllers' `rate_limit`):
+
+  ```ruby
+  class ApplicationController < ActionController::Base
+    rescue_from ActionController::TooManyRequests do
+      render plain: "Too many requests. Please try again later.", status: :too_many_requests
+    end
+  end
+  ```
+
+  To respond differently on one endpoint, set `with:` in its options.
+- **Counters are shared between scopes**: `/sign_in` and `/admin/sign_in` count against the same limit. The default scope signs in every account, so a counter per scope would give an attacker one more budget against the same accounts. To count each scope on its own anyway, put the scope in the key: `by: -> { [aikotoba_scope, request.remote_ip].join(":") }`. A subclass of an Aikotoba controller that your app routes itself counts against the same limit as the engine's, unless the options set `scope:`.
+- **A limited request reports no Aikotoba event.** It is refused before the password is checked, so a refused sign in is not a `sign_in_failed`. If you watch `sign_in_failed` to notice attacks, also subscribe to Rails' [`rate_limit.action_controller`](https://guides.rubyonrails.org/active_support_instrumentation.html) notification, or an attack shows up as failures that stop once the limit is reached:
+
+  ```ruby
+  ActiveSupport::Notifications.subscribe("rate_limit.action_controller") do |event|
+    next unless event.payload[:scope].start_with?("aikotoba/")
+
+    Rails.logger.warn("Rate limited #{event.payload[:scope]}: #{event.payload[:count]} requests in #{event.payload[:within].inspect}")
+  end
+  ```
+- **Counters live in the cache store** (`config.cache_store`, or `store:`). It has to be shared by every process and server, such as Solid Cache or Redis: with a per-process `:memory_store`, each process counts on its own, so the real limit is `to:` times the number of processes. `:null_store` (the default in the test environment) counts nothing, so nothing is ever limited.
+- The options are read when the controller class loads, so a change needs a restart (or, in tests, reloading the controller).
 
 ### Multiple Scopes
 
@@ -395,64 +431,37 @@ Aikotoba.configure do |config|
   # ============================================
   # Rate Limiting
   # ============================================
-  # Rate limiting protects email-sending endpoints (confirm, unlock, recover) from email bombing attacks.
-  # Default (empty hash): no rate limiting
+  # Off ({}) by default. Takes the options of Rails' rate_limit. Limits only :create unless only:/except:
+  # is set. See the Rate Limiting section for which by: to choose and what store it needs.
 
-  # Requires Rails 8.0+ to use the built-in rate_limit feature.
-  #
-  # Configuration format: { to: <max_requests>, within: <time_duration>, by: <identifier_proc>, only: <action> }
-  #
-  # SECURITY RECOMMENDATION:
-  # Use .dig() with fallback to prevent nil errors and ensure rate limiting always works:
-  #   by: -> { request.params.dig(:account, :email).presence || request.remote_ip }
-  #
-  # This ensures:
-  # - Invalid or missing email params don't bypass rate limiting
-  # - Fallback to IP address when email is not provided
-  # - Repeated emails to the same address are throttled (this keys on the email, so it does not limit
-  #   requests spread across many different addresses)
-  #
-  # Examples:
+  # Sign in, per IP: against credential stuffing. Don't key it by email alone, which lets anyone
+  # block an account's sign in by sending wrong passwords for it.
+  config.sign_in_rate_limit_options = {to: 20, within: 10.minutes, by: -> { request.remote_ip }}
 
-  # Limit confirmation token requests to 10 per hour, per email address (with IP fallback)
+  # Sign up, per IP: caps how many emails can be checked for an existing account.
+  config.registration_rate_limit_options = {to: 10, within: 1.hour, by: -> { request.remote_ip }}
+
+  # Token emails, per email address with an IP fallback: against flooding one inbox.
   config.confirmation_rate_limit_options = {
     to: 10,
     within: 1.hour,
-    by: -> { request.params.dig(:account, :email).presence || request.remote_ip },
-    only: :create
+    by: -> { request.params.dig(:account, :email).presence || request.remote_ip }
   }
-
-  # Limit unlock token requests to 5 per hour, per email address (stricter for security)
   config.unlock_rate_limit_options = {
     to: 5,
     within: 1.hour,
-    by: -> { request.params.dig(:account, :email).presence || request.remote_ip },
-    only: :create
+    by: -> { request.params.dig(:account, :email).presence || request.remote_ip }
   }
-
-  # Limit recovery token requests to 3 per hour, per email address (most strict for password recovery)
   config.recovery_rate_limit_options = {
     to: 3,
     within: 1.hour,
-    by: -> { request.params.dig(:account, :email).presence || request.remote_ip },
-    only: :create
+    by: -> { request.params.dig(:account, :email).presence || request.remote_ip }
   }
-
-  # Limit magic link requests to 5 per hour, per email address
   config.magic_link_rate_limit_options = {
     to: 5,
     within: 1.hour,
-    by: -> { request.params.dig(:account, :email).presence || request.remote_ip },
-    only: :create
+    by: -> { request.params.dig(:account, :email).presence || request.remote_ip }
   }
-
-  # Rate limiting by IP address only (simpler, but less precise)
-  # config.confirmation_rate_limit_options = {
-  #   to: 20,
-  #   within: 1.hour,
-  #   by: -> { request.remote_ip },
-  #   only: :create
-  # }
 
   # ============================================
   # Scope settings
@@ -606,7 +615,7 @@ admin.account #=> Aikotoba::Account instance
 
 Aikotoba's controllers have no methods to override. Pick the tool by what you need:
 
-- **React to something that happened** (log it, send it to an audit trail, alert on it): subscribe to the [Events](#events). They are reported from every caller, so you don't need to touch any controller. A failed sign in is one too (`sign_in_failed`).
+- **React to something that happened** (log it, send it to an audit trail, alert on it): subscribe to the [Events](#events). They are reported from every caller, so you don't need to touch any controller. A failed sign in is one too (`sign_in_failed`), but a sign in refused by a [rate limit](#rate-limiting) is not.
 - **Stop a request before Aikotoba handles it** (block an IP, require a feature flag): add a `before_action` to your `ApplicationController`. Aikotoba's controllers inherit it (`config.parent_controller`), so it runs before them. `is_a?(Aikotoba::ApplicationController)` limits it to Aikotoba's pages, sign in, sign up, magic links and the token pages alike:
 
   ```ruby

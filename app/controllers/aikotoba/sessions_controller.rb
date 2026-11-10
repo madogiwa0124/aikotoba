@@ -3,6 +3,14 @@
 module Aikotoba
   class SessionsController < ApplicationController
     include Authenticatable
+    include Protection::RateLimiting
+
+    def self.sign_in_rate_limit_options
+      Aikotoba.sign_in_rate_limit_options
+    end
+    private_class_method :sign_in_rate_limit_options
+
+    aikotoba_rate_limit(sign_in_rate_limit_options)
 
     def new
       return redirect_to after_sign_in_path if aikotoba_current_account
