@@ -8,14 +8,9 @@ module Aikotoba
 
     def create
       @account = build_account(accounts_params.to_h.symbolize_keys)
-      ActiveRecord::Base.transaction do
-        before_create_account_process
-        save_with_callbacks!(@account)
-        after_create_account_process
-      end
+      save_with_callbacks!(@account)
       redirect_to after_sign_up_path, flash: {notice: successed_message}
-    rescue ActiveRecord::RecordInvalid => e
-      failed_create_account_process(e)
+    rescue ActiveRecord::RecordInvalid
       flash[:alert] = failed_message
       render :new, status: :unprocessable_entity
     end
@@ -49,18 +44,6 @@ module Aikotoba
 
     def failed_message
       I18n.t(".aikotoba.messages.registration.failed")
-    end
-
-    # NOTE: Methods to override if you want to do something before account creation.
-    def before_create_account_process
-    end
-
-    # NOTE: Methods to override if you want to do something after account creation.
-    def after_create_account_process
-    end
-
-    # NOTE: Methods to override if you want to do something failed account creation.
-    def failed_create_account_process(e)
     end
   end
 end

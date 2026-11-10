@@ -17,13 +17,11 @@ module Aikotoba
 
     def create
       account = find_by_send_token_account!(send_recovery_token_params)
-      before_send_recovery_token_process
       send_recovery_token!(account)
-      after_send_recovery_token_process
-    rescue ActiveRecord::RecordNotFound => e
-      failed_send_recovery_token_process(e)
+    rescue ActiveRecord::RecordNotFound
+      # NOTE: An unknown email gets the same response as a known one, to avoid account
+      #       enumeration.
     ensure
-      # NOTE: Always show success message to avoid account enumeration.
       redirect_to success_send_recovery_token_path, flash: {notice: success_send_recovery_token_message}
     end
 
@@ -33,12 +31,9 @@ module Aikotoba
 
     def update
       @account = find_by_has_token_account!(params)
-      before_recover_process
       recover_account!(@account, recover_accounts_params[:password])
-      after_recover_process
       redirect_to success_recovered_path, flash: {notice: success_recovered_message}
-    rescue ActiveRecord::RecordInvalid => e
-      failed_recover_process(e)
+    rescue ActiveRecord::RecordInvalid
       flash[:alert] = failed_message
       render :edit, status: :unprocessable_entity
     end
@@ -91,30 +86,6 @@ module Aikotoba
 
     def success_send_recovery_token_message
       I18n.t(".aikotoba.messages.recovery.sent")
-    end
-
-    # NOTE: Methods to override if you want to do something before send recover token.
-    def before_send_recovery_token_process
-    end
-
-    # NOTE: Methods to override if you want to do something after send recover token.
-    def after_send_recovery_token_process
-    end
-
-    # NOTE: Methods to override if you want to do something failed send recover token.
-    def failed_send_recovery_token_process(e)
-    end
-
-    # NOTE: Methods to override if you want to do something before recover.
-    def before_recover_process
-    end
-
-    # NOTE: Methods to override if you want to do something after recover.
-    def after_recover_process
-    end
-
-    # NOTE: Methods to override if you want to do something failed recover.
-    def failed_recover_process(e)
     end
   end
 end
