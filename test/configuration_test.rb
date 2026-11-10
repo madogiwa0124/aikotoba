@@ -25,7 +25,7 @@ class Aikotoba::ConfigurationTest < ActiveSupport::TestCase
 
   test "add_scope inside configure adds a scope under its root_path" do
     Aikotoba.configure do |config|
-      config.add_scope(:staff, root_path: "/staff", authenticate_for: "Staff")
+      config.add_scope(:staff, root_path: "/staff", session_key: "staff_session_token", authenticate_for: "Staff")
     end
 
     assert_equal "/staff", Aikotoba.scopes[:staff][:root_path]
@@ -36,7 +36,7 @@ class Aikotoba::ConfigurationTest < ActiveSupport::TestCase
     assert_deprecated(/Aikotoba.lockable= is deprecated/, Aikotoba.deprecator) { Aikotoba.lockable = true }
     assert_deprecated(/Aikotoba.default_scope= is deprecated/, Aikotoba.deprecator) { Aikotoba.default_scope = {sign_in_path: "/login"} }
     assert_deprecated(/Aikotoba.add_scope is deprecated/, Aikotoba.deprecator) do
-      Aikotoba.add_scope(:staff, root_path: "/staff", authenticate_for: "Staff")
+      Aikotoba.add_scope(:staff, root_path: "/staff", session_key: "staff_session_token", authenticate_for: "Staff")
     end
 
     assert Aikotoba.config.lockable
@@ -73,7 +73,7 @@ class Aikotoba::ConfigurationTest < ActiveSupport::TestCase
     copy = original.dup
 
     copy.default_scope[:sign_in_path] = "/login"
-    copy.add_scope(:staff, root_path: "/staff")
+    copy.add_scope(:staff, root_path: "/staff", session_key: "staff_session_token")
     copy.confirmation_rate_limit_options[:to] = 3
 
     assert_equal "/sign_in", original.default_scope[:sign_in_path]

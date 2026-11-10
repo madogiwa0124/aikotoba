@@ -8,7 +8,7 @@ class Aikotoba::ScopesTest < ActiveSupport::TestCase
     assert_instance_of Aikotoba::Scope, Aikotoba.default_scope
     assert_instance_of Aikotoba::Scope, Aikotoba.scopes[:admin]
 
-    Aikotoba.config.add_scope(:added, root_path: "/added")
+    Aikotoba.config.add_scope(:added, root_path: "/added", session_key: "added_session_token")
     assert_instance_of Aikotoba::Scope, Aikotoba.scopes[:added]
 
     Aikotoba.scopes[:assigned] = {root_path: "/assigned"}
@@ -60,6 +60,14 @@ class Aikotoba::ScopesTest < ActiveSupport::TestCase
     assert scope.covers?("/admin/sign_in")
     assert_not scope.covers?("/administrator")
     assert_not scope.covers?("/magic_link")
+  end
+
+  test "name_for_path picks the first added scope covering the path, else default" do
+    assert_equal "admin", Aikotoba.scopes.name_for_path("/admin")
+    assert_equal "admin", Aikotoba.scopes.name_for_path("/admin/sign_in")
+    assert_equal "default", Aikotoba.scopes.name_for_path("/administrator")
+    assert_equal "default", Aikotoba.scopes.name_for_path("/sign_in")
+    assert_equal "default", Aikotoba.scopes.name_for_path(nil)
   end
 
   test "Scope#valid_root_path? accepts an absolute path with segments only" do
