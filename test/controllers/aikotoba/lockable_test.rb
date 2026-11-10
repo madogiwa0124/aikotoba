@@ -53,6 +53,16 @@ class Aikotoba::LockableTest < ActionDispatch::IntegrationTest
     assert_equal I18n.t(".aikotoba.messages.unlocking.sent"), flash[:notice]
   end
 
+  test "POST create_unlock_token_path does not swallow RecordNotFound raised while issuing the token" do
+    Aikotoba::Account::Lock.lock!(account: @account)
+    raise_not_found = ->(**) { raise ActiveRecord::RecordNotFound, "raised while issuing the token" }
+    Aikotoba::Account::Lock.stub(:create_token!, raise_not_found) do
+      post aikotoba.create_unlock_token_path, params: {account: {email: @account.email}}
+    end
+    assert_response :not_found
+    assert_nil flash[:notice]
+  end
+
   test "failed POST create_unlock_token_path due to not locked account" do
     Aikotoba::Account::Lock.unlock!(account: @account)
     assert_emails 0 do

@@ -17,12 +17,15 @@ module Aikotoba
     end
 
     def create
-      account = find_by_send_token_account!(magic_link_accounts_params)
-      send_magic_link_token!(account)
-    rescue ActiveRecord::RecordNotFound
-      # NOTE: An unknown email gets the same response as a known one, to avoid account
-      #       enumeration.
-    ensure
+      account = begin
+        find_by_send_token_account!(magic_link_accounts_params)
+      rescue ActiveRecord::RecordNotFound
+        # NOTE: An unknown email gets the same response as a known one, to avoid account
+        #       enumeration. Only the lookup is rescued, so an error from issuing the token
+        #       is raised rather than answered with the success message.
+        nil
+      end
+      send_magic_link_token!(account) if account
       redirect_to success_send_magic_link_token_path, flash: {notice: success_send_magic_link_token_message}
     end
 

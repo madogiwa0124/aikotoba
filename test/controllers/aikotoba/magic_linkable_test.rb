@@ -55,6 +55,15 @@ class Aikotoba::MagicLinkableTest < ActionDispatch::IntegrationTest
     assert_equal I18n.t(".aikotoba.messages.magic_link.sent"), flash[:notice]
   end
 
+  test "POST create_magic_link_path does not swallow RecordNotFound raised while issuing the token" do
+    raise_not_found = ->(**) { raise ActiveRecord::RecordNotFound, "raised while issuing the token" }
+    Aikotoba::Account::MagicLink.stub(:create_token!, raise_not_found) do
+      post aikotoba.create_magic_link_path, params: {account: {email: @account.email}}
+    end
+    assert_response :not_found
+    assert_nil flash[:notice]
+  end
+
   test "success GET authenticate_via_magic_link_path by active token" do
     Aikotoba::Account::MagicLink.create_token!(account: @account, notify: false)
     get aikotoba.authenticate_via_magic_link_path(token: @account.magic_link_token.token)
