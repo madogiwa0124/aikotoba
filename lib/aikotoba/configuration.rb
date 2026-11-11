@@ -15,6 +15,7 @@ module Aikotoba
       lockable max_failed_attempts unlock_token_expiry unlock_rate_limit_options
       recoverable recovery_token_expiry recovery_rate_limit_options
       magic_link_authenticatable magic_link_token_expiry magic_link_rate_limit_options
+      email_otp_code_expiry email_otp_max_failed_attempts two_factor_rate_limit_options
       encrypted_token
       scopes
     ].freeze
@@ -56,6 +57,11 @@ module Aikotoba
       @magic_link_token_expiry = 15.minutes
       @magic_link_rate_limit_options = {}
 
+      # for TwoFactorAuthenticatable (turned on per scope, see two_factor_authenticatable below)
+      @email_otp_code_expiry = 10.minutes
+      @email_otp_max_failed_attempts = 5
+      @two_factor_rate_limit_options = {}
+
       # for encrypt token
       @encrypted_token = false
 
@@ -72,7 +78,9 @@ module Aikotoba
           confirm_path: "/confirm",
           unlock_path: "/unlock",
           recover_path: "/recover",
-          magic_link_path: "/magic_link"
+          magic_link_path: "/magic_link",
+          two_factor_authenticatable: false,
+          two_factor_path: "/two_factor"
         }
       })
     end

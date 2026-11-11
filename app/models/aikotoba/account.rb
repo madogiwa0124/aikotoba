@@ -195,5 +195,14 @@ module Aikotoba
           dependent: :destroy
       end
     end
+
+    concerning :TwoFactorAuthenticatable do
+      included do
+        # NOTE: See the comment on Confirmable's association above -- same reasoning.
+        optional_has_one :email_otp_code,
+          foreign_key: "aikotoba_account_id",
+          dependent: :destroy
+      end
+    end
   end
 end

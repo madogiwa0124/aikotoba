@@ -42,7 +42,12 @@ module Aikotoba
     end
 
     class << self
-      def authenticate_by(attributes:, target_type_name: nil)
+      # NOTE: reset_failed_attempts: false leaves failed_attempts as it is on a match. Pass it
+      #       when a second factor is still to come (aikotoba_two_factor_required?): otherwise
+      #       every correct password would reset the count, and someone holding the password
+      #       could keep guessing one-time codes without ever reaching Lockable's limit. The
+      #       second factor resets it once it succeeds.
+      def authenticate_by(attributes:, target_type_name: nil, reset_failed_attempts: true)
         email, password = attributes.values_at(:email, :password)
         # NOTE: A blank password can never match anything, so there's nothing to guard
         #       against timing-wise here -- the caller already knows their own input was
@@ -67,7 +72,7 @@ module Aikotoba
 
         ActiveRecord::Base.transaction do
           if matched
-            account.authentication_success!
+            account.authentication_success! if reset_failed_attempts
           else
             account.authentication_failed!
             Account::Lock.lock!(account: account, notify: true) if account.lockable? && account.should_lock?

@@ -28,4 +28,24 @@ class HelperTest < ActionDispatch::SystemTestCase
     assert_selector "h1", text: "Sign in"
     assert_selector ".message", text: "Oops. You need to Signed up or Signed in."
   end
+
+  test "sign_in by helper enters the code when the default scope requires it" do
+    Aikotoba.config.default_scope[:two_factor_authenticatable] = true
+    aikotoba_sign_in(@account, password: @password)
+    visit "/sensitives"
+    assert_selector "h1", text: "Sensitive Page"
+  end
+
+  test "sign in through the pages with a code" do
+    Aikotoba.config.default_scope[:two_factor_authenticatable] = true
+    visit aikotoba.new_session_path
+    fill_in "Email", with: @account.email
+    fill_in "Password", with: @password
+    click_on "Sign in"
+    assert_selector "h1", text: "Enter verification code"
+    assert_selector ".message", text: "A verification code has been sent to your email address."
+    fill_in "Verification code", with: @account.reload.email_otp_code.code
+    click_on "Verify"
+    assert_selector "h1", text: "Sensitive Page"
+  end
 end

@@ -1,0 +1,14 @@
+<div class="aikotoba-two-factors-new">
+  <%= render "aikotoba/common/message" %>
+  <h1><%= I18n.t(".aikotoba.two_factors.new") %></h1>
+  <%= form_with scope: :two_factor, method: :post, url: aikotoba_scoped_path(:create_two_factor_path) do |f| %>
+    <p>
+      <%= f.label :code, I18n.t(".aikotoba.two_factors.code") %>
+      <%= f.text_field :code, required: true, autocomplete: "one-time-code", inputmode: "numeric", pattern: "[0-9]*", maxlength: Aikotoba::Account::EmailOtpCode::LENGTH %>
+    </p>
+    <%= f.submit I18n.t(".aikotoba.two_factors.submit") %>
+  <% end %>
+  <p>
+    <%= link_to I18n.t(".aikotoba.two_factors.restart"), aikotoba_scoped_path(:new_session_path) %>
+  </p>
+</div>

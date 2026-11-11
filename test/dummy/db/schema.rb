@@ -27,6 +27,16 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_21_000001) do
     t.index ["token"], name: "index_aikotoba_account_confirmation_tokens_on_token", unique: true
   end
 
+  create_table "aikotoba_account_email_otp_codes", force: :cascade do |t|
+    t.integer "aikotoba_account_id", null: false
+    t.string "code", null: false
+    t.datetime "created_at", null: false
+    t.datetime "expired_at", precision: nil, null: false
+    t.integer "failed_attempts", default: 0, null: false
+    t.datetime "updated_at", null: false
+    t.index ["aikotoba_account_id"], name: "index_account_email_otp_codes_on_account_id", unique: true
+  end
+
   create_table "aikotoba_account_magic_link_tokens", force: :cascade do |t|
     t.integer "aikotoba_account_id", null: false
     t.datetime "created_at", null: false
@@ -97,6 +107,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_21_000001) do
   end
 
   add_foreign_key "aikotoba_account_confirmation_tokens", "aikotoba_accounts"
+  add_foreign_key "aikotoba_account_email_otp_codes", "aikotoba_accounts"
   add_foreign_key "aikotoba_account_magic_link_tokens", "aikotoba_accounts"
   add_foreign_key "aikotoba_account_password_hashes", "aikotoba_accounts"
   add_foreign_key "aikotoba_account_recovery_tokens", "aikotoba_accounts"

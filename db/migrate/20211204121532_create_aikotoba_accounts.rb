@@ -1,7 +1,8 @@
 class CreateAikotobaAccounts < ActiveRecord::Migration[6.1]
   # NOTE: The tables below the "optional features" marker belong to features that are
   #       disabled by default (Aikotoba.confirmable / .lockable / .recoverable /
-  #       .magic_link_authenticatable all default to false), so they ship commented out.
+  #       .magic_link_authenticatable all default to false, as does every scope's
+  #       two_factor_authenticatable), so they ship commented out.
   #       Uncomment the block for each feature you enable -- before running db:migrate
   #       on a fresh install, or in a new migration of your own if you enable the
   #       feature later.
@@ -97,6 +98,21 @@ class CreateAikotobaAccounts < ActiveRecord::Migration[6.1]
     #     index: {unique: true, name: "index_account_magic_link_tokens_on_account_id"}
     #   )
     #   t.string :token, null: false, index: {unique: true}
+    #   t.datetime :expired_at, null: false
+    #
+    #   t.timestamps
+    # end
+
+    # two_factor_authenticatable: true (on any scope)
+    #
+    # create_table :aikotoba_account_email_otp_codes do |t|
+    #   t.belongs_to(
+    #     :aikotoba_account,
+    #     null: false, foreign_key: true,
+    #     index: {unique: true, name: "index_account_email_otp_codes_on_account_id"}
+    #   )
+    #   t.string :code, null: false
+    #   t.integer :failed_attempts, null: false, default: 0
     #   t.datetime :expired_at, null: false
     #
     #   t.timestamps
