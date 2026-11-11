@@ -84,29 +84,35 @@ module Aikotoba
     end
 
     # NOTE: The sign in in progress lives in the Rails session: which account passed the
-    #       password, and until when. The code itself and the attempts made against it are
-    #       kept in the database (Account::EmailOtpCode), since a cookie session can be
-    #       replayed to undo an attempt count or reuse a code.
+    #       password, which second factor strategy challenged it, and until when. What the
+    #       strategy checks (a code and the attempts made against it, ...) stays in the
+    #       database with the strategy, since a cookie session can be replayed to undo an
+    #       attempt count or reuse a code. Which strategy, and how it challenges, is
+    #       Account::TwoFactor's to decide, not this controller's.
     #       The session is reset first, so a session fixed before the password step can't
     #       inherit the sign in in progress.
     def start_aikotoba_two_factor_for(account)
       prevent_session_fixation_attack
-      Account::EmailOtp.create_code!(account: account, notify: true)
+      challenge = Account::TwoFactor.start!(account: account)
       session[aikotoba_two_factor_session_key] = {
         "account_id" => account.id,
-        "expires_at" => Aikotoba.email_otp_code_expiry.from_now.to_i
+        "strategy" => challenge.strategy,
+        "expires_at" => challenge.expires_at.to_i
       }
     end
 
-    def aikotoba_two_factor_account_id
+    # NOTE: {"account_id" => ..., "strategy" => ...} while a sign in is waiting on its second
+    #       factor, else nil (none started, expired, or written for a strategy that no longer
+    #       exists).
+    def aikotoba_two_factor_in_progress
       pending = session[aikotoba_two_factor_session_key]
       return unless pending.is_a?(Hash)
 
-      if Time.current.to_i > pending["expires_at"].to_i
+      if Time.current.to_i > pending["expires_at"].to_i || !Account::TwoFactor.strategy?(pending["strategy"])
         clear_aikotoba_two_factor
         return
       end
-      pending["account_id"]
+      pending.slice("account_id", "strategy")
     end
 
     # NOTE: Has to run before aikotoba_sign_in: its session fixation protection copies every

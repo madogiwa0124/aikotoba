@@ -24,10 +24,12 @@ en:
     magic_links:
       new: Send sign in link
     two_factors:
-      new: Enter verification code
-      code: Verification code
+      new: Two-factor authentication
       submit: Verify
-      restart: Didn't get the code? Sign in again
+      restart: Start over and sign in again
+      email_otp:
+        instruction: We sent a verification code to your email address. Enter it to finish signing in.
+        label: Verification code
     mailers:
       confirm:
         subject: "Confirmation instructions"
@@ -64,6 +66,6 @@ en:
         sent: Sign in url has been sent to your email address (if user with that email address exists).
         failed: Oops. Sign in link is invalid or has expired.
       two_factor:
-        sent: A verification code has been sent to your email address.
-        failed: Oops. The verification code is incorrect.
-        expired: The verification code has expired or too many attempts were made. Please sign in again.
+        required: One more step is needed to finish signing in.
+        failed: Oops. Two-factor authentication failed.
+        expired: Two-factor authentication has expired or too many attempts were made. Please sign in again.

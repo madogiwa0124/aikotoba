@@ -72,7 +72,7 @@ module Aikotoba
     end
 
     def two_factor_required_message
-      I18n.t(".aikotoba.messages.two_factor.sent")
+      I18n.t(".aikotoba.messages.two_factor.required")
     end
 
     def signed_out_message

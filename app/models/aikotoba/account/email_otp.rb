@@ -1,12 +1,20 @@
 # frozen_string_literal: true
 
 module Aikotoba
-  # NOTE: The second factor of a password sign in to a scope with two_factor_authenticatable:
-  #       a short numeric code sent by email. Owns its own storage (Account::EmailOtpCode) and
-  #       the check, as Account::PasswordHash does for the first factor. Failed codes count
-  #       towards the account's failed_attempts and lock it like a wrong password does, since
-  #       whoever reaches this step already knows the password.
+  # NOTE: A second factor strategy (see Account::TwoFactor for the interface): a short numeric
+  #       code sent by email. Owns its own storage (Account::EmailOtpCode) and the check, as
+  #       Account::PasswordHash does for the first factor. Failed codes count towards the
+  #       account's failed_attempts and lock it like a wrong password does, since whoever
+  #       reaches this step already knows the password.
   class Account::EmailOtp
+    def self.start!(account:)
+      create_code!(account: account, notify: true)
+    end
+
+    def self.challenge_expiry
+      Aikotoba.email_otp_code_expiry
+    end
+
     def self.create_code!(account:, notify: false)
       new(account: account).create_code!(notify: notify)
     end
@@ -14,17 +22,18 @@ module Aikotoba
     # NOTE: account_id comes from the sign in in progress (the Rails session), not from the
     #       user. The account is looked up through authenticatable again, so one locked (or
     #       otherwise unable to sign in) since the password step can't finish signing in.
-    def self.authenticate_by(account_id:, code:, target_type_name: nil)
+    #       response is the code the user typed.
+    def self.authenticate_by(account_id:, response:, target_type_name: nil)
       account = Account.authenticatable(target_type_name: target_type_name).find_by(id: account_id)
       return unless account
 
-      new(account: account).authenticate(code, target_type_name: target_type_name)
+      new(account: account).authenticate(response, target_type_name: target_type_name)
     end
 
     # NOTE: Whether the sign in can still be finished with a code: the account can still sign
     #       in to the scope (not locked since, say) and has a code left to try (not expired or
     #       used up). Once not, the sign in has to start over from the password.
-    def self.code_active?(account_id:, target_type_name: nil)
+    def self.challenge_active?(account_id:, target_type_name: nil)
       account = Account.authenticatable(target_type_name: target_type_name).find_by(id: account_id)
       account&.email_otp_code&.active? || false
     end

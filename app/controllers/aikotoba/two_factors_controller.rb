@@ -2,9 +2,11 @@
 
 module Aikotoba
   # NOTE: The second step of a password sign in to a scope with two_factor_authenticatable:
-  #       the code sent by SessionsController#create (via aikotoba_begin_sign_in) is entered
-  #       here, and the session starts only once it matches. Reached without a sign in in
-  #       progress, it sends the user back to the sign in page.
+  #       the challenge started by SessionsController#create (via aikotoba_begin_sign_in) is
+  #       answered here, and the session starts only once it succeeds. Knows nothing about the
+  #       strategy beyond its key: Account::TwoFactor checks the answer, and the page renders
+  #       the strategy's own partial. Reached without a sign in in progress, it sends the user
+  #       back to the sign in page.
   class TwoFactorsController < ApplicationController
     include Authenticatable
     include Protection::RateLimiting
@@ -23,12 +25,12 @@ module Aikotoba
     end
 
     def create
-      account = authenticate_account(params.dig(:two_factor, :code))
+      account = authenticate_account(params.dig(:two_factor, :response))
       if account
         clear_aikotoba_two_factor
         aikotoba_sign_in(account)
         redirect_to after_sign_in_path, notice: successed_message
-      elsif code_active?
+      elsif challenge_active?
         flash.now[:alert] = failed_message
         render :new, status: :unprocessable_entity
       else
@@ -44,21 +46,27 @@ module Aikotoba
     end
 
     def require_two_factor_in_progress
-      return if aikotoba_two_factor_account_id
+      @two_factor = aikotoba_two_factor_in_progress
+      return if @two_factor
 
       redirect_to aikotoba_scoped_path(:new_session_path), alert: expired_message
     end
 
-    def authenticate_account(code)
-      Account::EmailOtp.authenticate_by(
-        account_id: aikotoba_two_factor_account_id,
-        code: code,
+    def authenticate_account(response)
+      Account::TwoFactor.authenticate_by(
+        strategy: @two_factor["strategy"],
+        account_id: @two_factor["account_id"],
+        response: response,
         target_type_name: aikotoba_authenticate_target
       )
     end
 
-    def code_active?
-      Account::EmailOtp.code_active?(account_id: aikotoba_two_factor_account_id, target_type_name: aikotoba_authenticate_target)
+    def challenge_active?
+      Account::TwoFactor.challenge_active?(
+        strategy: @two_factor["strategy"],
+        account_id: @two_factor["account_id"],
+        target_type_name: aikotoba_authenticate_target
+      )
     end
 
     def after_sign_in_path

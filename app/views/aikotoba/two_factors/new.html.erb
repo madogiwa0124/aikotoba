@@ -2,10 +2,9 @@
   <%= render "aikotoba/common/message" %>
   <h1><%= I18n.t(".aikotoba.two_factors.new") %></h1>
   <%= form_with scope: :two_factor, method: :post, url: aikotoba_scoped_path(:create_two_factor_path) do |f| %>
-    <p>
-      <%= f.label :code, I18n.t(".aikotoba.two_factors.code") %>
-      <%= f.text_field :code, required: true, autocomplete: "one-time-code", inputmode: "numeric", pattern: "[0-9]*", maxlength: Aikotoba::Account::EmailOtpCode::LENGTH %>
-    </p>
+    <%# NOTE: Each strategy's partial renders its own instructions and the field(s) for its
+              answer, submitted as two_factor[response] (see Aikotoba::Account::TwoFactor). %>
+    <%= render "aikotoba/two_factors/#{@two_factor["strategy"]}", f: f %>
     <%= f.submit I18n.t(".aikotoba.two_factors.submit") %>
   <% end %>
   <p>

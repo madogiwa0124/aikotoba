@@ -18,7 +18,7 @@ class Aikotoba::TwoFactorAuthenticatableTest < ActionDispatch::IntegrationTest
   end
 
   def submit_code(code, path: aikotoba.create_two_factor_path)
-    post path, params: {two_factor: {code: code}}
+    post path, params: {two_factor: {response: code}}
   end
 
   def current_code(account = @account)
@@ -46,7 +46,7 @@ class Aikotoba::TwoFactorAuthenticatableTest < ActionDispatch::IntegrationTest
       end
     end
     assert_redirected_to aikotoba.new_two_factor_path
-    assert_equal I18n.t(".aikotoba.messages.two_factor.sent"), flash[:notice]
+    assert_equal I18n.t(".aikotoba.messages.two_factor.required"), flash[:notice]
 
     mail = ActionMailer::Base.deliveries.last
     assert_equal [@account.email], mail.to
@@ -69,7 +69,7 @@ class Aikotoba::TwoFactorAuthenticatableTest < ActionDispatch::IntegrationTest
     get aikotoba.new_two_factor_path
     assert_response :ok
     assert_select "h1", I18n.t(".aikotoba.two_factors.new")
-    assert_select "input[name='two_factor[code]'][autocomplete='one-time-code']"
+    assert_select "input[name='two_factor[response]'][autocomplete='one-time-code']"
   end
 
   test "the correct code signs in, consumes the code and reports sign_in" do
@@ -162,6 +162,16 @@ class Aikotoba::TwoFactorAuthenticatableTest < ActionDispatch::IntegrationTest
     assert_redirected_to aikotoba.new_session_path
   end
 
+  test "a sign in in progress whose strategy is no longer registered starts over" do
+    sign_in_with_password
+    Aikotoba::Account::TwoFactor.stub(:strategy?, false) do
+      get aikotoba.new_two_factor_path
+    end
+    assert_redirected_to aikotoba.new_session_path
+    get aikotoba.new_two_factor_path
+    assert_redirected_to aikotoba.new_session_path
+  end
+
   test "a signed in account is sent on from the two factor page" do
     sign_in_with_password
     submit_code(current_code)
@@ -247,7 +257,7 @@ class Aikotoba::TwoFactorAuthenticatableTest < ActionDispatch::IntegrationTest
     Aikotoba.config.default_scope[:two_factor_authenticatable] = false
     get aikotoba.new_two_factor_path
     assert_response :not_found
-    post aikotoba.create_two_factor_path, params: {two_factor: {code: "123456"}}
+    post aikotoba.create_two_factor_path, params: {two_factor: {response: "123456"}}
     assert_response :not_found
   end
 
@@ -279,7 +289,7 @@ class Aikotoba::TwoFactorAuthenticatableTest < ActionDispatch::IntegrationTest
 
     test "the admin scope signs in with its own code" do
       post aikotoba.admin_create_session_path, params: {account: {email: @admin_account.email, password: @password}}
-      post aikotoba.admin_create_two_factor_path, params: {two_factor: {code: @admin_account.reload.email_otp_code.code}}
+      post aikotoba.admin_create_two_factor_path, params: {two_factor: {response: @admin_account.reload.email_otp_code.code}}
       assert_redirected_to Aikotoba.scopes[:admin][:after_sign_in_path]
       get "/admin/sensitives"
       assert_response :ok
@@ -288,7 +298,7 @@ class Aikotoba::TwoFactorAuthenticatableTest < ActionDispatch::IntegrationTest
     test "a sign in in progress for one scope can't be finished in another" do
       post aikotoba.admin_create_session_path, params: {account: {email: @admin_account.email, password: @password}}
       Aikotoba.config.default_scope[:two_factor_authenticatable] = true
-      post aikotoba.create_two_factor_path, params: {two_factor: {code: @admin_account.reload.email_otp_code.code}}
+      post aikotoba.create_two_factor_path, params: {two_factor: {response: @admin_account.reload.email_otp_code.code}}
       assert_redirected_to aikotoba.new_session_path
       assert_not_nil @admin_account.reload.email_otp_code
     end

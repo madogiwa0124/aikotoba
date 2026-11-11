@@ -42,8 +42,9 @@ class HelperTest < ActionDispatch::SystemTestCase
     fill_in "Email", with: @account.email
     fill_in "Password", with: @password
     click_on "Sign in"
-    assert_selector "h1", text: "Enter verification code"
-    assert_selector ".message", text: "A verification code has been sent to your email address."
+    assert_selector "h1", text: "Two-factor authentication"
+    assert_selector ".message", text: "One more step is needed to finish signing in."
+    assert_text "We sent a verification code to your email address."
     fill_in "Verification code", with: @account.reload.email_otp_code.code
     click_on "Verify"
     assert_selector "h1", text: "Sensitive Page"

@@ -29,7 +29,7 @@ class CustomSignInTest < ActionDispatch::IntegrationTest
     assert_redirected_to aikotoba.new_two_factor_path
     assert_equal 2, @account.reload.failed_attempts
 
-    post aikotoba.create_two_factor_path, params: {two_factor: {code: @account.email_otp_code.code}}
+    post aikotoba.create_two_factor_path, params: {two_factor: {response: @account.email_otp_code.code}}
     assert_redirected_to Aikotoba.default_scope[:after_sign_in_path]
     get "/sensitives"
     assert_response :ok
