@@ -26,7 +26,7 @@ class Aikotoba::TwoFactorAuthenticatableTest < ActionDispatch::IntegrationTest
   end
 
   def wrong_code(account = @account)
-    current_code(account).succ.last(Aikotoba::Account::EmailOtpCode::LENGTH)
+    current_code(account).succ.last(Aikotoba::Account::TwoFactor::EmailOtpCode::LENGTH)
   end
 
   def assert_signed_in
@@ -202,7 +202,7 @@ class Aikotoba::TwoFactorAuthenticatableTest < ActionDispatch::IntegrationTest
       sign_in_with_password
       sign_in_with_password
     end
-    assert_equal 1, Aikotoba::Account::EmailOtpCode.where(aikotoba_account_id: @account.id).count
+    assert_equal 1, Aikotoba::Account::TwoFactor::EmailOtpCode.where(aikotoba_account_id: @account.id).count
     submit_code("111111")
     assert_response :unprocessable_entity
     submit_code("222222")

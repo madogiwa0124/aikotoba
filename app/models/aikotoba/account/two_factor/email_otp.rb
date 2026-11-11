@@ -2,11 +2,11 @@
 
 module Aikotoba
   # NOTE: A second factor strategy (see Account::TwoFactor for the interface): a short numeric
-  #       code sent by email. Owns its own storage (Account::EmailOtpCode) and the check, as
+  #       code sent by email. Owns its own storage (Account::TwoFactor::EmailOtpCode) and the check, as
   #       Account::PasswordHash does for the first factor. Failed codes count towards the
   #       account's failed_attempts and lock it like a wrong password does, since whoever
   #       reaches this step already knows the password.
-  class Account::EmailOtp
+  class Account::TwoFactor::EmailOtp
     def self.create_code!(account:, notify: false)
       new(account: account).create_code!(notify: notify)
     end
@@ -26,7 +26,7 @@ module Aikotoba
     # NOTE: Read from the database rather than the association, which may hold a code
     #       authenticate has destroyed since.
     def challenge_active?
-      Account::EmailOtpCode.find_by(aikotoba_account_id: @account.id)&.active? || false
+      Account::TwoFactor::EmailOtpCode.find_by(aikotoba_account_id: @account.id)&.active? || false
     end
 
     def create_code!(notify:)
@@ -45,7 +45,7 @@ module Aikotoba
     #       The account is reloaded under that lock for the same reason (Lockable's count).
     def authenticate(response, target_type_name: nil)
       result = ActiveRecord::Base.transaction do
-        code = Account::EmailOtpCode.lock.find_by(aikotoba_account_id: @account.id)
+        code = Account::TwoFactor::EmailOtpCode.lock.find_by(aikotoba_account_id: @account.id)
         # NOTE: No code left to guess against (expired, used up, or never issued): fails
         #       without counting an attempt, so a user who comes back late isn't pushed
         #       towards a lock.

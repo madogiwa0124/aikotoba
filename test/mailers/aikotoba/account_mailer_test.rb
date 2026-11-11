@@ -23,7 +23,7 @@ class Aikotoba::AccountMailerTest < ActionMailer::TestCase
   end
 
   test "email_otp sends nothing once the code is gone" do
-    Aikotoba::Account::EmailOtp.create_code!(account: @account, notify: false)
+    Aikotoba::Account::TwoFactor::EmailOtp.create_code!(account: @account, notify: false)
     @account.email_otp_code.destroy!
     assert_no_emails do
       Aikotoba::AccountMailer.with(account: @account.reload).email_otp.deliver_now
@@ -31,7 +31,7 @@ class Aikotoba::AccountMailerTest < ActionMailer::TestCase
   end
 
   test "email_otp sends the account's current code, with no link" do
-    Aikotoba::Account::EmailOtp.create_code!(account: @account, notify: false)
+    Aikotoba::Account::TwoFactor::EmailOtp.create_code!(account: @account, notify: false)
     mail = Aikotoba::AccountMailer.with(account: @account.reload).email_otp.deliver_now
     assert_equal [@account.email], mail.to
     assert_includes mail.body.to_s, @account.email_otp_code.code

@@ -52,7 +52,7 @@ class Aikotoba::Account::TwoFactorTest < ActiveSupport::TestCase
 
   test "an unknown strategy answers like an expired challenge, and is never constantized" do
     _, code = start_and_read_code
-    %w[unknown Kernel Aikotoba::Account::EmailOtp].each do |key|
+    %w[unknown Kernel Aikotoba::Account::TwoFactor::EmailOtp].each do |key|
       assert_not Aikotoba::Account::TwoFactor.strategy?(key)
       assert_nil @account.two_factor.authenticate(code, strategy: key)
       assert_not @account.two_factor.challenge_active?(strategy: key)

@@ -199,7 +199,9 @@ module Aikotoba
     concerning :TwoFactorAuthenticatable do
       included do
         # NOTE: See the comment on Confirmable's association above -- same reasoning.
+        #       class_name is needed since second factor strategies live under Account::TwoFactor.
         optional_has_one :email_otp_code,
+          class_name: "Aikotoba::Account::TwoFactor::EmailOtpCode",
           foreign_key: "aikotoba_account_id",
           dependent: :destroy
       end

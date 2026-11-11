@@ -1,5 +1,5 @@
 <p><%= I18n.t(".aikotoba.two_factors.email_otp.instruction") %></p>
 <p>
   <%= f.label :response, I18n.t(".aikotoba.two_factors.email_otp.label") %>
-  <%= f.text_field :response, value: nil, required: true, autocomplete: "one-time-code", inputmode: "numeric", pattern: "[0-9]*", maxlength: Aikotoba::Account::EmailOtpCode::LENGTH %>
+  <%= f.text_field :response, value: nil, required: true, autocomplete: "one-time-code", inputmode: "numeric", pattern: "[0-9]*", maxlength: Aikotoba::Account::TwoFactor::EmailOtpCode::LENGTH %>
 </p>

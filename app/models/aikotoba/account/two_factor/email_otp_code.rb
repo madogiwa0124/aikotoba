@@ -1,8 +1,13 @@
 # frozen_string_literal: true
 
 module Aikotoba
-  class Account::EmailOtpCode < ApplicationRecord
+  class Account::TwoFactor::EmailOtpCode < ApplicationRecord
     LENGTH = 6
+
+    # NOTE: Set explicitly: nested under Account::TwoFactor, which isn't a model, Rails would
+    #       infer "email_otp_codes", without the "aikotoba_account_" a class nested directly
+    #       under Account gets. The table keeps the name the other optional tables follow.
+    self.table_name = "aikotoba_account_email_otp_codes"
 
     # NOTE: Not TokenEncryptable, which encrypts a `token` column. Non-deterministic, since the
     #       code is never looked up by value: it is read through the account and compared.

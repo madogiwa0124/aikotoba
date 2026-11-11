@@ -65,7 +65,7 @@ class Aikotoba::EmailOtpCodeEncryptionTest < ActiveSupport::TestCase
   end
 
   test "the code is stored encrypted and still checked against the original value" do
-    Aikotoba::Account::EmailOtp.create_code!(account: @account, notify: false)
+    Aikotoba::Account::TwoFactor::EmailOtp.create_code!(account: @account, notify: false)
     code = @account.reload.email_otp_code
     assert_match(/\A\d{6}\z/, code.code)
     assert_not_equal code.code, code.code_before_type_cast
@@ -79,8 +79,8 @@ class Aikotoba::EmailOtpCodeEncryptionTest < ActiveSupport::TestCase
   #       resolved first, so it is pointed at the reloaded class too. Otherwise the tests after
   #       this one would keep building codes with the encrypting class.
   def reload_email_otp_code_class
-    Aikotoba::Account.send(:remove_const, :EmailOtpCode)
-    load "app/models/aikotoba/account/email_otp_code.rb"
+    Aikotoba::Account::TwoFactor.send(:remove_const, :EmailOtpCode)
+    load "app/models/aikotoba/account/two_factor/email_otp_code.rb"
     Aikotoba::Account.reflect_on_association(:email_otp_code).instance_variable_set(:@klass, nil)
   end
 end

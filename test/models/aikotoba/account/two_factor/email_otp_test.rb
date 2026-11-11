@@ -3,7 +3,7 @@
 require "test_helper"
 require "minitest/mock"
 
-class Aikotoba::Account::EmailOtpTest < ActiveSupport::TestCase
+class Aikotoba::Account::TwoFactor::EmailOtpTest < ActiveSupport::TestCase
   include ActionMailer::TestHelper
 
   def setup
@@ -11,18 +11,18 @@ class Aikotoba::Account::EmailOtpTest < ActiveSupport::TestCase
   end
 
   def email_otp
-    Aikotoba::Account::EmailOtp.new(account: @account)
+    Aikotoba::Account::TwoFactor::EmailOtp.new(account: @account)
   end
 
   def issue_code!
-    Aikotoba::Account::EmailOtp.create_code!(account: @account, notify: false)
+    Aikotoba::Account::TwoFactor::EmailOtp.create_code!(account: @account, notify: false)
     @account.reload.email_otp_code
   end
 
   test "a code is six digits, zero padded, and expires after email_otp_code_expiry" do
-    assert_match(/\A\d{6}\z/, Aikotoba::Account::EmailOtpCode.generate_code)
+    assert_match(/\A\d{6}\z/, Aikotoba::Account::TwoFactor::EmailOtpCode.generate_code)
     SecureRandom.stub(:random_number, 42) do
-      assert_equal "000042", Aikotoba::Account::EmailOtpCode.generate_code
+      assert_equal "000042", Aikotoba::Account::TwoFactor::EmailOtpCode.generate_code
     end
     freeze_time do
       assert_equal Aikotoba.email_otp_code_expiry.from_now, issue_code!.expired_at
@@ -34,13 +34,13 @@ class Aikotoba::Account::EmailOtpTest < ActiveSupport::TestCase
     assert_event_reported("aikotoba.email_otp_code_issued", payload: {account_id: @account.id, notified: false}) do
       issue_code!
     end
-    assert_equal 1, Aikotoba::Account::EmailOtpCode.where(aikotoba_account_id: @account.id).count
-    assert_not Aikotoba::Account::EmailOtpCode.exists?(first.id)
+    assert_equal 1, Aikotoba::Account::TwoFactor::EmailOtpCode.where(aikotoba_account_id: @account.id).count
+    assert_not Aikotoba::Account::TwoFactor::EmailOtpCode.exists?(first.id)
   end
 
   test "create_code! with notify sends the code" do
     assert_emails 1 do
-      Aikotoba::Account::EmailOtp.create_code!(account: @account, notify: true)
+      Aikotoba::Account::TwoFactor::EmailOtp.create_code!(account: @account, notify: true)
     end
     assert_includes ActionMailer::Base.deliveries.last.body.to_s, @account.reload.email_otp_code.code
   end

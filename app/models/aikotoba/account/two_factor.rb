@@ -8,7 +8,7 @@ module Aikotoba
   #       what a second factor does stays here and in the strategies.
   #
   #       A strategy is a class built with new(account:) whose instances answer, like
-  #       Account::EmailOtp:
+  #       Account::TwoFactor::EmailOtp:
   #         #start!                                   # issue a challenge (send a code, ...)
   #         #authenticate(response, target_type_name:) # => the account, or nil
   #         #challenge_active?                        # can the challenge still be answered?
@@ -19,7 +19,7 @@ module Aikotoba
   #       still sign in at all is checked here, before any strategy is asked.
   class Account::TwoFactor
     STRATEGIES = {
-      "email_otp" => "Aikotoba::Account::EmailOtp"
+      "email_otp" => "Aikotoba::Account::TwoFactor::EmailOtp"
     }.freeze
 
     # NOTE: What a started sign in has to remember (in the Rails session) to finish it: which
