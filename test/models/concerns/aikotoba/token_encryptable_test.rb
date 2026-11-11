@@ -70,7 +70,7 @@ class Aikotoba::EmailOtpCodeEncryptionTest < ActiveSupport::TestCase
     assert_match(/\A\d{6}\z/, code.code)
     assert_not_equal code.code, code.code_before_type_cast
     assert_includes code.code_before_type_cast, "\"p\":"
-    assert_equal @account, Aikotoba::Account::EmailOtp.authenticate_by(account_id: @account.id, response: code.code)
+    assert_equal @account, @account.two_factor.authenticate(code.code, strategy: "email_otp")
   end
 
   private

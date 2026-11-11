@@ -172,6 +172,15 @@ class Aikotoba::TwoFactorAuthenticatableTest < ActionDispatch::IntegrationTest
     assert_redirected_to aikotoba.new_session_path
   end
 
+  test "an account deleted during the sign in starts over" do
+    sign_in_with_password
+    @account.destroy!
+    submit_code("123456")
+    assert_redirected_to aikotoba.new_session_path
+    get aikotoba.new_two_factor_path
+    assert_redirected_to aikotoba.new_session_path
+  end
+
   test "a signed in account is sent on from the two factor page" do
     sign_in_with_password
     submit_code(current_code)

@@ -4,7 +4,7 @@
   <%= form_with scope: :two_factor, method: :post, url: aikotoba_scoped_path(:create_two_factor_path) do |f| %>
     <%# NOTE: Each strategy's partial renders its own instructions and the field(s) for its
               answer, submitted as two_factor[response] (see Aikotoba::Account::TwoFactor). %>
-    <%= render "aikotoba/two_factors/#{@two_factor["strategy"]}", f: f %>
+    <%= render "aikotoba/two_factors/#{@two_factor_strategy}", f: f %>
     <%= f.submit I18n.t(".aikotoba.two_factors.submit") %>
   <% end %>
   <p>

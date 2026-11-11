@@ -88,12 +88,12 @@ module Aikotoba
     #       strategy checks (a code and the attempts made against it, ...) stays in the
     #       database with the strategy, since a cookie session can be replayed to undo an
     #       attempt count or reuse a code. Which strategy, and how it challenges, is
-    #       Account::TwoFactor's to decide, not this controller's.
+    #       account.two_factor's (Account::TwoFactor) to decide, not this controller's.
     #       The session is reset first, so a session fixed before the password step can't
     #       inherit the sign in in progress.
     def start_aikotoba_two_factor_for(account)
       prevent_session_fixation_attack
-      challenge = Account::TwoFactor.start!(account: account)
+      challenge = account.two_factor.start!
       session[aikotoba_two_factor_session_key] = {
         "account_id" => account.id,
         "strategy" => challenge.strategy,

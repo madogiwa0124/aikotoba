@@ -10,6 +10,10 @@ class Aikotoba::Account::EmailOtpTest < ActiveSupport::TestCase
     @account = Aikotoba::Account.create_by!(attributes: {email: "email_otp@example.com", password: "password"})
   end
 
+  def email_otp
+    Aikotoba::Account::EmailOtp.new(account: @account)
+  end
+
   def issue_code!
     Aikotoba::Account::EmailOtp.create_code!(account: @account, notify: false)
     @account.reload.email_otp_code
@@ -41,63 +45,51 @@ class Aikotoba::Account::EmailOtpTest < ActiveSupport::TestCase
     assert_includes ActionMailer::Base.deliveries.last.body.to_s, @account.reload.email_otp_code.code
   end
 
-  test "authenticate_by returns the account for the right code and consumes it" do
+  test "authenticate returns the account for the right code and consumes it" do
     code = issue_code!.code
     @account.update!(failed_attempts: 2)
-    assert_equal @account, Aikotoba::Account::EmailOtp.authenticate_by(account_id: @account.id, response: code)
+    assert_equal @account, email_otp.authenticate(code)
     assert_nil @account.reload.email_otp_code
     assert_equal 0, @account.failed_attempts
   end
 
-  test "authenticate_by counts a wrong code on the code and the account" do
+  test "authenticate counts a wrong code on the code and the account" do
     code = issue_code!
-    assert_nil Aikotoba::Account::EmailOtp.authenticate_by(account_id: @account.id, response: code.code.succ.last(6))
+    assert_nil email_otp.authenticate(code.code.succ.last(6))
     assert_equal 1, code.reload.failed_attempts
     assert_equal 1, @account.reload.failed_attempts
   end
 
-  test "authenticate_by does not count an attempt when no code can be tried" do
+  test "authenticate does not count an attempt when no code can be tried" do
     assert_event_reported("aikotoba.email_otp_sign_in_failed", payload: {account_id: @account.id}) do
-      assert_nil Aikotoba::Account::EmailOtp.authenticate_by(account_id: @account.id, response: "123456")
+      assert_nil email_otp.authenticate("123456")
     end
     code = issue_code!
     code.update!(expired_at: 1.second.ago)
-    assert_nil Aikotoba::Account::EmailOtp.authenticate_by(account_id: @account.id, response: code.code)
+    assert_nil email_otp.authenticate(code.code)
     assert_equal 0, @account.reload.failed_attempts
   end
 
-  test "authenticate_by only finds an account of the scope's target type" do
-    code = issue_code!.code
-    assert_nil Aikotoba::Account::EmailOtp.authenticate_by(account_id: @account.id, response: code, target_type_name: "Admin")
-    assert_not_nil @account.reload.email_otp_code
-    assert_equal 0, @account.failed_attempts
-  end
-
-  test "challenge_active? is false once the code is used up, expired, or the account can't sign in" do
+  test "challenge_active? is false once the code is used up or expired" do
     Aikotoba.config.email_otp_max_failed_attempts = 1
     code = issue_code!
-    assert Aikotoba::Account::EmailOtp.challenge_active?(account_id: @account.id)
-    Aikotoba::Account::EmailOtp.authenticate_by(account_id: @account.id, response: code.code.succ.last(6))
-    assert_not Aikotoba::Account::EmailOtp.challenge_active?(account_id: @account.id)
+    assert email_otp.challenge_active?
+    email_otp.authenticate(code.code.succ.last(6))
+    assert_not email_otp.challenge_active?
     assert_nil @account.reload.email_otp_code
 
     issue_code!.update!(expired_at: 1.second.ago)
-    assert_not Aikotoba::Account::EmailOtp.challenge_active?(account_id: @account.id)
-
-    issue_code!
-    Aikotoba.config.lockable = true
-    @account.lock!
-    assert_not Aikotoba::Account::EmailOtp.challenge_active?(account_id: @account.id)
+    assert_not email_otp.challenge_active?
   end
 
-  test "authenticate_by locks the account once failed_attempts goes over the limit" do
+  test "authenticate locks the account once failed_attempts goes over the limit" do
     Aikotoba.config.lockable = true
     Aikotoba.config.max_failed_attempts = 1
     code = issue_code!
-    Aikotoba::Account::EmailOtp.authenticate_by(account_id: @account.id, response: code.code.succ.last(6))
+    email_otp.authenticate(code.code.succ.last(6))
     assert_not @account.reload.locked?
     assert_event_reported("aikotoba.account_locked", payload: {account_id: @account.id}) do
-      Aikotoba::Account::EmailOtp.authenticate_by(account_id: @account.id, response: code.code.succ.last(6))
+      email_otp.authenticate(code.code.succ.last(6))
     end
     assert @account.reload.locked?
     assert_nil @account.email_otp_code

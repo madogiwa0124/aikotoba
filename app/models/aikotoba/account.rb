@@ -203,6 +203,13 @@ module Aikotoba
           foreign_key: "aikotoba_account_id",
           dependent: :destroy
       end
+
+      # NOTE: The account's second factor (start!, authenticate, challenge_active?). Only this
+      #       reader lives on Account; what a second factor does stays in Account::TwoFactor
+      #       and its strategies.
+      def two_factor
+        Account::TwoFactor.new(account: self)
+      end
     end
   end
 end

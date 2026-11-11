@@ -4,7 +4,7 @@ module Aikotoba
   # NOTE: The second step of a password sign in to a scope with two_factor_authenticatable:
   #       the challenge started by SessionsController#create (via aikotoba_begin_sign_in) is
   #       answered here, and the session starts only once it succeeds. Knows nothing about the
-  #       strategy beyond its key: Account::TwoFactor checks the answer, and the page renders
+  #       strategy beyond its key: account.two_factor checks the answer, and the page renders
   #       the strategy's own partial. Reached without a sign in in progress, it sends the user
   #       back to the sign in page.
   class TwoFactorsController < ApplicationController
@@ -45,28 +45,26 @@ module Aikotoba
       redirect_to after_sign_in_path if aikotoba_current_account
     end
 
+    # NOTE: The account is looked up once here; whether it may still sign in to the scope is
+    #       account.two_factor's check. One deleted since the password step starts over.
     def require_two_factor_in_progress
-      @two_factor = aikotoba_two_factor_in_progress
-      return if @two_factor
+      in_progress = aikotoba_two_factor_in_progress
+      @two_factor_account = Account.find_by(id: in_progress["account_id"]) if in_progress
+      if @two_factor_account
+        @two_factor_strategy = in_progress["strategy"]
+        return
+      end
 
+      clear_aikotoba_two_factor
       redirect_to aikotoba_scoped_path(:new_session_path), alert: expired_message
     end
 
     def authenticate_account(response)
-      Account::TwoFactor.authenticate_by(
-        strategy: @two_factor["strategy"],
-        account_id: @two_factor["account_id"],
-        response: response,
-        target_type_name: aikotoba_authenticate_target
-      )
+      @two_factor_account.two_factor.authenticate(response, strategy: @two_factor_strategy, target_type_name: aikotoba_authenticate_target)
     end
 
     def challenge_active?
-      Account::TwoFactor.challenge_active?(
-        strategy: @two_factor["strategy"],
-        account_id: @two_factor["account_id"],
-        target_type_name: aikotoba_authenticate_target
-      )
+      @two_factor_account.two_factor.challenge_active?(strategy: @two_factor_strategy, target_type_name: aikotoba_authenticate_target)
     end
 
     def after_sign_in_path
