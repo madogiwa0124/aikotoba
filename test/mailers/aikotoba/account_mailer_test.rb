@@ -22,6 +22,23 @@ class Aikotoba::AccountMailerTest < ActionMailer::TestCase
     end
   end
 
+  test "email_otp sends nothing once the code is gone" do
+    Aikotoba::Account::TwoFactor::EmailOtp.create_code!(account: @account, notify: false)
+    @account.email_otp_code.destroy!
+    assert_no_emails do
+      Aikotoba::AccountMailer.with(account: @account.reload).email_otp.deliver_now
+    end
+  end
+
+  test "email_otp sends the account's current code, with no link" do
+    Aikotoba::Account::TwoFactor::EmailOtp.create_code!(account: @account, notify: false)
+    mail = Aikotoba::AccountMailer.with(account: @account.reload).email_otp.deliver_now
+    assert_equal [@account.email], mail.to
+    assert_includes mail.body.to_s, @account.email_otp_code.code
+    assert_includes mail.body.to_s, I18n.l(@account.email_otp_code.expired_at, format: :long)
+    assert_no_match(/https?:/, mail.body.to_s)
+  end
+
   test "unlock sends nothing once the token is gone" do
     Aikotoba::Account::Lock.create_token!(account: @account, notify: false)
     @account.unlock_token.destroy!

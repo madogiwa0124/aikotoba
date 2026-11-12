@@ -20,7 +20,7 @@ class Aikotoba::EventsTest < ActiveSupport::TestCase
     events.each do |event|
       assert_equal "aikotoba.#{event.name.demodulize.underscore}", event.event_name
     end
-    assert_equal [Aikotoba::Event::MagicLinkSignInFailed, Aikotoba::Event::SignInFailed], events.reject(&:after_commit?).sort_by(&:name)
+    assert_equal [Aikotoba::Event::EmailOtpSignInFailed, Aikotoba::Event::MagicLinkSignInFailed, Aikotoba::Event::SignInFailed], events.reject(&:after_commit?).sort_by(&:name)
   end
 
   test "an event raises on a missing or unknown payload key, and reports nothing" do

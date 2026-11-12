@@ -41,6 +41,16 @@ module Aikotoba
       mail(to: @account.email, subject: I18n.t(".aikotoba.mailers.magic_link.subject"))
     end
 
+    # NOTE: No link: the code is typed into the page the sign in is waiting on, in the same
+    #       browser, which is what ties it to the password just entered.
+    def email_otp
+      @account = params[:account]
+      @code = @account.email_otp_code
+      return unless @code
+
+      mail(to: @account.email, subject: I18n.t(".aikotoba.mailers.email_otp.subject"))
+    end
+
     private
 
     def aikotoba_scoped_url(route, **params)

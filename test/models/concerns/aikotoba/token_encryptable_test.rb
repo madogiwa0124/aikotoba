@@ -50,3 +50,37 @@ class Aikotoba::TokenEncryptableTest < ActiveSupport::TestCase
     load "app/models/aikotoba/account/confirmation_token.rb"
   end
 end
+
+class Aikotoba::EmailOtpCodeEncryptionTest < ActiveSupport::TestCase
+  def setup
+    Aikotoba.config.encrypted_token = true
+    reload_email_otp_code_class
+    @account = ::Aikotoba::Account.create_by!(attributes: {email: "email_otp_encrypted@example.com", password: "password"})
+  end
+
+  # NOTE: See Aikotoba::TokenEncryptableTest#teardown.
+  def teardown
+    Aikotoba.config.encrypted_token = false
+    reload_email_otp_code_class
+  end
+
+  test "the code is stored encrypted and still checked against the original value" do
+    Aikotoba::Account::TwoFactor::EmailOtp.create_code!(account: @account, notify: false)
+    code = @account.reload.email_otp_code
+    assert_match(/\A\d{6}\z/, code.code)
+    assert_not_equal code.code, code.code_before_type_cast
+    assert_includes code.code_before_type_cast, "\"p\":"
+    assert_equal @account, @account.two_factor.authenticate(code.code, strategy: "email_otp")
+  end
+
+  private
+
+  # NOTE: The code is built through Account's has_one, whose reflection keeps the class it
+  #       resolved first, so it is pointed at the reloaded class too. Otherwise the tests after
+  #       this one would keep building codes with the encrypting class.
+  def reload_email_otp_code_class
+    Aikotoba::Account::TwoFactor.send(:remove_const, :EmailOtpCode)
+    load "app/models/aikotoba/account/two_factor/email_otp_code.rb"
+    Aikotoba::Account.reflect_on_association(:email_otp_code).instance_variable_set(:@klass, nil)
+  end
+end

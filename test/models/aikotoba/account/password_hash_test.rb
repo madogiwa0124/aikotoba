@@ -96,6 +96,16 @@ class Aikotoba::Account::PasswordHashTest < ActiveSupport::TestCase
       assert_equal @account.reload.failed_attempts, 0
     end
 
+    test "authenticate_by leaves failed_attempts as is with reset_failed_attempts: false" do
+      @account.update!(failed_attempts: 5)
+      account = Aikotoba::Account::PasswordHash.authenticate_by(attributes: {
+        email: "user@example.com",
+        password: "Password1!"
+      }, reset_failed_attempts: false)
+      assert_equal @account, account
+      assert_equal 5, @account.reload.failed_attempts
+    end
+
     test "authenticate_by locks account when max attempts exceeded" do
       Aikotoba.config.lockable = true
       account = Aikotoba::Account.create_by!(attributes: {

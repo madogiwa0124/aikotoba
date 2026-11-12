@@ -19,6 +19,13 @@ module Aikotoba
       authenticate_for.blank?
     end
 
+    # NOTE: Whether signing in with a password to this scope also needs a one-time code sent
+    #       by email before the session starts. Set per scope (two_factor_authenticatable: true),
+    #       since a stricter scope (an admin one) is the usual reason to want it.
+    def two_factor_authenticatable?
+      self[:two_factor_authenticatable] == true
+    end
+
     # NOTE: Whether this is the scope set up for the target type (authenticate_for: "Admin"
     #       for "Admin"). An unrestricted scope also signs Admins in, but isn't "for" them.
     def for?(target_type_name)

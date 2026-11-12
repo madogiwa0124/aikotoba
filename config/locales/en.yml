@@ -23,6 +23,13 @@ en:
       edit: Password reset
     magic_links:
       new: Send sign in link
+    two_factors:
+      new: Two-factor authentication
+      submit: Verify
+      restart: Start over and sign in again
+      email_otp:
+        instruction: We sent a verification code to your email address. Enter it to finish signing in.
+        label: Verification code
     mailers:
       confirm:
         subject: "Confirmation instructions"
@@ -32,6 +39,8 @@ en:
         subject: "Password reset instructions"
       magic_link:
         subject: "Your sign in link"
+      email_otp:
+        subject: "Your verification code"
 
     messages:
       authentication:
@@ -56,3 +65,7 @@ en:
       magic_link:
         sent: Sign in url has been sent to your email address (if user with that email address exists).
         failed: Oops. Sign in link is invalid or has expired.
+      two_factor:
+        required: One more step is needed to finish signing in.
+        failed: Oops. Two-factor authentication failed.
+        expired: Two-factor authentication has expired or too many attempts were made. Please sign in again.
