@@ -20,8 +20,11 @@ module Aikotoba
     def create
       @account = authenticate_account(session_params.to_h.symbolize_keys)
       if @account
-        aikotoba_sign_in(@account)
-        redirect_to after_sign_in_path, notice: successed_message
+        if aikotoba_begin_sign_in(@account)
+          redirect_to after_sign_in_path, notice: successed_message
+        else
+          redirect_to aikotoba_scoped_path(:new_two_factor_path), notice: two_factor_required_message
+        end
       else
         @account = build_account({email: "", password: ""})
         flash[:alert] = failed_message
@@ -62,6 +65,10 @@ module Aikotoba
 
     def failed_message
       I18n.t(".aikotoba.messages.authentication.failed")
+    end
+
+    def two_factor_required_message
+      I18n.t(".aikotoba.messages.two_factor.required")
     end
 
     def signed_out_message

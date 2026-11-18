@@ -79,6 +79,13 @@ class Aikotoba::MagicLinkableTest < ActionDispatch::IntegrationTest
     assert_redirected_to Aikotoba.default_scope[:after_sign_in_path]
   end
 
+  test "magic link sign in resets failed_attempts" do
+    Aikotoba::Account::MagicLink.create_token!(account: @account, notify: false)
+    @account.update!(failed_attempts: 3)
+    get aikotoba.authenticate_via_magic_link_path(token: @account.magic_link_token.token)
+    assert_equal 0, @account.reload.failed_attempts
+  end
+
   test "failed GET authenticate_via_magic_link_path by not exists token" do
     get aikotoba.authenticate_via_magic_link_path(token: "not_exists_token")
     assert_equal status, 404

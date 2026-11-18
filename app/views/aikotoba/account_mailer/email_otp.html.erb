@@ -1,0 +1,5 @@
+Verification code: <%= @code.code %>
+<br>
+The code expires at <%= I18n.l(@code.expired_at, format: :long) %>
+<br>
+If you did not try to sign in, someone may know your password. Please change it.

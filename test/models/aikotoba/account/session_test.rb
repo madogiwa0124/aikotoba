@@ -88,6 +88,12 @@ class Aikotoba::Account::SessionTest < ActiveSupport::TestCase
     assert s.expired_at.present?
   end
 
+  test "start! resets failed_attempts, the one place a successful sign in does" do
+    @account.update!(failed_attempts: 3)
+    Aikotoba::Account::Session.start!(account: @account)
+    assert_equal 0, @account.reload.failed_attempts
+  end
+
   test "find_by_token returns active authenticatable session" do
     Aikotoba.config.confirmable = true
     s = Aikotoba::Account::Session.create!(account: @account)

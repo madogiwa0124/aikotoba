@@ -195,5 +195,23 @@ module Aikotoba
           dependent: :destroy
       end
     end
+
+    concerning :TwoFactorAuthenticatable do
+      included do
+        # NOTE: See the comment on Confirmable's association above -- same reasoning.
+        #       class_name is needed since second factor strategies live under Account::TwoFactor.
+        optional_has_one :email_otp_code,
+          class_name: "Aikotoba::Account::TwoFactor::EmailOtpCode",
+          foreign_key: "aikotoba_account_id",
+          dependent: :destroy
+      end
+
+      # NOTE: The account's second factor (start!, authenticate, challenge_active?). Only this
+      #       reader lives on Account; what a second factor does stays in Account::TwoFactor
+      #       and its strategies.
+      def two_factor
+        Account::TwoFactor.new(account: self)
+      end
+    end
   end
 end
