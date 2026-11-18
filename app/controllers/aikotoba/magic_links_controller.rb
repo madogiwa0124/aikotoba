@@ -35,7 +35,8 @@ module Aikotoba
       #       Account::Session record via aikotoba_sign_in.
       ActiveRecord::Base.connected_to(role: :writing) do
         account = authenticate_account!(params[:token])
-        aikotoba_sign_in(account)
+        # NOTE: The link proves the mailbox, which the email code would prove again.
+        aikotoba_sign_in(account, two_factor: :skip)
       end
       redirect_to after_sign_in_path, flash: {notice: successed_message}
     end

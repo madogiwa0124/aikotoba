@@ -46,6 +46,13 @@ class Aikotoba::ScopesTest < ActiveSupport::TestCase
     assert_equal "/login", Aikotoba.default_scope[:sign_in_path]
   end
 
+  test "Scope#two_factor_authenticatable? is off unless set to true, and add_scope inherits it" do
+    assert_not Aikotoba.default_scope.two_factor_authenticatable?
+    assert Aikotoba::Scope.new(two_factor_authenticatable: true).two_factor_authenticatable?
+    assert_not Aikotoba::Scope.new(two_factor_authenticatable: "true").two_factor_authenticatable?
+    assert_not Aikotoba.scopes[:admin].two_factor_authenticatable?
+  end
+
   test "Scope#for? matches only a set authenticate_for" do
     assert Aikotoba::Scope.new(authenticate_for: "Admin").for?("Admin")
     assert Aikotoba::Scope.new(authenticate_for: Admin).for?("Admin")
@@ -98,6 +105,7 @@ class Aikotoba::ScopesTest < ActiveSupport::TestCase
     keys = Aikotoba.default_scope.route_path_keys
     assert_includes keys, "sign_in_path"
     assert_includes keys, "magic_link_path"
+    assert_includes keys, "two_factor_path"
     assert_empty keys & %w[root_path after_sign_in_path after_sign_out_path]
   end
 

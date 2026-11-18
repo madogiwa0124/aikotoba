@@ -5,6 +5,7 @@ require "aikotoba/constraints/confirmable_constraint"
 require "aikotoba/constraints/lockable_constraint"
 require "aikotoba/constraints/recoverable_constraint"
 require "aikotoba/constraints/magic_link_authenticatable_constraint"
+require "aikotoba/constraints/two_factor_authenticatable_constraint"
 
 Aikotoba::Engine.routes.draw do
   Aikotoba.scopes.each do |scope_name, config|
@@ -43,6 +44,11 @@ Aikotoba::Engine.routes.draw do
         get(config.route_path(:magic_link_path), to: "magic_links#new", as: :new_magic_link)
         post(config.route_path(:magic_link_path), to: "magic_links#create", as: :create_magic_link)
         get(File.join(config.route_path(:magic_link_path), ":token"), to: "magic_links#update", as: :authenticate_via_magic_link)
+      end
+
+      constraints(Aikotoba::TwoFactorAuthenticatableConstraint.new(scope_name)) do
+        get(config.route_path(:two_factor_path), to: "two_factors#new", as: :new_two_factor)
+        post(config.route_path(:two_factor_path), to: "two_factors#create", as: :create_two_factor)
       end
     end
   end
