@@ -35,11 +35,12 @@ class Aikotoba::Account::MagicLinkTest < ActiveSupport::TestCase
       assert_nil @account.reload.magic_link_token
     end
 
-    test "authenticate_by resets failed_attempts" do
+    # NOTE: Reset when the session starts (Account::Session.start!), not by the link alone.
+    test "authenticate_by leaves failed_attempts as is" do
       token = @account.magic_link_token.token
       @account.update!(failed_attempts: 5)
       Aikotoba::Account::MagicLink.authenticate_by(token: token)
-      assert_equal @account.reload.failed_attempts, 0
+      assert_equal 5, @account.reload.failed_attempts
     end
 
     test "authenticate_by filters by target_type_name" do

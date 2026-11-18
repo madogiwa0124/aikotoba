@@ -32,11 +32,17 @@ module Aikotoba
     end
 
     class << self
+      # NOTE: Starting a session is what a successful sign in is, whichever credentials led
+      #       here, so failed_attempts is reset here and nowhere else (not by a matching
+      #       password, which may still have a second factor to pass).
       def start!(account:, **params)
-        account.sessions.create!(
-          ip_address: params[:ip_address],
-          user_agent: params[:user_agent]
-        )
+        ActiveRecord::Base.transaction do
+          account.authentication_success!
+          account.sessions.create!(
+            ip_address: params[:ip_address],
+            user_agent: params[:user_agent]
+          )
+        end
       end
 
       def find_by_token(token, target_type_name: nil)

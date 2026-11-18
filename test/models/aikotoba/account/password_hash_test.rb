@@ -87,13 +87,16 @@ class Aikotoba::Account::PasswordHashTest < ActiveSupport::TestCase
       assert_equal @account.reload.failed_attempts, initial_attempts + 1
     end
 
-    test "authenticate_by resets failed_attempts on successful authentication" do
+    # NOTE: The reset happens when the session starts (Account::Session.start!), so a caller
+    #       that checks the password but hasn't finished signing in can't reset it by mistake.
+    test "authenticate_by leaves failed_attempts as is on a match" do
       @account.update!(failed_attempts: 5)
-      Aikotoba::Account::PasswordHash.authenticate_by(attributes: {
+      account = Aikotoba::Account::PasswordHash.authenticate_by(attributes: {
         email: "user@example.com",
         password: "Password1!"
       })
-      assert_equal @account.reload.failed_attempts, 0
+      assert_equal @account, account
+      assert_equal 5, @account.reload.failed_attempts
     end
 
     test "authenticate_by locks account when max attempts exceeded" do

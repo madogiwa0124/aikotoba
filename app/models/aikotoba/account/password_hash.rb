@@ -42,6 +42,12 @@ module Aikotoba
     end
 
     class << self
+      # NOTE: A match leaves failed_attempts as it is: Account::Session.start! resets it once
+      #       the account is actually signed in. A correct password isn't a finished sign in
+      #       when a second factor is still to come, and resetting here would let someone who
+      #       holds the password re-enter it for a fresh set of one-time code guesses, never
+      #       reaching Lockable's limit. Keeping the reset out of here means no caller (an
+      #       app's own sign in controller included) has to remember to hold it back.
       def authenticate_by(attributes:, target_type_name: nil)
         email, password = attributes.values_at(:email, :password)
         # NOTE: A blank password can never match anything, so there's nothing to guard
@@ -65,10 +71,8 @@ module Aikotoba
         end
         return sign_in_failed(email: email, account: nil, target_type_name: target_type_name) unless account
 
-        ActiveRecord::Base.transaction do
-          if matched
-            account.authentication_success!
-          else
+        unless matched
+          ActiveRecord::Base.transaction do
             account.authentication_failed!
             Account::Lock.lock!(account: account, notify: true) if account.lockable? && account.should_lock?
           end

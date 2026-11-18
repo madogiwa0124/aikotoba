@@ -31,11 +31,10 @@ module Aikotoba
       end
     end
 
+    # NOTE: Leaves failed_attempts alone on purpose: Account::Session.start! resets it once the
+    #       account is actually signed in, for every way of signing in (see there).
     def authenticate!
-      ActiveRecord::Base.transaction do
-        @account.authentication_success!
-        @account.magic_link_token.destroy!
-      end
+      @account.magic_link_token.destroy!
       @account
     end
   end
