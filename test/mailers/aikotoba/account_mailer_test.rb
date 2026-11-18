@@ -10,8 +10,7 @@ class Aikotoba::AccountMailerTest < ActionMailer::TestCase
 
   {
     confirm: Aikotoba::Account::Confirmation,
-    recover: Aikotoba::Account::Recovery,
-    magic_link: Aikotoba::Account::MagicLink
+    recover: Aikotoba::Account::Recovery
   }.each do |mail, owner|
     test "#{mail} sends nothing once the token is gone" do
       owner.create_token!(account: @account, notify: false)

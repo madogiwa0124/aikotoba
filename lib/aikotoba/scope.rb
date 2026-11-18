@@ -48,8 +48,8 @@ module Aikotoba
 
     # NOTE: The path config/routes.rb draws for a path setting: the value as is when it is
     #       already under root_path, otherwise prefixed with root_path. So a path add_scope
-    #       copied from the default scope (/magic_link in an /admin scope) still lands in this
-    #       scope (/admin/magic_link), and "/admin/..." isn't prefixed twice. Only for routed
+    #       copied from the default scope (/recover in an /admin scope) still lands in this
+    #       scope (/admin/recover), and "/admin/..." isn't prefixed twice. Only for routed
     #       paths; redirect targets like after_sign_in_path may point anywhere.
     def route_path(key)
       path = self[key]

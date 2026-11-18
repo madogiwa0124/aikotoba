@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # Rate limiting for the endpoints anyone can call repeatedly without an account: the
-# token-sending endpoints (confirm, unlock, recover, magic link), against email bombing,
+# token-sending endpoints (confirm, unlock, recover), against email bombing,
 # and sign in / sign up, against credential stuffing and account enumeration.
 # Uses Rails' built-in rate_limit feature.
 #

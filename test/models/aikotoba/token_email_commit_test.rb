@@ -27,11 +27,6 @@ class Aikotoba::TokenEmailCommitTest < ActiveSupport::TestCase
       record_class: "Aikotoba::Account::RecoveryToken",
       mail: :recover
     },
-    magic_link_token: {
-      create: ->(account) { Aikotoba::Account::MagicLink.create_token!(account: account, notify: true) },
-      record_class: "Aikotoba::Account::MagicLinkToken",
-      mail: :magic_link
-    },
     email_otp_code: {
       create: ->(account) { Aikotoba::Account::TwoFactor::EmailOtp.create_code!(account: account, notify: true) },
       record_class: "Aikotoba::Account::TwoFactor::EmailOtpCode",

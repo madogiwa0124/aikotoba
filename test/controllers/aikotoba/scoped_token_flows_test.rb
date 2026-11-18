@@ -10,7 +10,6 @@ class Aikotoba::ScopedTokenFlowsTest < ActionDispatch::IntegrationTest
     Aikotoba.config.confirmable = true
     Aikotoba.config.lockable = true
     Aikotoba.config.recoverable = true
-    Aikotoba.config.magic_link_authenticatable = true
     @user_account = Aikotoba::Account.create_by!(attributes: {email: "scoped_user@example.com", password: "password"})
     @admin_account = Aikotoba::Account.create_by!(attributes: {email: "scoped_admin@example.com", password: "password", authenticate_target: Admin.create!(nickname: "scoped")})
   end
@@ -18,8 +17,7 @@ class Aikotoba::ScopedTokenFlowsTest < ActionDispatch::IntegrationTest
   {
     confirm: "/admin/confirm",
     unlock: "/admin/unlock",
-    recover: "/admin/recover",
-    magic_link: "/admin/magic_link"
+    recover: "/admin/recover"
   }.each do |feature, admin_path|
     test "#{feature}: admin scope does not send to an account outside its authenticate_for" do
       @user_account.lock! if feature == :unlock
@@ -60,10 +58,6 @@ class Aikotoba::ScopedTokenFlowsTest < ActionDispatch::IntegrationTest
     get "/admin/recover/#{@user_account.recovery_token.token}"
     assert_equal 404, status
     patch "/admin/recover/#{@user_account.recovery_token.token}", params: {account: {password: "new_password"}}
-    assert_equal 404, status
-
-    Aikotoba::Account::MagicLink.create_token!(account: @user_account)
-    get "/admin/magic_link/#{@user_account.magic_link_token.token}"
     assert_equal 404, status
   end
 

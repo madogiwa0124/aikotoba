@@ -46,9 +46,6 @@ module Aikotoba
     SignIn = define(name: :sign_in, payload: %i[account_id session_id scope])
     SignOut = define(name: :sign_out, payload: %i[account_id session_id scope])
     SignInFailed = define(name: :sign_in_failed, payload: %i[email account_id target_type_name], after_commit: false)
-    # NOTE: A magic link that matches no active token for an account that can sign in to the scope:
-    #       unknown, expired or already used. The token itself is a credential, so it is not reported.
-    MagicLinkSignInFailed = define(name: :magic_link_sign_in_failed, payload: %i[target_type_name], after_commit: false)
     # NOTE: A one-time code that doesn't match the account's active code, or for which no
     #       active code is left (expired, or used up its attempts). The code is a credential,
     #       so it is not reported; the account is, since the password step already said whose it is.
@@ -63,7 +60,6 @@ module Aikotoba
     ConfirmationTokenIssued = define(name: :confirmation_token_issued, payload: %i[account_id notified])
     UnlockTokenIssued = define(name: :unlock_token_issued, payload: %i[account_id notified])
     RecoveryTokenIssued = define(name: :recovery_token_issued, payload: %i[account_id notified])
-    MagicLinkTokenIssued = define(name: :magic_link_token_issued, payload: %i[account_id notified])
     EmailOtpCodeIssued = define(name: :email_otp_code_issued, payload: %i[account_id notified])
   end
 end

@@ -126,24 +126,6 @@ class NavigationTest < ActionDispatch::SystemTestCase
     click_on "Sign out"
   end
 
-  test "[default] (MagicLinkAuthenticatable) sign_in -> request sign in link -> sign in via link -> sign out" do
-    Aikotoba.config.magic_link_authenticatable = true
-    Aikotoba::Account.create_by!(attributes: {email: "default6@example.com", password: "password"})
-    visit "/sign_in"
-    click_on "Send sign in link"
-    assert_equal current_path, "/magic_link"
-    fill_in "Email", with: "default6@example.com"
-    assert_emails 1 do
-      click_on "Send sign in link"
-    end
-    assert_selector ".message", text: "Sign in url has been sent to your email address (if user with that email address exists)."
-    magic_link_email = ActionMailer::Base.deliveries.last
-    magic_link_path = magic_link_email.body.to_s.split("\n")[0].split(" ")[3] # NOTE: get XXX from "Sign in url: XXX"
-    visit magic_link_path
-    assert_selector ".message", text: "Signed in successfully."
-    click_on "Sign out"
-  end
-
   test "[default] (ALL) sign_up -> confirm -> sign_in -> lock -> unlock -> sign_in -> recover -> sign_in -> sign_out" do
     # Enable all features
     Aikotoba.config.registerable = true

@@ -13,12 +13,11 @@ module Aikotoba
       @aikotoba_current_account ||= aikotoba_current_session&.account
     end
 
-    TWO_FACTOR_SIGN_IN_REASONS = %i[verified skip].freeze
+    TWO_FACTOR_SIGN_IN_REASONS = %i[verified].freeze
 
     # NOTE: Starts a session right away, whatever the scope requires. In a scope with
-    #       two_factor_authenticatable, the caller has to say why that is fine: :verified once
-    #       the account passed its second factor, :skip when the credential needs none (a
-    #       magic link already proves the mailbox). Without it this raises
+    #       two_factor_authenticatable, the caller has to say the account passed its second
+    #       factor (two_factor: :verified). Without it this raises
     #       Errors::TwoFactorRequired before signing in, so a controller that should have
     #       called aikotoba_begin_sign_in fails the first time it runs rather than skipping
     #       the second factor. Scopes without two_factor_authenticatable ignore two_factor:.
@@ -29,7 +28,7 @@ module Aikotoba
       if two_factor.nil? && aikotoba_two_factor_required?
         raise Errors::TwoFactorRequired,
           "the #{aikotoba_scope} scope requires a second factor: call aikotoba_begin_sign_in after checking " \
-          "the password, or pass two_factor: :verified (it was passed) or :skip (none is needed) to aikotoba_sign_in"
+          "the password, or pass two_factor: :verified to aikotoba_sign_in once it was passed"
       end
 
       start_new_aikotoba_session_for(account).tap do |session|

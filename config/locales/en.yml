@@ -21,8 +21,6 @@ en:
     recoveries:
       new: Send password reset token
       edit: Password reset
-    magic_links:
-      new: Send sign in link
     two_factors:
       new: Two-factor authentication
       submit: Verify
@@ -37,8 +35,6 @@ en:
         subject: "Unlock instructions"
       recover:
         subject: "Password reset instructions"
-      magic_link:
-        subject: "Your sign in link"
       email_otp:
         subject: "Your verification code"
 
@@ -62,9 +58,6 @@ en:
         sent: Password reset url has been sent to your email address (if user with that email address exists).
         success: Password reset you account successfully.
         failed: Oops. Password reset failed.
-      magic_link:
-        sent: Sign in url has been sent to your email address (if user with that email address exists).
-        failed: Oops. Sign in link is invalid or has expired.
       two_factor:
         required: One more step is needed to finish signing in.
         failed: Oops. Two-factor authentication failed.

@@ -20,8 +20,7 @@ class TokenRequestLoggingTest < ActionDispatch::IntegrationTest
   {
     confirmable: [:create_confirmation_token_path, "[Aikotoba] Confirmation email not sent: no unconfirmed account with that email in the default scope."],
     lockable: [:create_unlock_token_path, "[Aikotoba] Unlock email not sent: no locked account with that email in the default scope."],
-    recoverable: [:create_recovery_token_path, "[Aikotoba] Password reset email not sent: no account with that email in the default scope."],
-    magic_link_authenticatable: [:create_magic_link_path, "[Aikotoba] Magic link not sent: no account with that email in the default scope."]
+    recoverable: [:create_recovery_token_path, "[Aikotoba] Password reset email not sent: no account with that email in the default scope."]
   }.each do |feature, (path, line)|
     test "#{path} logs why no email was sent for an unknown email, without the email" do
       Aikotoba.config.public_send(:"#{feature}=", true)
