@@ -22,7 +22,6 @@ Aikotoba is a Rails engine that makes it easy to implement simple email and pass
 - Confirmable(optional) : After registration, send an email with a token to confirm account.
 - Lockable(optional) : Lock account if make a mistake with password more than a certain number of times.
 - Recoverable(optional) : Recover account by resetting password.
-- MagicLinkAuthenticatable(optional) : (experimental) Authenticate account by clicking a one-time sign-in link sent by email, no password required.
 - TwoFactorAuthenticatable(optional, per scope) : (experimental) After a correct password, require a one-time code sent by email before signing in.
 
 [For more information](#features)
@@ -37,7 +36,7 @@ gem 'aikotoba'
 
 Aikotoba requires Rails 8.1 or later.
 
-Emails (confirmation, unlock, password recovery, magic link) are sent with `deliver_later` after the surrounding transaction commits. Configure a persistent Active Job backend in production: the default `:async` adapter loses queued emails when the process restarts.
+Emails (confirmation, unlock, password recovery, two-factor code) are sent with `deliver_later` after the surrounding transaction commits. Configure a persistent Active Job backend in production: the default `:async` adapter loses queued emails when the process restarts.
 
 ## Usage
 
@@ -51,7 +50,7 @@ $ bin/rails aikotoba:install:migrations
 
 The copied migration creates the always-required tables (accounts / password hashes /
 sessions) and carries one **commented-out** block per optional feature: Confirmable,
-Lockable, Recoverable, MagicLinkAuthenticatable and TwoFactorAuthenticatable. All of them
+Lockable, Recoverable and TwoFactorAuthenticatable. All of them
 default to off (see [Configuration](#configuration)), so nothing is created for them
 unless you ask for it. Uncomment the block for each feature you enable, then migrate:
 
@@ -138,8 +137,7 @@ redirects to the scope's sign in page, and after the next successful sign in
 redirects back there, falling back to `after_sign_in_path` when nothing was
 stored. Only a plain page visit (a non-XHR HTML `GET`) is stored, a
 protocol-relative path (`//host/...`) is never stored, so it can't become an
-open redirect, and it's used at most once. It also applies to [MagicLinkAuthenticatable](#experimental-magiclinkauthenticatable)
-sign in.
+open redirect, and it's used at most once.
 
 Aikotoba deliberately doesn't capture this from the `Referer` of `GET /sign_in`:
 browsers keep the original `Referer` across a redirect, so it points at the
@@ -246,30 +244,6 @@ Aikotoba enables a route to recover an account by password reset.
 | GET       | /recover/:token | Display page for recover account by password reset. |
 | PATCH     | /recover/:token | Recover account by password reset.                  |
 
-### (Experimental) MagicLinkAuthenticatable
-
-To enable it, set `config.magic_link_authenticatable` to `true` in `Aikotoba.configure`.
-
-```ruby
-Aikotoba.configure do |config|
-  config.magic_link_authenticatable = true
-end
-```
-
-Aikotoba enables a route to sign in via a one-time link sent by email —
-no password needed. This works for accounts that were never given a
-password at all (`Aikotoba::Account.create!(email: "sample@example.com")`),
-since password storage is owned entirely by `Aikotoba::Account::PasswordHash`
-and `Account` itself has no password of its own. Signing in works exactly
-like `Authenticatable`, just entered by clicking the link instead of
-submitting the sign-in form.
-
-| HTTP Verb | Path               | Overview                                       |
-| --------- | ------------------ | ----------------------------------------------- |
-| GET       | /magic_link        | Display page for requesting a sign in link.     |
-| POST      | /magic_link        | Send a one-time sign in link to the account.    |
-| GET       | /magic_link/:token | Verify the link and sign in.                    |
-
 ### (Experimental) TwoFactorAuthenticatable
 
 Turn it on per scope, with `two_factor_authenticatable: true`, and uncomment the `aikotoba_account_email_otp_codes` table in the migration:
@@ -299,7 +273,6 @@ A correct password then no longer signs in. Aikotoba emails a 6-digit code and s
 - The code expires after `config.email_otp_code_expiry` (10 minutes) and can be tried `config.email_otp_max_failed_attempts` times (5). After that the user signs in with the password again, which sends a new code; signing in again also replaces a code that hasn't been used.
 - **A wrong code is a failed sign in.** It counts towards the account's `failed_attempts` and, with [Lockable](#lockable), locks the account like a wrong password does. `failed_attempts` goes back to 0 only when the login session starts, not when the password matches, so someone who knows the password can't get a fresh set of guesses by signing in again, whichever controller checked the password.
 - Which account is signing in is kept in the Rails session, for the same time as the code. The code and the attempts made against it are kept in the database, since a cookie session could be sent again to undo an attempt count or to reuse a code.
-- [Magic link](#experimental-magiclinkauthenticatable) sign in doesn't ask for a code: having the email is what both prove.
 
 **An email code is a weaker second factor than an authenticator app or a passkey.** It protects an account whose password has leaked, but not one whose mailbox is taken over: with [Recoverable](#recoverable), whoever controls the mailbox can reset the password and receive the code. NIST SP 800-63B does not accept email for out-of-band authentication ([§5.1.3.1](https://pages.nist.gov/800-63-3/sp800-63b.html#-5131-out-of-band-authenticators)). Use it where the users' mailboxes are themselves protected with two-factor authentication.
 
@@ -323,7 +296,7 @@ class SignInsController < ApplicationController
 end
 ```
 
-`aikotoba_sign_in` starts the session straight away, so in a scope with `two_factor_authenticatable` it raises `Aikotoba::Errors::TwoFactorRequired` (before signing in) unless you say why skipping the code is fine: `two_factor: :verified` once the account passed its second factor, or `two_factor: :skip` for a credential that needs none, as Aikotoba's magic link sign in does. A controller that should have called `aikotoba_begin_sign_in` therefore fails the first time it runs, instead of silently letting accounts skip the code. Scopes without `two_factor_authenticatable` ignore `two_factor:`.
+`aikotoba_sign_in` starts the session straight away, so in a scope with `two_factor_authenticatable` it raises `Aikotoba::Errors::TwoFactorRequired` (before signing in) unless you pass `two_factor: :verified`, saying the account passed its second factor. A controller that should have called `aikotoba_begin_sign_in` therefore fails the first time it runs, instead of silently letting accounts skip the code. Scopes without `two_factor_authenticatable` ignore `two_factor:`.
 
 ### Rate Limiting
 
@@ -336,7 +309,6 @@ Aikotoba can rate limit the endpoints anyone can call without an account, using 
 | `confirmation_rate_limit_options`  | `POST /confirm`          | email bombing                                |
 | `unlock_rate_limit_options`        | `POST /unlock`           | email bombing                                |
 | `recovery_rate_limit_options`      | `POST /recover`          | email bombing                                |
-| `magic_link_rate_limit_options`    | `POST /magic_link`       | email bombing                                |
 | `two_factor_rate_limit_options`    | `POST /two_factor`       | guessing the emailed code                    |
 
 Every setting is off (`{}`) by default. Each takes the options of `rate_limit` (`to:`, `within:`, `by:`, `with:`, `store:`, `name:`, `only:`, `except:`):
@@ -407,8 +379,7 @@ Aikotoba.configure do |config|
     sign_out_path: "/admin/sign_out",
     confirm_path: "/admin/confirm",
     unlock_path: "/admin/unlock",
-    recover_path: "/admin/recover",
-    magic_link_path: "/admin/magic_link"
+    recover_path: "/admin/recover"
   })
 end
 ```
@@ -481,10 +452,6 @@ Aikotoba.configure do |config|
   config.recoverable = false
   config.recovery_token_expiry = 4.hours
 
-  # for (Experimental) MagicLinkAuthenticatable
-  config.magic_link_authenticatable = false
-  config.magic_link_token_expiry = 15.minutes
-
   # for (Experimental) TwoFactorAuthenticatable (turned on per scope with two_factor_authenticatable)
   config.email_otp_code_expiry = 10.minutes
   config.email_otp_max_failed_attempts = 5
@@ -518,11 +485,6 @@ Aikotoba.configure do |config|
     within: 1.hour,
     by: -> { request.params.dig(:account, :email).presence || request.remote_ip }
   }
-  config.magic_link_rate_limit_options = {
-    to: 5,
-    within: 1.hour,
-    by: -> { request.params.dig(:account, :email).presence || request.remote_ip }
-  }
 
   # Entering the emailed code, per IP. The attempts per code and Lockable limit it per account already.
   config.two_factor_rate_limit_options = {to: 20, within: 10.minutes, by: -> { request.remote_ip }}
@@ -543,7 +505,6 @@ Aikotoba.configure do |config|
     confirm_path: "/confirm",
     unlock_path: "/unlock",
     recover_path: "/recover",
-    magic_link_path: "/magic_link",
     two_factor_authenticatable: false,  # Require an emailed code after the password
     two_factor_path: "/two_factor",
     after_sign_in_path: "/sensitives",
@@ -560,7 +521,6 @@ Aikotoba.configure do |config|
     confirm_path: "/admin/confirm",
     unlock_path: "/admin/unlock",
     recover_path: "/admin/recover",
-    magic_link_path: "/admin/magic_link",
     after_sign_in_path: "/admin/sensitives",
     after_sign_out_path: "/admin/sign_in"
   })
@@ -606,7 +566,7 @@ end
 When `authenticate_for` is set, only accounts with matching `authenticate_target_type` will authenticate successfully in that scope.
 This is useful for separating authentication between different user types (e.g., Admin vs User).
 
-The same rule applies to the scope's confirm, unlock, password reset and magic link endpoints: they only send emails to, and accept tokens from, accounts with a matching `authenticate_target_type`. A scope without `authenticate_for` handles every account, just as it lets every account sign in.
+The same rule applies to the scope's confirm, unlock and password reset endpoints: they only send emails to, and accept tokens from, accounts with a matching `authenticate_target_type`. A scope without `authenticate_for` handles every account, just as it lets every account sign in.
 
 The links in those emails point to the account's own scope: the scope whose `authenticate_for` matches the account's `authenticate_target_type`, or the default scope if none does. This holds wherever the email was requested from, since it is rendered in a background job with no request to tell.
 
@@ -616,7 +576,7 @@ An added scope must also set its own `session_key`, the name of its session cook
 
 Each `authenticate_for` value may be set on only one scope, so that an account's type maps to exactly one scope. Otherwise `Aikotoba::Errors::InvalidScopeConfiguration` is raised when the scope is added, or at boot once your initializers have run. Keep in mind that `add_scope` copies unspecified keys from the default scope, including `authenticate_for`. If the default scope sets one, give every added scope its own `authenticate_for` (`nil` for an unrestricted scope).
 
-The same copying applies to paths, but they need no extra care. Aikotoba decides which scope a request belongs to by its `root_path`, so it draws each route path of a scope under that scope's `root_path`. A path already under `root_path` (`/admin/sign_in` in an `/admin` scope) is used as is. Any other path is prefixed with `root_path`: an unset `magic_link_path` inherits `/magic_link` from the default scope and is drawn as `/admin/magic_link`, and `/magic` becomes `/admin/magic`. Redirect targets such as `after_sign_in_path` are not prefixed. If you set an absolute path outside `root_path` on the scope itself (say `magic_link_path: "/magic"` in an `/admin` scope), it is still drawn as `/admin/magic`, and Aikotoba logs a warning at boot, since you may have meant `/magic` as is. Write `/admin/magic` or the relative `magic` to silence it.
+The same copying applies to paths, but they need no extra care. Aikotoba decides which scope a request belongs to by its `root_path`, so it draws each route path of a scope under that scope's `root_path`. A path already under `root_path` (`/admin/sign_in` in an `/admin` scope) is used as is. Any other path is prefixed with `root_path`: an unset `unlock_path` inherits `/unlock` from the default scope and is drawn as `/admin/unlock`, and `/unlocking` becomes `/admin/unlocking`. Redirect targets such as `after_sign_in_path` are not prefixed. If you set an absolute path outside `root_path` on the scope itself (say `unlock_path: "/unlocking"` in an `/admin` scope), it is still drawn as `/admin/unlocking`, and Aikotoba logs a warning at boot, since you may have meant `/unlocking` as is. Write `/admin/unlocking` or the relative `unlocking` to silence it.
 
 **Note:** A scope with `authenticate_for` has no sign up, even when `Aikotoba.registerable` is enabled: no route is generated for its `sign_up_path`, and its sign in page shows no sign up link. Its accounts need an `authenticate_target` of that type, which the generic sign up form can't create, and a public form that could would let anyone create, say, an Admin account. Create these accounts yourself (from the console, a seed, an invitation flow, or your own controller as described in [Registrable](#registrable)):
 
@@ -682,7 +642,7 @@ admin.account #=> Aikotoba::Account instance
 Aikotoba's controllers have no methods to override. Pick the tool by what you need:
 
 - **React to something that happened** (log it, send it to an audit trail, alert on it): subscribe to the [Events](#events). They are reported from every caller, so you don't need to touch any controller. A failed sign in is one too (`sign_in_failed`), but a sign in refused by a [rate limit](#rate-limiting) is not.
-- **Stop a request before Aikotoba handles it** (block an IP, require a feature flag): add a `before_action` to your `ApplicationController`. Aikotoba's controllers inherit it (`config.parent_controller`), so it runs before them. `is_a?(Aikotoba::ApplicationController)` limits it to Aikotoba's pages, sign in, sign up, magic links and the token pages alike:
+- **Stop a request before Aikotoba handles it** (block an IP, require a feature flag): add a `before_action` to your `ApplicationController`. Aikotoba's controllers inherit it (`config.parent_controller`), so it runs before them. `is_a?(Aikotoba::ApplicationController)` limits it to Aikotoba's pages, sign in, sign up, the two-factor page and the token pages alike:
 
   ```ruby
   class ApplicationController < ActionController::Base
@@ -696,7 +656,7 @@ Aikotoba's controllers have no methods to override. Pick the tool by what you ne
   end
   ```
 
-  Keep the condition this broad unless you mean one page only: you can sign in with a password or a magic link, and an email address is taken by the sign in page and by every token request, so a check on one action leaves the others open.
+  Keep the condition this broad unless you mean one page only: an email address is taken by the sign in page and by every token request, so a check on one action leaves the others open.
 
 - **Change the flow itself, or do more in the same transaction** (create a profile with the account, check the account after its password matched, show your own response to a validation error or to a token request for an email with no account): write your own controller on the model methods Aikotoba's controllers use, such as `Aikotoba::Account.build_by` / `#register!`, `Aikotoba::Account::PasswordHash.authenticate_by` and `aikotoba_sign_in` / `aikotoba_begin_sign_in` / `aikotoba_sign_out`. [Registrable](#registrable) shows a sign up controller. Your controller reports the same events, since the model methods and the sign in helpers report them.
 
@@ -717,22 +677,20 @@ Rails.event.subscribe(AuthEventSubscriber.new) { |event| event[:name].start_with
 
 | Event                                                                                         | Reported when                                                                   | Payload                                         |
 | --------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------- | ----------------------------------------------- |
-| `aikotoba.sign_in`                                                                            | a session starts (`aikotoba_sign_in`), with a password or a magic link         | `account_id`, `session_id`, `scope`             |
+| `aikotoba.sign_in`                                                                            | a session starts (`aikotoba_sign_in`)                                           | `account_id`, `session_id`, `scope`             |
 | `aikotoba.sign_out`                                                                           | a session is revoked (`aikotoba_sign_out`)                                      | `account_id`, `session_id`, `scope`             |
 | `aikotoba.sign_in_failed`                                                                     | a password sign in fails (`Aikotoba::Account::PasswordHash.authenticate_by`)    | `email`, `account_id`, `target_type_name`       |
-| `aikotoba.magic_link_sign_in_failed`                                                          | a magic link matches no active token (`Aikotoba::Account::MagicLink.authenticate_by`) | `target_type_name`                         |
 | `aikotoba.email_otp_sign_in_failed`                                                           | an emailed code is wrong, or none is left to try (`account.two_factor.authenticate`) | `account_id`, `target_type_name` |
 | `aikotoba.account_registered`                                                                 | `Aikotoba::Account#register!` saves an account                                  | `account_id`                                    |
 | `aikotoba.account_confirmed`                                                                  | an account is confirmed                                                          | `account_id`                                    |
 | `aikotoba.account_locked`                                                                     | an account is locked after too many failed sign ins                              | `account_id`                                    |
 | `aikotoba.account_unlocked`                                                                   | an account is unlocked                                                           | `account_id`                                    |
 | `aikotoba.password_recovered`                                                                 | a password is reset through a recovery token                                     | `account_id`                                    |
-| `aikotoba.confirmation_token_issued`, `aikotoba.unlock_token_issued`, `aikotoba.recovery_token_issued`, `aikotoba.magic_link_token_issued`, `aikotoba.email_otp_code_issued` | a token or code is issued, whether or not its email is sent | `account_id`, `notified`                        |
+| `aikotoba.confirmation_token_issued`, `aikotoba.unlock_token_issued`, `aikotoba.recovery_token_issued`, `aikotoba.email_otp_code_issued` | a token or code is issued, whether or not its email is sent | `account_id`, `notified`                        |
 
 - Each event is also a constant, such as `Aikotoba::Event::SignInFailed`, whose `event_name` is `"aikotoba.sign_in_failed"`, so a subscriber can match on it instead of a string.
 - Payloads hold plain values, not records, so a subscriber can serialize them as is. `scope` is the scope's name (`"default"`, `"admin"`). `notified` is whether the token's email was queued: Aikotoba's own pages always send it, but your code may issue a token without (`notify: false`).
 - `sign_in_failed`'s `account_id` is `nil` when no account that can sign in to the scope has that email, so you can tell an unknown email from a wrong password. The response to the user is the same either way. It is also `nil` for a blank password, which is rejected before any account is looked up.
-- `magic_link_sign_in_failed` is reported for a link that is unknown, expired or already used, or whose account can't sign in to the scope (another target type, or locked or unconfirmed when Lockable or Confirmable is on). Its payload has no token, which is a credential, and no `account_id`, since a failed link doesn't tell whose it was. The user gets a 404 either way.
 - `email_otp_sign_in_failed` carries the `account_id`, since the password step already said whose sign in it is, but not the code, which is a credential. A sign in that requires a code reports `sign_in` only once the code is entered, and a wrong password still reports `sign_in_failed`.
 - `sign_in_failed`'s `email` is normalized the way Aikotoba looks accounts up (surrounding spaces stripped, lowercased), so `" Victim@Example.com"` and `"victim@example.com"` are reported as the same address. A missing email is reported as `nil`.
 - `Rails.event` masks payload keys that match `config.filter_parameters`. New apps filter `:email`, so `sign_in_failed`'s `email` is reported as `"[FILTERED]"` unless you change that filter.
@@ -744,17 +702,16 @@ Rails.event.subscribe(AuthEventSubscriber.new) { |event| event[:name].start_with
   end
   ```
 - The events are reported from the models and the sign in helpers, not the controllers, so your own controllers built on them report the same events. That includes the console and rake tasks: unlocking an account from the console reports `account_unlocked`.
-- Every event except the failed sign ins (`sign_in_failed`, `magic_link_sign_in_failed`, `email_otp_sign_in_failed`) is reported after the database transaction commits, the caller's own included, and not at all if it rolls back, so a subscriber never sees a change that didn't persist. The failed sign ins have nothing to commit, so they are reported right away.
+- Every event except the failed sign ins (`sign_in_failed`, `email_otp_sign_in_failed`) is reported after the database transaction commits, the caller's own included, and not at all if it rolls back, so a subscriber never sees a change that didn't persist. The failed sign ins have nothing to commit, so they are reported right away.
 - Subscribers run synchronously, in the request (or job, or console) that reported the event, so keep them fast and enqueue a job for anything slow. `Rails.event` reports an exception raised by a subscriber to `Rails.error` instead of failing the request, except where `config.consider_all_requests_local` is set (development and test by default), where it raises.
 - In tests, use Rails' `assert_event_reported("aikotoba.sign_in")` and friends.
-- A magic link sign in reports `sign_in` like a password one; its `scope` tells which scope it signed in to.
 
 ### Logs
 
 Aikotoba writes a few lines of its own to `Rails.logger`, each prefixed with `[Aikotoba]`, so you can find them among your app's:
 
 - at boot, a warning when an absolute path you set on an added scope is drawn under its `root_path` (see [Filtering by authenticate target type](#filtering-by-authenticate-target-type));
-- at the `info` level, when a confirmation, unlock, password reset or magic link email is not sent because no account matches the email. The user sees the same page either way, so this line is how you tell why an email never arrived. It names the scope but not the email, since `config.filter_parameters` doesn't mask a log message.
+- at the `info` level, when a confirmation, unlock or password reset email is not sent because no account matches the email. The user sees the same page either way, so this line is how you tell why an email never arrived. It names the scope but not the email, since `config.filter_parameters` doesn't mask a log message.
 
 ### Using encrypted token
 

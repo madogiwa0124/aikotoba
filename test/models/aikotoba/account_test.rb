@@ -425,7 +425,6 @@ class Aikotoba::AccountTest < ActiveSupport::TestCase
       aikotoba_account_confirmation_tokens
       aikotoba_account_unlock_tokens
       aikotoba_account_recovery_tokens
-      aikotoba_account_magic_link_tokens
       aikotoba_account_email_otp_codes
     ].freeze
 
@@ -440,7 +439,6 @@ class Aikotoba::AccountTest < ActiveSupport::TestCase
       Aikotoba::Account::Confirmation.create_token!(account: @account, notify: false)
       Aikotoba::Account::Lock.create_token!(account: @account, notify: false)
       Aikotoba::Account::Recovery.create_token!(account: @account, notify: false)
-      Aikotoba::Account::MagicLink.create_token!(account: @account, notify: false)
       Aikotoba::Account::TwoFactor::EmailOtp.create_code!(account: @account, notify: false)
       Aikotoba::Account::Session.start!(account: @account)
     end
@@ -458,7 +456,6 @@ class Aikotoba::AccountTest < ActiveSupport::TestCase
         "Aikotoba::Account::ConfirmationToken.count",
         "Aikotoba::Account::UnlockToken.count",
         "Aikotoba::Account::RecoveryToken.count",
-        "Aikotoba::Account::MagicLinkToken.count",
         "Aikotoba::Account::TwoFactor::EmailOtpCode.count",
         "Aikotoba::Account::Session.count"
       ], -1 do
@@ -474,7 +471,6 @@ class Aikotoba::AccountTest < ActiveSupport::TestCase
         assert_nothing_raised { Aikotoba::Account.find(@account.id).destroy! }
       end
       assert_equal 0, Aikotoba::Account::ConfirmationToken.where(aikotoba_account_id: @account.id).count
-      assert_equal 0, Aikotoba::Account::MagicLinkToken.where(aikotoba_account_id: @account.id).count
       assert_equal 0, Aikotoba::Account::TwoFactor::EmailOtpCode.where(aikotoba_account_id: @account.id).count
     end
 
@@ -498,8 +494,7 @@ class Aikotoba::AccountTest < ActiveSupport::TestCase
       previous = {
         confirmable: Aikotoba.confirmable,
         lockable: Aikotoba.lockable,
-        recoverable: Aikotoba.recoverable,
-        magic_link_authenticatable: Aikotoba.magic_link_authenticatable
+        recoverable: Aikotoba.recoverable
       }
       two_factor = Aikotoba.scopes.transform_values(&:two_factor_authenticatable?)
       previous.each_key { |feature| Aikotoba.config.public_send(:"#{feature}=", false) }

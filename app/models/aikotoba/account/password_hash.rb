@@ -64,7 +64,7 @@ module Aikotoba
           account.password_hash.match?(password)
         else
           # NOTE: Runs whether account is nil (not found) or exists but has no
-          #       password_hash (e.g. a magic-link-only account), so neither case is
+          #       password_hash (e.g. one registered for a passwordless method), so neither case is
           #       distinguishable from a wrong-password guess by response time.
           prevent_timing_attack(password)
           false

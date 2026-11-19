@@ -277,16 +277,6 @@ class Aikotoba::TwoFactorAuthenticatableTest < ActionDispatch::IntegrationTest
     assert_not_signed_in
   end
 
-  test "magic link sign in does not ask for a code" do
-    Aikotoba.config.magic_link_authenticatable = true
-    Aikotoba::Account::MagicLink.create_token!(account: @account, notify: false)
-    assert_no_emails do
-      get aikotoba.authenticate_via_magic_link_path(token: @account.magic_link_token.token)
-    end
-    assert_redirected_to Aikotoba.default_scope[:after_sign_in_path]
-    assert_signed_in
-  end
-
   test "the two factor routes return 404 when the scope does not require it" do
     Aikotoba.config.default_scope[:two_factor_authenticatable] = false
     get aikotoba.new_two_factor_path

@@ -19,8 +19,7 @@ Aikotoba.configure do |config|
     after_sign_out_path: "/admin/sign_in",
     confirm_path: "/admin/confirm",
     unlock_path: "/admin/unlock",
-    recover_path: "/admin/recover",
-    # NOTE: magic_link_path is left unset on purpose: the "/magic_link" it inherits from the
-    #       default scope is drawn under root_path, as "/admin/magic_link".
+    # NOTE: recover_path is left unset on purpose: the "/recover" it inherits from the
+    #       default scope is drawn under root_path, as "/admin/recover".
   })
 end

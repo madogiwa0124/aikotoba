@@ -20,10 +20,6 @@ module Aikotoba
       def recoverable?
         Aikotoba.recoverable
       end
-
-      def magic_link_authenticatable?
-        Aikotoba.magic_link_authenticatable
-      end
     end
 
     def registerable?
@@ -40,10 +36,6 @@ module Aikotoba
 
     def recoverable?
       self.class.recoverable?
-    end
-
-    def magic_link_authenticatable?
-      self.class.magic_link_authenticatable?
     end
   end
 end

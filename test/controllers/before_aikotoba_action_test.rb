@@ -8,7 +8,7 @@ require "test_helper"
 class BeforeAikotobaActionTest < ActionDispatch::IntegrationTest
   def setup
     ActionController::Base.allow_forgery_protection = false
-    Aikotoba.config.magic_link_authenticatable = true
+    Aikotoba.config.recoverable = true
     @account = Aikotoba::Account.create_by!(attributes: {email: "email@example.com", password: "password"})
     @blocked = {"REMOTE_ADDR" => ApplicationController::BLOCKED_IP}
   end
@@ -23,9 +23,9 @@ class BeforeAikotobaActionTest < ActionDispatch::IntegrationTest
     assert_equal 0, @account.sessions.count
   end
 
-  test "a blocked IP can't request a magic link either" do
+  test "a blocked IP can't request a password reset either" do
     assert_no_emails do
-      post aikotoba.create_magic_link_path, params: {account: {email: @account.email}}, env: @blocked
+      post aikotoba.create_recovery_token_path, params: {account: {email: @account.email}}, env: @blocked
     end
     assert_response :forbidden
   end

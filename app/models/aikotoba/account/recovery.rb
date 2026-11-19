@@ -32,8 +32,8 @@ module Aikotoba
     end
 
     def recover!(new_password:)
-      # NOTE: An account can legitimately have no password (e.g. a magic-link-only
-      #       account), so there's nothing to recover. Surface this the same way an
+      # NOTE: An account can legitimately have no password (e.g. one registered for a
+      #       passwordless method), so there's nothing to recover. Surface this the same way an
       #       invalid new_password would be (RecordInvalid -> :password_hash error)
       #       instead of raising NoMethodError on a nil association.
       unless @account.password_hash

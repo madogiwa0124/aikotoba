@@ -32,15 +32,6 @@ module Aikotoba
       mail(to: @account.email, subject: I18n.t(".aikotoba.mailers.recover.subject"))
     end
 
-    def magic_link
-      @account = params[:account]
-      @token = @account.magic_link_token
-      return unless @token
-
-      @magic_link_url = aikotoba_scoped_url(:authenticate_via_magic_link_url, token: @token.token)
-      mail(to: @account.email, subject: I18n.t(".aikotoba.mailers.magic_link.subject"))
-    end
-
     # NOTE: No link: the code is typed into the page the sign in is waiting on, in the same
     #       browser, which is what ties it to the password just entered.
     def email_otp
