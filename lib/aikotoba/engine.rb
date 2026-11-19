@@ -15,6 +15,7 @@ module Aikotoba
     config.after_initialize do
       Aikotoba.scopes.validate!
       Aikotoba.scopes.warn_rewritten_paths
+      Aikotoba::Account::TwoFactor.validate_configuration!
     end
   end
 end

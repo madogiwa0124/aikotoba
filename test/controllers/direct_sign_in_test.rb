@@ -23,7 +23,7 @@ class DirectSignInTest < ActionDispatch::IntegrationTest
 
   # NOTE: An integration test only sees the 500 page Rails renders for the error.
   test "raises without two_factor: in a scope that requires a second factor, before signing in" do
-    Aikotoba.config.default_scope[:two_factor_authenticatable] = true
+    Aikotoba.config.default_scope[:two_factor_strategies] = %w[email_otp]
     assert_no_difference "Aikotoba::Account::Session.count" do
       assert_no_event_reported("aikotoba.sign_in") { sign_in_directly }
     end
@@ -31,7 +31,7 @@ class DirectSignInTest < ActionDispatch::IntegrationTest
   end
 
   test "signs in with two_factor: :verified in a scope that requires a second factor" do
-    Aikotoba.config.default_scope[:two_factor_authenticatable] = true
+    Aikotoba.config.default_scope[:two_factor_strategies] = %w[email_otp]
     assert_difference "Aikotoba::Account::Session.count", 1 do
       sign_in_directly(two_factor: "verified")
     end
@@ -50,7 +50,7 @@ class DirectSignInErrorTest < ActionController::TestCase
   end
 
   test "raises Errors::TwoFactorRequired, pointing at aikotoba_begin_sign_in" do
-    Aikotoba.config.default_scope[:two_factor_authenticatable] = true
+    Aikotoba.config.default_scope[:two_factor_strategies] = %w[email_otp]
     error = assert_raises(Aikotoba::Errors::TwoFactorRequired) do
       post :create, params: {email: @account.email}
     end
@@ -58,10 +58,11 @@ class DirectSignInErrorTest < ActionController::TestCase
     assert_equal 0, Aikotoba::Account::Session.count
   end
 
-  test "raises ArgumentError on any other two_factor:, whatever the scope requires" do
+  test "any other two_factor: counts as not passed" do
     # NOTE: :skip was accepted while magic link sign in, its only caller, existed.
-    %w[yes skip].each do |reason|
-      assert_raises(ArgumentError) do
+    Aikotoba.config.default_scope[:two_factor_strategies] = %w[email_otp]
+    %w[yes skip verifed].each do |reason|
+      assert_raises(Aikotoba::Errors::TwoFactorRequired) do
         post :create, params: {email: @account.email, two_factor: reason}
       end
     end

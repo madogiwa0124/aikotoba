@@ -1,19 +1,27 @@
 # frozen_string_literal: true
 
 module Aikotoba
-  # NOTE: A second factor strategy (see Account::TwoFactor for the interface): a short numeric
+  # NOTE: A second factor strategy (see Account::TwoFactor::Base for the interface): a short numeric
   #       code sent by email. Owns its own storage (Account::TwoFactor::EmailOtpCode) and the
   #       check, as Account::PasswordHash does for the first factor. Failed codes count towards the
   #       account's failed_attempts and lock it like a wrong password does, since whoever
   #       reaches this step already knows the password. The count is reset only when the
   #       session starts (Account::Session.start!), never by a correct password alone.
-  class Account::TwoFactor::EmailOtp
+  class Account::TwoFactor::EmailOtp < Account::TwoFactor::Base
+    # NOTE: Every account has an email address, so none has to set this up first.
+    def self.enrollment_required?
+      false
+    end
+
     def self.create_code!(account:, notify: false)
       new(account: account).create_code!(notify: notify)
     end
 
-    def initialize(account:)
-      @account = account
+    # NOTE: Always: there is nothing to set up (see enrollment_required?), and every account
+    #       has the email address the code is sent to. Whether the account may still sign in
+    #       (locked, another target type) is Account::TwoFactor's check, not this one.
+    def usable?
+      true
     end
 
     def start!
@@ -72,14 +80,9 @@ module Aikotoba
     # NOTE: A locked account can't finish signing in (Account::TwoFactor checks it can still
     #       sign in), so its code goes with the lock, and the sign in starts over.
     def failed!(issued)
-      @account.authentication_failed!
       issued.increment!(:failed_attempts)
-      if @account.lockable? && @account.should_lock?
-        Account::Lock.lock!(account: @account, notify: true)
-        issued.destroy!
-      elsif !issued.active?
-        issued.destroy!
-      end
+      authentication_failed!
+      issued.destroy! if @account.locked? || !issued.active?
     end
 
     def sign_in_failed(target_type_name)

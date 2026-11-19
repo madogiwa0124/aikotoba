@@ -19,11 +19,16 @@ module Aikotoba
       authenticate_for.blank?
     end
 
-    # NOTE: Whether signing in with a password to this scope also needs a one-time code sent
-    #       by email before the session starts. Set per scope (two_factor_authenticatable: true),
-    #       since a stricter scope (an admin one) is the usual reason to want it.
+    # NOTE: The second factors this scope offers, in order of preference (two_factor_strategies:
+    #       [:email_otp]): an account signs in with the first one it can use. Empty (the
+    #       default) turns two-factor sign in off for the scope. Set per scope, since a stricter
+    #       scope (an admin one) is the usual reason to want it.
+    def two_factor_strategies
+      Array(self[:two_factor_strategies]).map(&:to_s)
+    end
+
     def two_factor_authenticatable?
-      self[:two_factor_authenticatable] == true
+      two_factor_strategies.any?
     end
 
     # NOTE: Whether this is the scope set up for the target type (authenticate_for: "Admin"

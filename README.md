@@ -246,37 +246,46 @@ Aikotoba enables a route to recover an account by password reset.
 
 ### (Experimental) TwoFactorAuthenticatable
 
-Turn it on per scope, with `two_factor_authenticatable: true`, and uncomment the `aikotoba_account_email_otp_codes` table in the migration:
+Turn it on per scope by listing the second factors it offers in `two_factor_strategies`. An account signs in with the first one in the list it can use. The one strategy so far:
+
+- `:email_otp`: a 6-digit code sent by email. Every account can use it.
 
 ```ruby
 Aikotoba.configure do |config|
-  # Every account signing in to the default scope
-  config.default_scope[:two_factor_authenticatable] = true
+  # Every account signing in to the default scope gets an emailed code
+  config.default_scope[:two_factor_strategies] = [:email_otp]
 
-  # Or only the admins
+  # And every admin
   config.add_scope(:admin, {
     root_path: "/admin",
     session_key: "aikotoba_admin_session_token",
     authenticate_for: "Admin",
-    two_factor_authenticatable: true
+    two_factor_strategies: [:email_otp]
   })
 end
 ```
 
-A correct password then no longer signs in. Aikotoba emails a 6-digit code and sends the user to the scope's `two_factor_path`, and the login session starts only once the code is entered there. Until then there is no `Aikotoba::Account::Session`, so `aikotoba_current_account` is `nil`.
+Uncomment the table of each strategy you list in the migration: `aikotoba_account_email_otp_codes` for `:email_otp`.
 
-| HTTP Verb | Path        | Overview                                      |
-| --------- | ----------- | --------------------------------------------- |
-| GET       | /two_factor | Display page for entering the emailed code.   |
-| POST      | /two_factor | Verify the code and sign in.                  |
+A correct password then no longer signs in. Aikotoba challenges the account (emails a code) and sends the user to the scope's `two_factor_path`. The login session starts only once the code is entered there. Until then there is no `Aikotoba::Account::Session`, so `aikotoba_current_account` is `nil`.
+
+| HTTP Verb | Path        | Overview                                    |
+| --------- | ----------- | ------------------------------------------- |
+| GET       | /two_factor | Display page for entering the code.         |
+| POST      | /two_factor | Verify the code and sign in.                |
+
+- Every account of the scope passes a second factor; letting each account choose whether to use one isn't supported. So a list made only of strategies an account has to set up first is refused at boot: an account that hadn't couldn't sign in to set one up.
+- **A wrong code is a failed sign in.** It counts towards the account's `failed_attempts` and, with [Lockable](#lockable), locks the account like a wrong password does. `failed_attempts` goes back to 0 only when the login session starts, not when the password matches, so someone who knows the password can't get a fresh set of guesses by signing in again, whichever controller checked the password.
+- Which account is signing in, with which strategy, is kept in the Rails session. What the strategy checks (an emailed code and the attempts made against it) is kept in the database, since a cookie session could be sent again to undo an attempt count or to reuse a code.
+
+#### Emailed code (`:email_otp`)
 
 - The code expires after `config.email_otp_code_expiry` (10 minutes) and can be tried `config.email_otp_max_failed_attempts` times (5). After that the user signs in with the password again, which sends a new code; signing in again also replaces a code that hasn't been used.
-- **A wrong code is a failed sign in.** It counts towards the account's `failed_attempts` and, with [Lockable](#lockable), locks the account like a wrong password does. `failed_attempts` goes back to 0 only when the login session starts, not when the password matches, so someone who knows the password can't get a fresh set of guesses by signing in again, whichever controller checked the password.
-- Which account is signing in is kept in the Rails session, for the same time as the code. The code and the attempts made against it are kept in the database, since a cookie session could be sent again to undo an attempt count or to reuse a code.
+- **An emailed code is a weaker second factor than an authenticator app or a passkey.** It protects an account whose password has leaked, but not one whose mailbox is taken over: with [Recoverable](#recoverable), whoever controls the mailbox can reset the password and receive the code. NIST SP 800-63B does not accept email for out-of-band authentication ([§5.1.3.1](https://pages.nist.gov/800-63-3/sp800-63b.html#-5131-out-of-band-authenticators)). Use it where the users' mailboxes are themselves protected with two-factor authentication.
 
-**An email code is a weaker second factor than an authenticator app or a passkey.** It protects an account whose password has leaked, but not one whose mailbox is taken over: with [Recoverable](#recoverable), whoever controls the mailbox can reset the password and receive the code. NIST SP 800-63B does not accept email for out-of-band authentication ([§5.1.3.1](https://pages.nist.gov/800-63-3/sp800-63b.html#-5131-out-of-band-authenticators)). Use it where the users' mailboxes are themselves protected with two-factor authentication.
+#### Your own sign in controller
 
-If you write your own sign in controller, call `aikotoba_begin_sign_in` instead of `aikotoba_sign_in` once the password matches. It signs in and returns the session when the scope doesn't require a code. When it does, it sends the code and returns `nil`, and you redirect to the code page:
+Call `aikotoba_begin_sign_in` instead of `aikotoba_sign_in` once the password matches. It signs in and returns the session when the scope doesn't require a second factor. When it does, it challenges the account and returns `nil`, and you redirect to the code page:
 
 ```ruby
 class SignInsController < ApplicationController
@@ -296,7 +305,7 @@ class SignInsController < ApplicationController
 end
 ```
 
-`aikotoba_sign_in` starts the session straight away, so in a scope with `two_factor_authenticatable` it raises `Aikotoba::Errors::TwoFactorRequired` (before signing in) unless you pass `two_factor: :verified`, saying the account passed its second factor. A controller that should have called `aikotoba_begin_sign_in` therefore fails the first time it runs, instead of silently letting accounts skip the code. Scopes without `two_factor_authenticatable` ignore `two_factor:`.
+`aikotoba_sign_in` starts the session straight away, so in a scope with `two_factor_strategies` it raises `Aikotoba::Errors::TwoFactorRequired` (before signing in) unless you pass `two_factor: :verified`, saying the account passed its second factor. A controller that should have called `aikotoba_begin_sign_in` therefore fails the first time it runs, instead of silently letting accounts skip the second factor. Scopes without `two_factor_strategies` ignore `two_factor:`.
 
 ### Rate Limiting
 
@@ -309,7 +318,7 @@ Aikotoba can rate limit the endpoints anyone can call without an account, using 
 | `confirmation_rate_limit_options`  | `POST /confirm`          | email bombing                                |
 | `unlock_rate_limit_options`        | `POST /unlock`           | email bombing                                |
 | `recovery_rate_limit_options`      | `POST /recover`          | email bombing                                |
-| `two_factor_rate_limit_options`    | `POST /two_factor`       | guessing the emailed code                    |
+| `two_factor_rate_limit_options`    | `POST /two_factor`       | guessing the code                            |
 
 Every setting is off (`{}`) by default. Each takes the options of `rate_limit` (`to:`, `within:`, `by:`, `with:`, `store:`, `name:`, `only:`, `except:`):
 
@@ -452,7 +461,7 @@ Aikotoba.configure do |config|
   config.recoverable = false
   config.recovery_token_expiry = 4.hours
 
-  # for (Experimental) TwoFactorAuthenticatable (turned on per scope with two_factor_authenticatable)
+  # for (Experimental) TwoFactorAuthenticatable (turned on per scope with two_factor_strategies)
   config.email_otp_code_expiry = 10.minutes
   config.email_otp_max_failed_attempts = 5
 
@@ -505,7 +514,7 @@ Aikotoba.configure do |config|
     confirm_path: "/confirm",
     unlock_path: "/unlock",
     recover_path: "/recover",
-    two_factor_authenticatable: false,  # Require an emailed code after the password
+    two_factor_strategies: [],  # Second factors offered, e.g. [:email_otp]; empty turns it off
     two_factor_path: "/two_factor",
     after_sign_in_path: "/sensitives",
     after_sign_out_path: "/sign_in"
@@ -756,7 +765,7 @@ end
 You can use a helper to login/logout by Aikotoba.
 :warning: It only supports rack testing.
 
-Both helpers sign in to the default scope; pass `scope:` for another one (`aikotoba_sign_in(admin_account, password: "password", scope: :admin)`, `aikotoba_sign_out(scope: :admin)`). When that scope has `two_factor_authenticatable`, `aikotoba_sign_in` also enters the code it was sent, so the account ends up signed in either way.
+Both helpers sign in to the default scope; pass `scope:` for another one (`aikotoba_sign_in(admin_account, password: "password", scope: :admin)`, `aikotoba_sign_out(scope: :admin)`). When that scope has `two_factor_strategies`, `aikotoba_sign_in` also enters a valid code for the strategy the account was challenged with (the emailed code), so the account ends up signed in either way.
 
 ```ruby
 require "aikotoba/test/authentication_helper"

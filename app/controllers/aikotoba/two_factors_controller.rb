@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module Aikotoba
-  # NOTE: The second step of a password sign in to a scope with two_factor_authenticatable:
+  # NOTE: The second step of a password sign in to a scope with two_factor_strategies:
   #       the challenge started by SessionsController#create (via aikotoba_begin_sign_in) is
   #       answered here, and the session starts only once it succeeds. Knows nothing about the
   #       strategy beyond its key: account.two_factor checks the answer, and the page renders

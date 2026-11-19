@@ -7,6 +7,13 @@ module Aikotoba
       #       (scope: :admin uses admin_create_session_path), and the code to enter when the
       #       password step asked for one.
       module Scoped
+        # NOTE: How a test gets a valid code for each strategy, kept here rather than as
+        #       test-only methods on the strategies. A strategy added to
+        #       Account::TwoFactor::STRATEGIES adds its entry here too.
+        TWO_FACTOR_TEST_CODES = {
+          "email_otp" => ->(account) { account.email_otp_code&.code }
+        }.freeze
+
         private
 
         def aikotoba_scoped_test_path(route, scope)
@@ -15,14 +22,16 @@ module Aikotoba
           aikotoba.public_send(name)
         end
 
-        # NOTE: The code the password step just issued, only when its response sent the account
-        #       on to the scope's code page. A code left over from an earlier sign in that was
-        #       never finished is never entered after a wrong password.
+        # NOTE: The code for the strategy the account was challenged with, only when the password
+        #       step's response sent it on to the scope's code page. A code left over from an
+        #       earlier sign in that was never finished is never entered after a wrong password.
         def aikotoba_two_factor_test_code(account, scope, response)
           return unless response.redirect?
           return unless URI(response.location).path == aikotoba_scoped_test_path(:new_two_factor_path, scope)
 
-          account.reload.email_otp_code&.code
+          account.reload
+          strategy = account.two_factor.strategy_for(aikotoba_test_scope(scope).two_factor_strategies)
+          TWO_FACTOR_TEST_CODES.fetch(strategy).call(account)
         end
 
         def aikotoba_test_scope(scope)
@@ -38,7 +47,7 @@ module Aikotoba
           follow_redirect!
         end
 
-        # NOTE: In a scope with two_factor_authenticatable, also enters the code the password
+        # NOTE: In a scope with two_factor_strategies, also enters the code the password
         #       step just issued, so the account ends up signed in either way.
         def aikotoba_sign_in(account, password:, scope: :default)
           post aikotoba_scoped_test_path(:create_session_path, scope), params: {account: {email: account.email, password: password}}

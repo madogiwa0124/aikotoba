@@ -13,19 +13,15 @@ module Aikotoba
       @aikotoba_current_account ||= aikotoba_current_session&.account
     end
 
-    TWO_FACTOR_SIGN_IN_REASONS = %i[verified].freeze
-
     # NOTE: Starts a session right away, whatever the scope requires. In a scope with
-    #       two_factor_authenticatable, the caller has to say the account passed its second
-    #       factor (two_factor: :verified). Without it this raises
+    #       two_factor_strategies, the caller has to say the account passed its second factor
+    #       (two_factor: :verified). Without it this raises
     #       Errors::TwoFactorRequired before signing in, so a controller that should have
     #       called aikotoba_begin_sign_in fails the first time it runs rather than skipping
-    #       the second factor. Scopes without two_factor_authenticatable ignore two_factor:.
+    #       the second factor. Any other value counts as not passed. Scopes without
+    #       two_factor_strategies ignore two_factor:.
     def aikotoba_sign_in(account, two_factor: nil)
-      unless two_factor.nil? || TWO_FACTOR_SIGN_IN_REASONS.include?(two_factor)
-        raise ArgumentError, "two_factor: must be one of #{TWO_FACTOR_SIGN_IN_REASONS.inspect}, got #{two_factor.inspect}"
-      end
-      if two_factor.nil? && aikotoba_two_factor_required?
+      if two_factor != :verified && aikotoba_two_factor_required?
         raise Errors::TwoFactorRequired,
           "the #{aikotoba_scope} scope requires a second factor: call aikotoba_begin_sign_in after checking " \
           "the password, or pass two_factor: :verified to aikotoba_sign_in once it was passed"
@@ -36,20 +32,22 @@ module Aikotoba
       end
     end
 
-    # NOTE: What to call once the first factor (a password) has been checked: signs in right
-    #       away (and returns the session, as aikotoba_sign_in does) unless the scope requires
-    #       a second factor, in which case it sends a one-time code and returns nil, leaving
-    #       the account to finish at the scope's two_factor_path. No Account::Session exists
+    # NOTE: What to call once the first factor has been checked: signs in right away (and
+    #       returns the session, as aikotoba_sign_in does) unless the scope requires a second
+    #       factor, in which case it challenges the account (sends a code, ...) and returns nil,
+    #       leaving it to finish at the scope's two_factor_path. No Account::Session exists
     #       until then, so aikotoba_current_account stays nil in between.
     #       An app's own sign in controller calls this rather than aikotoba_sign_in.
-    #       The session is reset first, so a session fixed before the password step can't
+    #       The session is reset first, so a session fixed before the first factor can't
     #       inherit the sign in in progress. Which strategy, and how it challenges, is
     #       account.two_factor's (Account::TwoFactor) to decide.
     def aikotoba_begin_sign_in(account)
       return aikotoba_sign_in(account) unless aikotoba_two_factor_required?
 
+      two_factor = account.two_factor
+      strategy = two_factor.strategy_for(aikotoba_scope_config.two_factor_strategies)
       prevent_session_fixation_attack
-      challenge = account.two_factor.start!
+      challenge = two_factor.start!(strategy: strategy)
       aikotoba_two_factor_challenge_store.start(account, challenge)
       nil
     end

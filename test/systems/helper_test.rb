@@ -30,14 +30,14 @@ class HelperTest < ActionDispatch::SystemTestCase
   end
 
   test "sign_in by helper enters the code when the default scope requires it" do
-    Aikotoba.config.default_scope[:two_factor_authenticatable] = true
+    Aikotoba.config.default_scope[:two_factor_strategies] = %w[email_otp]
     aikotoba_sign_in(@account, password: @password)
     visit "/sensitives"
     assert_selector "h1", text: "Sensitive Page"
   end
 
   test "sign in through the pages with a code" do
-    Aikotoba.config.default_scope[:two_factor_authenticatable] = true
+    Aikotoba.config.default_scope[:two_factor_strategies] = %w[email_otp]
     visit aikotoba.new_session_path
     fill_in "Email", with: @account.email
     fill_in "Password", with: @password
