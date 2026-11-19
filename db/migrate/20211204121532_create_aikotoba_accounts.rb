@@ -114,7 +114,7 @@ class CreateAikotobaAccounts < ActiveRecord::Migration[6.1]
     #   )
     #   t.string :secret, null: false
     #   t.datetime :enabled_at
-    #   t.bigint :last_otp_at
+    #   t.datetime :last_otp_at
     #
     #   t.timestamps
     # end
