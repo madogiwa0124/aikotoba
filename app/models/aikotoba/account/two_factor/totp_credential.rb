@@ -3,8 +3,8 @@
 module Aikotoba
   # NOTE: An account's TOTP secret, shared with its authenticator app. Pending until the account
   #       turns it on with a code from the app (enabled_at), so a secret its app never stored
-  #       can't lock it out. last_otp_at is the time step of the last code accepted, so a code
-  #       is accepted once (RFC 6238 section 5.2).
+  #       can't lock it out. last_otp_at is the start of the time step of the last code
+  #       accepted (like Rodauth's last_use), so a code is accepted once (RFC 6238 section 5.2).
   #
   #       TOTP itself is done by algorithm_class (TotpCredential::Algorithm, the rotp gem) and the QR
   #       code by qr_code_class (TotpCredential::QrCode, the rqrcode gem), which can be swapped
@@ -46,13 +46,15 @@ module Aikotoba
       enabled_at.present?
     end
 
-    # NOTE: When the code verified, the start of the time step it belongs to (Unix seconds, what
-    #       last_otp_at records), if it matches and is newer than the last one accepted; nil
-    #       otherwise. Spaces are ignored ("123 456"), and nil is a mismatch.
+    # NOTE: When the code verified, the start of the time step it belongs to (what last_otp_at
+    #       records: the step, not the time of the request, since a code from the next step
+    #       accepted now must stay used once that step comes), if it matches and is newer than
+    #       the last one accepted; nil otherwise. Spaces are ignored ("123 456"), and nil is a mismatch.
     #       Doesn't record the step: the caller does, under its row lock, so two requests can't
     #       both use the same code.
     def verify(code, at: Time.current, algorithm_class: Algorithm)
-      algorithm(algorithm_class).verify(code.to_s.gsub(/\s/, ""), drift: DRIFT, after: last_otp_at, at: at)
+      step = algorithm(algorithm_class).verify(code.to_s.gsub(/\s/, ""), drift: DRIFT, after: last_otp_at, at: at)
+      step && Time.zone.at(step)
     end
 
     # NOTE: What the account's authenticator app reads from the QR code (otpauth://totp/...).
