@@ -23,7 +23,7 @@ class CustomSignInTest < ActionDispatch::IntegrationTest
   # NOTE: The controller passes nothing about failed_attempts, so this is what keeps an app's
   #       own controller from resetting the count on a correct password.
   test "sends a code and leaves the account signed out when the scope requires one" do
-    Aikotoba.config.default_scope[:two_factor_authenticatable] = true
+    Aikotoba.config.default_scope[:two_factor_strategies] = %w[email_otp]
     @account.update!(failed_attempts: 2)
     assert_emails 1 do
       assert_no_event_reported("aikotoba.sign_in") do

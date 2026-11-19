@@ -496,13 +496,13 @@ class Aikotoba::AccountTest < ActiveSupport::TestCase
         lockable: Aikotoba.lockable,
         recoverable: Aikotoba.recoverable
       }
-      two_factor = Aikotoba.scopes.transform_values(&:two_factor_authenticatable?)
+      two_factor = Aikotoba.scopes.transform_values(&:two_factor_strategies)
       previous.each_key { |feature| Aikotoba.config.public_send(:"#{feature}=", false) }
-      Aikotoba.scopes.each_value { |scope| scope[:two_factor_authenticatable] = false }
+      Aikotoba.scopes.each_value { |scope| scope[:two_factor_strategies] = [] }
       yield
     ensure
       previous.each { |feature, value| Aikotoba.config.public_send(:"#{feature}=", value) }
-      two_factor.each { |name, value| Aikotoba.scopes[name][:two_factor_authenticatable] = value }
+      two_factor.each { |name, value| Aikotoba.scopes[name][:two_factor_strategies] = value }
     end
 
     # NOTE: SQLite (the test adapter) has transactional DDL, so the drops roll back with

@@ -51,7 +51,7 @@ module Aikotoba
       @recovery_token_expiry = 4.hours
       @recovery_rate_limit_options = {}
 
-      # for TwoFactorAuthenticatable (turned on per scope, see two_factor_authenticatable below)
+      # for TwoFactorAuthenticatable (turned on per scope, see two_factor_strategies below)
       @email_otp_code_expiry = 10.minutes
       @email_otp_max_failed_attempts = 5
       @two_factor_rate_limit_options = {}
@@ -72,7 +72,7 @@ module Aikotoba
           confirm_path: "/confirm",
           unlock_path: "/unlock",
           recover_path: "/recover",
-          two_factor_authenticatable: false,
+          two_factor_strategies: [],
           two_factor_path: "/two_factor"
         }
       })

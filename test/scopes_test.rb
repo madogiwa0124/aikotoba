@@ -46,10 +46,12 @@ class Aikotoba::ScopesTest < ActiveSupport::TestCase
     assert_equal "/login", Aikotoba.default_scope[:sign_in_path]
   end
 
-  test "Scope#two_factor_authenticatable? is off unless set to true, and add_scope inherits it" do
+  test "Scope#two_factor_strategies turns two-factor sign in on when not empty, and add_scope inherits it" do
+    assert_equal [], Aikotoba.default_scope.two_factor_strategies
     assert_not Aikotoba.default_scope.two_factor_authenticatable?
-    assert Aikotoba::Scope.new(two_factor_authenticatable: true).two_factor_authenticatable?
-    assert_not Aikotoba::Scope.new(two_factor_authenticatable: "true").two_factor_authenticatable?
+    scope = Aikotoba::Scope.new(two_factor_strategies: [:email_otp])
+    assert scope.two_factor_authenticatable?
+    assert_equal %w[email_otp], scope.two_factor_strategies
     assert_not Aikotoba.scopes[:admin].two_factor_authenticatable?
   end
 

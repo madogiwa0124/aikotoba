@@ -3,12 +3,12 @@
 require "test_helper"
 require "minitest/mock"
 
-# NOTE: A scope with two_factor_authenticatable: a correct password sends a one-time code by
+# NOTE: A scope with two_factor_strategies: [:email_otp]: a correct password sends a one-time code by
 #       email instead of signing in, and the session starts only once the code is entered.
 class Aikotoba::TwoFactorAuthenticatableTest < ActionDispatch::IntegrationTest
   def setup
     ActionController::Base.allow_forgery_protection = false
-    Aikotoba.config.default_scope[:two_factor_authenticatable] = true
+    Aikotoba.config.default_scope[:two_factor_strategies] = %w[email_otp]
     @password = "password"
     @account = Aikotoba::Account.create_by!(attributes: {email: "two_factor@example.com", password: @password})
   end
@@ -278,15 +278,15 @@ class Aikotoba::TwoFactorAuthenticatableTest < ActionDispatch::IntegrationTest
   end
 
   test "the two factor routes return 404 when the scope does not require it" do
-    Aikotoba.config.default_scope[:two_factor_authenticatable] = false
+    Aikotoba.config.default_scope[:two_factor_strategies] = []
     get aikotoba.new_two_factor_path
     assert_response :not_found
     post aikotoba.create_two_factor_path, params: {two_factor: {code: "123456"}}
     assert_response :not_found
   end
 
-  test "without two_factor_authenticatable a correct password signs in right away" do
-    Aikotoba.config.default_scope[:two_factor_authenticatable] = false
+  test "without two_factor_strategies a correct password signs in right away" do
+    Aikotoba.config.default_scope[:two_factor_strategies] = []
     assert_no_emails { sign_in_with_password }
     assert_redirected_to Aikotoba.default_scope[:after_sign_in_path]
     assert_nil @account.reload.email_otp_code
@@ -295,7 +295,7 @@ class Aikotoba::TwoFactorAuthenticatableTest < ActionDispatch::IntegrationTest
   class AdminScope < ActionDispatch::IntegrationTest
     def setup
       ActionController::Base.allow_forgery_protection = false
-      Aikotoba.config.scopes[:admin][:two_factor_authenticatable] = true
+      Aikotoba.config.scopes[:admin][:two_factor_strategies] = %w[email_otp]
       @password = "password"
       @admin_account = Aikotoba::Account.create_by!(attributes: {email: "two_factor_admin@example.com", password: @password, authenticate_target: Admin.create!(nickname: "two_factor")})
       @user_account = Aikotoba::Account.create_by!(attributes: {email: "two_factor_user@example.com", password: @password})
@@ -321,7 +321,7 @@ class Aikotoba::TwoFactorAuthenticatableTest < ActionDispatch::IntegrationTest
 
     test "a sign in in progress for one scope can't be finished in another" do
       post aikotoba.admin_create_session_path, params: {account: {email: @admin_account.email, password: @password}}
-      Aikotoba.config.default_scope[:two_factor_authenticatable] = true
+      Aikotoba.config.default_scope[:two_factor_strategies] = %w[email_otp]
       post aikotoba.create_two_factor_path, params: {two_factor: {code: @admin_account.reload.email_otp_code.code}}
       assert_redirected_to aikotoba.new_session_path
       assert_not_nil @admin_account.reload.email_otp_code
@@ -334,7 +334,7 @@ class Aikotoba::TwoFactorRequestHelperTest < ActionDispatch::IntegrationTest
 
   test "aikotoba_sign_in enters the code when the default scope requires it" do
     ActionController::Base.allow_forgery_protection = false
-    Aikotoba.config.default_scope[:two_factor_authenticatable] = true
+    Aikotoba.config.default_scope[:two_factor_strategies] = %w[email_otp]
     account = Aikotoba::Account.create_by!(attributes: {email: "request_helper@example.com", password: "password"})
     aikotoba_sign_in(account, password: "password")
     assert_equal Aikotoba.default_scope[:after_sign_in_path], path
@@ -346,7 +346,7 @@ class Aikotoba::TwoFactorRequestHelperTest < ActionDispatch::IntegrationTest
   #       the helper's follow_redirect! raises; what matters is that it entered no code.
   test "aikotoba_sign_in doesn't enter a code left from an unfinished sign in after a wrong password" do
     ActionController::Base.allow_forgery_protection = false
-    Aikotoba.config.default_scope[:two_factor_authenticatable] = true
+    Aikotoba.config.default_scope[:two_factor_strategies] = %w[email_otp]
     account = Aikotoba::Account.create_by!(attributes: {email: "request_helper_stale@example.com", password: "password"})
     post aikotoba.create_session_path, params: {account: {email: account.email, password: "password"}}
     assert_not_nil account.reload.email_otp_code
@@ -362,7 +362,7 @@ class Aikotoba::TwoFactorScopedHelperTest < ActionDispatch::IntegrationTest
 
   def setup
     ActionController::Base.allow_forgery_protection = false
-    Aikotoba.config.scopes[:admin][:two_factor_authenticatable] = true
+    Aikotoba.config.scopes[:admin][:two_factor_strategies] = %w[email_otp]
     @admin_account = Aikotoba::Account.create_by!(attributes: {email: "helper_admin@example.com", password: "password", authenticate_target: Admin.create!(nickname: "helper")})
   end
 

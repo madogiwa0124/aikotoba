@@ -1,7 +1,7 @@
 class CreateAikotobaAccounts < ActiveRecord::Migration[6.1]
   # NOTE: The tables below the "optional features" marker belong to features that are
   #       disabled by default (Aikotoba.confirmable / .lockable / .recoverable all
-  #       default to false, as does every scope's two_factor_authenticatable), so they
+  #       default to false, and every scope's two_factor_strategies to []), so they
   #       ship commented out.
   #       Uncomment the block for each feature you enable -- before running db:migrate
   #       on a fresh install, or in a new migration of your own if you enable the
@@ -89,7 +89,7 @@ class CreateAikotobaAccounts < ActiveRecord::Migration[6.1]
     #   t.timestamps
     # end
 
-    # two_factor_authenticatable: true (on any scope)
+    # two_factor_strategies including :email_otp (on any scope)
     #
     # create_table :aikotoba_account_email_otp_codes do |t|
     #   t.belongs_to(
