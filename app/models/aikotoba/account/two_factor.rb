@@ -14,6 +14,7 @@ module Aikotoba
   #       may still sign in at all is checked here, before any strategy is asked.
   class Account::TwoFactor
     STRATEGIES = {
+      "totp" => "Aikotoba::Account::TwoFactor::Totp",
       "email_otp" => "Aikotoba::Account::TwoFactor::EmailOtp"
     }.freeze
 
@@ -37,9 +38,10 @@ module Aikotoba
       #       Errors::InvalidTwoFactorConfiguration for a scope that lists an unknown strategy, or
       #       offers only strategies an account has to set up first (every account of the scope
       #       passes a second factor, and one that hasn't set any up couldn't sign in to do so);
-      #       then lets each strategy in use check what it needs. Whether a registered strategy
-      #       implements Account::TwoFactor::Base is left to Account::TwoFactorTest: STRATEGIES is
-      #       the engine's own, so a strategy can't reach an app without passing that test.
+      #       then lets each strategy in use check what it needs (TOTP: a warning without
+      #       encrypted_token). Whether a registered strategy implements Account::TwoFactor::Base
+      #       is left to Account::TwoFactorTest: STRATEGIES is the engine's own, so a strategy
+      #       can't reach an app without passing that test.
       def validate_configuration!(scopes = Aikotoba.scopes)
         in_use = Hash.new { |hash, key| hash[key] = [] }
         scopes.each do |name, scope|
@@ -73,9 +75,8 @@ module Aikotoba
     end
 
     # NOTE: The strategy the account signs in with: the first of the scope's strategies it can
-    #       use (email_otp always; one that needs setting up, once the account has). nil only
-    #       when none is usable, which validate_configuration! rules out for a scope that offers
-    #       any strategy.
+    #       use (TOTP once set up; email_otp always). nil only when none is usable, which
+    #       validate_configuration! rules out for a scope that offers any strategy.
     def strategy_for(strategies)
       strategies.map(&:to_s).find { |key| build_strategy(key)&.usable? }
     end
@@ -86,12 +87,14 @@ module Aikotoba
       Challenge.new(strategy: strategy.to_s, expires_at: challenger.challenge_expiry.from_now)
     end
 
-    # NOTE: strategy is the key the challenge was started with (Challenge#strategy, kept in the
+    # NOTE: Whether the code passes the second factor: true or false. Not the account, which
+    #       the caller already has (it built account.two_factor).
+    #       strategy is the key the challenge was started with (Challenge#strategy, kept in the
     #       Rails session); an unknown one answers like an expired challenge rather than raising.
     def authenticate(code, strategy:, target_type_name: nil)
-      return unless can_sign_in?(target_type_name)
+      return false unless can_sign_in?(target_type_name)
 
-      build_strategy(strategy)&.authenticate(code, target_type_name: target_type_name)
+      build_strategy(strategy)&.authenticate(code, target_type_name: target_type_name) || false
     end
 
     # NOTE: Whether the sign in can still be finished: the account can still sign in to the

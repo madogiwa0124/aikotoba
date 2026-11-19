@@ -50,6 +50,9 @@ module Aikotoba
     #       active code is left (expired, or used up its attempts). The code is a credential,
     #       so it is not reported; the account is, since the password step already said whose it is.
     EmailOtpSignInFailed = define(name: :email_otp_sign_in_failed, payload: %i[account_id target_type_name], after_commit: false)
+    # NOTE: A TOTP code that doesn't match the account's authenticator app now, or one already
+    #       used. The code is a credential, so it is not reported.
+    TotpSignInFailed = define(name: :totp_sign_in_failed, payload: %i[account_id target_type_name], after_commit: false)
     AccountRegistered = define(name: :account_registered, payload: %i[account_id])
     AccountConfirmed = define(name: :account_confirmed, payload: %i[account_id])
     AccountLocked = define(name: :account_locked, payload: %i[account_id])
@@ -61,5 +64,8 @@ module Aikotoba
     UnlockTokenIssued = define(name: :unlock_token_issued, payload: %i[account_id notified])
     RecoveryTokenIssued = define(name: :recovery_token_issued, payload: %i[account_id notified])
     EmailOtpCodeIssued = define(name: :email_otp_code_issued, payload: %i[account_id notified])
+    # NOTE: An account set up TOTP (confirmed its authenticator app with a code) or removed it.
+    TotpEnabled = define(name: :totp_enabled, payload: %i[account_id])
+    TotpDisabled = define(name: :totp_disabled, payload: %i[account_id])
   end
 end

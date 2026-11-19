@@ -34,9 +34,10 @@ module Aikotoba
 
     # NOTE: What to call once the first factor has been checked: signs in right away (and
     #       returns the session, as aikotoba_sign_in does) unless the scope requires a second
-    #       factor, in which case it challenges the account (sends a code, ...) and returns nil,
-    #       leaving it to finish at the scope's two_factor_path. No Account::Session exists
-    #       until then, so aikotoba_current_account stays nil in between.
+    #       factor, in which case it challenges the account (sends a code, or waits for its
+    #       authenticator app) and returns nil, leaving it to finish at the scope's
+    #       two_factor_path. No Account::Session exists until then, so aikotoba_current_account
+    #       stays nil in between.
     #       An app's own sign in controller calls this rather than aikotoba_sign_in.
     #       The session is reset first, so a session fixed before the first factor can't
     #       inherit the sign in in progress. Which strategy, and how it challenges, is

@@ -43,6 +43,13 @@ Aikotoba::Engine.routes.draw do
         get(config.route_path(:two_factor_path), to: "two_factors#new", as: :new_two_factor)
         post(config.route_path(:two_factor_path), to: "two_factors#create", as: :create_two_factor)
       end
+
+      # NOTE: Setting up TOTP, for a signed in account, in scopes that list :totp.
+      constraints(Aikotoba::TwoFactorAuthenticatableConstraint.new(scope_name, strategy: :totp)) do
+        get(config.route_path(:two_factor_totp_path), to: "totps#show", as: :two_factor_totp)
+        post(config.route_path(:two_factor_totp_path), to: "totps#create", as: :create_two_factor_totp)
+        delete(config.route_path(:two_factor_totp_path), to: "totps#destroy", as: :destroy_two_factor_totp)
+      end
     end
   end
 end

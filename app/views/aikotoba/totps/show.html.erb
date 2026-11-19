@@ -1,0 +1,29 @@
+<div class="aikotoba-totps-show">
+  <%= render "aikotoba/common/message" %>
+  <h1><%= I18n.t(".aikotoba.totps.show") %></h1>
+  <% if @credential %>
+    <p><%= I18n.t(".aikotoba.totps.scan") %></p>
+    <div class="aikotoba-totps-qr-code"><%= raw @credential.provisioning_qr_code_svg %></div>
+    <p>
+      <%= I18n.t(".aikotoba.totps.secret") %>:
+      <code><%= @credential.secret.scan(/.{1,4}/).join(" ") %></code>
+    </p>
+    <%= form_with scope: :totp, method: :post, url: aikotoba_scoped_path(:create_two_factor_totp_path) do |f| %>
+      <p>
+        <%= f.label :code, I18n.t(".aikotoba.totps.code") %>
+        <%= f.text_field :code, value: nil, required: true, autocomplete: "one-time-code", inputmode: "numeric", pattern: "[0-9]*", maxlength: 6 %>
+      </p>
+      <%= f.submit I18n.t(".aikotoba.totps.enable") %>
+    <% end %>
+  <% else %>
+    <p><%= I18n.t(".aikotoba.totps.enabled") %></p>
+    <p><%= I18n.t(".aikotoba.totps.disable_instruction") %></p>
+    <%= form_with scope: :totp, method: :delete, url: aikotoba_scoped_path(:destroy_two_factor_totp_path) do |f| %>
+      <p>
+        <%= f.label :code, I18n.t(".aikotoba.totps.code") %>
+        <%= f.text_field :code, value: nil, required: true, autocomplete: "one-time-code", inputmode: "numeric", pattern: "[0-9]*", maxlength: 6 %>
+      </p>
+      <%= f.submit I18n.t(".aikotoba.totps.disable") %>
+    <% end %>
+  <% end %>
+</div>

@@ -14,11 +14,11 @@ module Aikotoba
   #         .enrollment_required?   whether an account has to set it up before using it
   #         #usable?                whether this account can use it now
   #         #start!                 issue a challenge (send a code, or nothing)
-  #         #authenticate(code, target_type_name:) the account, or nil (counting the failure)
+  #         #authenticate(code, target_type_name:) whether the code matched (counting a failure)
   #         #challenge_active?      whether the challenge can still be answered
   #         #challenge_expiry       how long a sign in may wait on it
   #       .validate_configuration!(scope_names) is optional: boot-time checks of what the
-  #       strategy needs (gems, encryption).
+  #       strategy needs (TOTP: a warning without encrypted_token).
   class Account::TwoFactor::Base
     ABSTRACT_CLASS_METHODS = %i[enrollment_required?].freeze
     ABSTRACT_INSTANCE_METHODS = %i[usable? start! authenticate challenge_active? challenge_expiry].freeze

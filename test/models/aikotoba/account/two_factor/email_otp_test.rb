@@ -48,7 +48,7 @@ class Aikotoba::Account::TwoFactor::EmailOtpTest < ActiveSupport::TestCase
   test "authenticate returns the account for the right code and consumes it" do
     code = issue_code!.code
     @account.update!(failed_attempts: 2)
-    assert_equal @account, email_otp.authenticate(code)
+    assert_equal true, email_otp.authenticate(code)
     assert_nil @account.reload.email_otp_code
     # NOTE: Reset when the session starts (Account::Session.start!), not here.
     assert_equal 2, @account.failed_attempts
@@ -56,18 +56,18 @@ class Aikotoba::Account::TwoFactor::EmailOtpTest < ActiveSupport::TestCase
 
   test "authenticate counts a wrong code on the code and the account" do
     code = issue_code!
-    assert_nil email_otp.authenticate(code.code.succ.last(6))
+    assert_equal false, email_otp.authenticate(code.code.succ.last(6))
     assert_equal 1, code.reload.failed_attempts
     assert_equal 1, @account.reload.failed_attempts
   end
 
   test "authenticate does not count an attempt when no code can be tried" do
     assert_event_reported("aikotoba.email_otp_sign_in_failed", payload: {account_id: @account.id}) do
-      assert_nil email_otp.authenticate("123456")
+      assert_equal false, email_otp.authenticate("123456")
     end
     code = issue_code!
     code.update!(expired_at: 1.second.ago)
-    assert_nil email_otp.authenticate(code.code)
+    assert_equal false, email_otp.authenticate(code.code)
     assert_equal 0, @account.reload.failed_attempts
   end
 

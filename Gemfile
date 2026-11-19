@@ -17,6 +17,10 @@ group :development, :test do
   gem "standard", require: false
   # TODO: Upgrade to minitest v6 when Rails' minitest v6 support stabilizes
   gem "minitest", "~> 5.0"
+  # NOTE: Not gemspec dependencies: an app that offers TOTP (two_factor_strategies: [:totp, ...])
+  #       adds them itself. The dummy app exercises every feature, so it needs them.
+  gem "rotp"
+  gem "rqrcode"
 end
 
 group :test do

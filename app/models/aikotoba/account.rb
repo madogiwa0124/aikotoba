@@ -195,6 +195,10 @@ module Aikotoba
           class_name: "Aikotoba::Account::TwoFactor::EmailOtpCode",
           foreign_key: "aikotoba_account_id",
           dependent: :destroy
+        optional_has_one :totp_credential,
+          class_name: "Aikotoba::Account::TwoFactor::TotpCredential",
+          foreign_key: "aikotoba_account_id",
+          dependent: :destroy
       end
 
       # NOTE: The account's second factor (start!, authenticate, challenge_active?). Only this

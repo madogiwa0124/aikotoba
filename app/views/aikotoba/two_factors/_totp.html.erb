@@ -1,0 +1,5 @@
+<p><%= I18n.t(".aikotoba.two_factors.totp.instruction") %></p>
+<p>
+  <%= f.label :code, I18n.t(".aikotoba.two_factors.totp.label") %>
+  <%= f.text_field :code, value: nil, required: true, autocomplete: "one-time-code", inputmode: "numeric", pattern: "[0-9]*", maxlength: 6 %>
+</p>

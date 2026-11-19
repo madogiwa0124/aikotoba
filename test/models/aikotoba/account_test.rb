@@ -426,6 +426,7 @@ class Aikotoba::AccountTest < ActiveSupport::TestCase
       aikotoba_account_unlock_tokens
       aikotoba_account_recovery_tokens
       aikotoba_account_email_otp_codes
+      aikotoba_account_totp_credentials
     ].freeze
 
     def setup
@@ -440,6 +441,7 @@ class Aikotoba::AccountTest < ActiveSupport::TestCase
       Aikotoba::Account::Lock.create_token!(account: @account, notify: false)
       Aikotoba::Account::Recovery.create_token!(account: @account, notify: false)
       Aikotoba::Account::TwoFactor::EmailOtp.create_code!(account: @account, notify: false)
+      Aikotoba::Account::TwoFactor::Totp.new(account: @account).enroll!
       Aikotoba::Account::Session.start!(account: @account)
     end
 
@@ -457,6 +459,7 @@ class Aikotoba::AccountTest < ActiveSupport::TestCase
         "Aikotoba::Account::UnlockToken.count",
         "Aikotoba::Account::RecoveryToken.count",
         "Aikotoba::Account::TwoFactor::EmailOtpCode.count",
+        "Aikotoba::Account::TwoFactor::TotpCredential.count",
         "Aikotoba::Account::Session.count"
       ], -1 do
         Aikotoba::Account.find(@account.id).destroy!
@@ -472,6 +475,7 @@ class Aikotoba::AccountTest < ActiveSupport::TestCase
       end
       assert_equal 0, Aikotoba::Account::ConfirmationToken.where(aikotoba_account_id: @account.id).count
       assert_equal 0, Aikotoba::Account::TwoFactor::EmailOtpCode.where(aikotoba_account_id: @account.id).count
+      assert_equal 0, Aikotoba::Account::TwoFactor::TotpCredential.where(aikotoba_account_id: @account.id).count
     end
 
     test "destroy! never queries an optional token table that does not exist" do

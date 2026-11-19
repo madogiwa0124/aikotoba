@@ -22,4 +22,14 @@ Aikotoba.configure do |config|
     # NOTE: recover_path is left unset on purpose: the "/recover" it inherits from the
     #       default scope is drawn under root_path, as "/admin/recover".
   })
+
+  # NOTE: Two-factor sign in for trying it out with bin/rails s, in the default scope since
+  #       it has a sign up page: sign up at /sign_up, sign in with the emailed code (open it at
+  #       /letter_opener), set up the authenticator app from the link on /sensitives, then
+  #       sign in again with its code. :email_otp stays in the list since an account without
+  #       TOTP couldn't sign in to set it up.
+  #       Development only: tests turn it on where they need it.
+  if Rails.env.development?
+    config.default_scope[:two_factor_strategies] = [:totp, :email_otp]
+  end
 end
