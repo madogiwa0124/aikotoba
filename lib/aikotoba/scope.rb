@@ -20,7 +20,7 @@ module Aikotoba
     end
 
     # NOTE: The second factors this scope offers, in order of preference (two_factor_strategies:
-    #       [:email_otp]): an account signs in with the first one it can use. Empty (the
+    #       [:totp, :email_otp]): an account signs in with the first one it can use. Empty (the
     #       default) turns two-factor sign in off for the scope. Set per scope, since a stricter
     #       scope (an admin one) is the usual reason to want it.
     def two_factor_strategies

@@ -7,6 +7,8 @@
 <p>nickname: <%= @account.user.nickname %></p>
 <% end %>
 
+<p><%= link_to "Authenticator app (TOTP)", aikotoba_scoped_path(:two_factor_totp_path) %></p>
+
 <%= form_with method: :delete, url: aikotoba_scoped_path(:destroy_session_path) do |f| %>
   <%= f.submit 'Sign out' %>
 <% end %>

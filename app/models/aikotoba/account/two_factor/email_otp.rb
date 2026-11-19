@@ -72,7 +72,10 @@ module Aikotoba
           :failed
         end
       end
-      (result == :matched) ? @account : sign_in_failed(target_type_name)
+      return true if result == :matched
+
+      Event::EmailOtpSignInFailed.report(account_id: @account.id, target_type_name: target_type_name)
+      false
     end
 
     private
@@ -83,11 +86,6 @@ module Aikotoba
       issued.increment!(:failed_attempts)
       authentication_failed!
       issued.destroy! if @account.locked? || !issued.active?
-    end
-
-    def sign_in_failed(target_type_name)
-      Event::EmailOtpSignInFailed.report(account_id: @account.id, target_type_name: target_type_name)
-      nil
     end
   end
 end

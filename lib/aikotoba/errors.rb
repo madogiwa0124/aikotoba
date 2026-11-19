@@ -11,9 +11,9 @@ module Aikotoba
     #       signing in anyway would let the caller skip the second factor without anyone noticing.
     class TwoFactorRequired < Base; end
 
-    # NOTE: A scope's two-factor settings can't work as set (an unknown strategy, only
-    #       strategies that need setting up, or what a strategy itself needs). Raised at boot
-    #       by Account::TwoFactor.validate_configuration!.
+    # NOTE: A scope's two-factor settings can't work as set (an unknown strategy, or only
+    #       strategies that need setting up). Raised at boot by
+    #       Account::TwoFactor.validate_configuration!.
     class InvalidTwoFactorConfiguration < Base; end
   end
 end

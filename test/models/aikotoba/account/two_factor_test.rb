@@ -6,46 +6,6 @@ require "minitest/mock"
 class Aikotoba::Account::TwoFactorTest < ActiveSupport::TestCase
   include ActionMailer::TestHelper
 
-  # NOTE: A strategy an account has to set up before using it, registered only inside
-  #       with_set_up_first, since email_otp (the only one shipped) needs no setting up.
-  class SetUpFirst < Aikotoba::Account::TwoFactor::Base
-    cattr_accessor :set_up_account_ids, default: []
-    cattr_accessor :validated_scope_names
-
-    def self.enrollment_required? = true
-
-    def self.validate_configuration!(scope_names)
-      self.validated_scope_names = scope_names
-    end
-
-    def usable? = set_up_account_ids.include?(@account.id)
-
-    def start!
-    end
-
-    def authenticate(code, target_type_name:) = nil
-
-    def challenge_active? = usable?
-
-    def challenge_expiry = 1.minute
-  end
-
-  def self.with_set_up_first(&block)
-    two_factor = Aikotoba::Account::TwoFactor
-    strategy_class = two_factor.method(:strategy_class)
-    strategy = two_factor.method(:strategy?)
-    two_factor.stub(:strategy_class, ->(key) { (key.to_s == "set_up_first") ? SetUpFirst : strategy_class.call(key) }) do
-      two_factor.stub(:strategy?, ->(key) { key.to_s == "set_up_first" || strategy.call(key) }, &block)
-    end
-  ensure
-    SetUpFirst.set_up_account_ids = []
-    SetUpFirst.validated_scope_names = nil
-  end
-
-  def with_set_up_first(&block)
-    self.class.with_set_up_first(&block)
-  end
-
   def setup
     @account = Aikotoba::Account.create_by!(attributes: {email: "two_factor_model@example.com", password: "password"})
   end
@@ -57,6 +17,13 @@ class Aikotoba::Account::TwoFactorTest < ActiveSupport::TestCase
     class_methods = base::ABSTRACT_CLASS_METHODS.select { |name| klass.singleton_class.instance_method(name).owner == base.singleton_class }
     instance_methods = base::ABSTRACT_INSTANCE_METHODS.select { |name| klass.instance_method(name).owner == base }
     class_methods.map { |name| ".#{name}" } + instance_methods.map { |name| "##{name}" }
+  end
+
+  def set_up_totp!
+    totp = Aikotoba::Account::TwoFactor::Totp.new(account: @account)
+    credential = totp.enroll!
+    assert totp.enable!(ROTP::TOTP.new(credential.secret).at(Time.current - 30))
+    credential.reload
   end
 
   # NOTE: What adding a strategy has to provide, checked for every registered one. Nothing
@@ -107,15 +74,18 @@ class Aikotoba::Account::TwoFactorTest < ActiveSupport::TestCase
   end
 
   test "strategy_for picks the first of the scope's strategies the account can use" do
-    with_set_up_first do
-      assert_equal "email_otp", @account.two_factor.strategy_for(%w[set_up_first email_otp])
-      assert_nil @account.two_factor.strategy_for(%w[set_up_first])
+    assert_equal "email_otp", @account.two_factor.strategy_for(%w[totp email_otp])
+    assert_nil @account.two_factor.strategy_for(%w[totp])
 
-      SetUpFirst.set_up_account_ids = [@account.id]
-      assert_equal "set_up_first", @account.two_factor.strategy_for(%i[set_up_first email_otp])
-      assert_equal "email_otp", @account.two_factor.strategy_for(%w[email_otp set_up_first])
-      assert_equal "email_otp", @account.two_factor.strategy_for(%w[unknown email_otp])
-    end
+    set_up_totp!
+    assert_equal "totp", @account.two_factor.strategy_for(%i[totp email_otp])
+    assert_equal "email_otp", @account.two_factor.strategy_for(%w[email_otp totp])
+    assert_equal "email_otp", @account.two_factor.strategy_for(%w[unknown email_otp])
+  end
+
+  test "a pending TOTP set up isn't usable yet" do
+    Aikotoba::Account::TwoFactor::Totp.new(account: @account).enroll!
+    assert_equal "email_otp", @account.two_factor.strategy_for(%w[totp email_otp])
   end
 
   test "start! challenges the account with the strategy and says which one, and until when" do
@@ -130,6 +100,15 @@ class Aikotoba::Account::TwoFactorTest < ActiveSupport::TestCase
     assert_not_nil @account.reload.email_otp_code
   end
 
+  test "start! with TOTP sends nothing and waits totp_challenge_expiry" do
+    set_up_totp!
+    freeze_time do
+      challenge = nil
+      assert_no_emails { challenge = @account.two_factor.start!(strategy: "totp") }
+      assert_equal Aikotoba.totp_challenge_expiry.from_now, challenge.expires_at
+    end
+  end
+
   test "start! raises on an unknown strategy" do
     assert_raises(ArgumentError) { @account.two_factor.start!(strategy: "unknown") }
     assert_raises(ArgumentError) { @account.two_factor.start!(strategy: nil) }
@@ -139,7 +118,7 @@ class Aikotoba::Account::TwoFactorTest < ActiveSupport::TestCase
     challenge = @account.two_factor.start!(strategy: "email_otp")
     code = @account.reload.email_otp_code.code
     assert @account.two_factor.challenge_active?(strategy: challenge.strategy)
-    assert_equal @account, @account.two_factor.authenticate(code, strategy: challenge.strategy)
+    assert_equal true, @account.two_factor.authenticate(code, strategy: challenge.strategy)
     assert_not @account.two_factor.challenge_active?(strategy: challenge.strategy)
   end
 
@@ -148,7 +127,7 @@ class Aikotoba::Account::TwoFactorTest < ActiveSupport::TestCase
     code = @account.reload.email_otp_code.code
     %w[unknown Kernel Aikotoba::Account::TwoFactor::EmailOtp].each do |key|
       assert_not Aikotoba::Account::TwoFactor.strategy?(key)
-      assert_nil @account.two_factor.authenticate(code, strategy: key)
+      assert_equal false, @account.two_factor.authenticate(code, strategy: key)
       assert_not @account.two_factor.challenge_active?(strategy: key)
     end
     assert_not_nil @account.reload.email_otp_code
@@ -157,7 +136,7 @@ class Aikotoba::Account::TwoFactorTest < ActiveSupport::TestCase
   test "an account of another target type than the scope's can't answer, and nothing is counted" do
     @account.two_factor.start!(strategy: "email_otp")
     code = @account.reload.email_otp_code.code
-    assert_nil @account.two_factor.authenticate(code, strategy: "email_otp", target_type_name: "Admin")
+    assert_equal false, @account.two_factor.authenticate(code, strategy: "email_otp", target_type_name: "Admin")
     assert_not @account.two_factor.challenge_active?(strategy: "email_otp", target_type_name: "Admin")
     assert_not_nil @account.reload.email_otp_code
     assert_equal 0, @account.failed_attempts
@@ -169,7 +148,7 @@ class Aikotoba::Account::TwoFactorTest < ActiveSupport::TestCase
     code = @account.reload.email_otp_code.code
     loaded_before = Aikotoba::Account.find(@account.id)
     @account.lock!
-    assert_nil loaded_before.two_factor.authenticate(code, strategy: "email_otp")
+    assert_equal false, loaded_before.two_factor.authenticate(code, strategy: "email_otp")
     assert_not loaded_before.two_factor.challenge_active?(strategy: "email_otp")
   end
 
@@ -199,18 +178,29 @@ class Aikotoba::Account::TwoFactorTest < ActiveSupport::TestCase
     end
 
     test "rejects a scope offering only strategies an account has to set up first" do
-      Aikotoba::Account::TwoFactorTest.with_set_up_first do
-        offer(%w[set_up_first])
-        assert_invalid(/without setting it up first \(email_otp\): .*couldn't sign in to set it up/)
+      offer(%w[totp])
+      assert_invalid(/without setting it up first \(email_otp\): .*couldn't sign in to set it up/)
+    end
+
+    def warnings_from_validate!
+      warnings = []
+      logger = Object.new
+      logger.define_singleton_method(:warn) { |message| warnings << message }
+      Aikotoba.stub(:logger, logger) { assert_nothing_raised { validate! } }
+      warnings
+    end
+
+    test "TOTP without encrypted_token warns, in any environment" do
+      offer(%w[totp email_otp])
+      Rails.stub(:env, ActiveSupport::EnvironmentInquirer.new("production")) do
+        assert_match(/TOTP is offered \(default\) but encrypted_token is off/, warnings_from_validate!.join)
       end
     end
 
-    test "lets each strategy in use check what it needs, with the scopes using it" do
-      Aikotoba::Account::TwoFactorTest.with_set_up_first do
-        offer(%w[set_up_first email_otp])
-        assert_nothing_raised { validate! }
-        assert_equal ["default"], SetUpFirst.validated_scope_names
-      end
+    test "TOTP with encrypted_token passes quietly" do
+      offer(%w[totp email_otp])
+      Aikotoba.config.encrypted_token = true
+      assert_empty warnings_from_validate!
     end
   end
 end

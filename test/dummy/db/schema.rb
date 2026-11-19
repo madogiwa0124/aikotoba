@@ -67,6 +67,16 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_21_000001) do
     t.index ["token"], name: "index_aikotoba_account_sessions_on_token", unique: true
   end
 
+  create_table "aikotoba_account_totp_credentials", force: :cascade do |t|
+    t.integer "aikotoba_account_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "enabled_at", precision: nil
+    t.bigint "last_otp_at"
+    t.string "secret", null: false
+    t.datetime "updated_at", null: false
+    t.index ["aikotoba_account_id"], name: "index_account_totp_credentials_on_account_id", unique: true
+  end
+
   create_table "aikotoba_account_unlock_tokens", force: :cascade do |t|
     t.integer "aikotoba_account_id", null: false
     t.datetime "created_at", null: false
@@ -101,5 +111,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_21_000001) do
   add_foreign_key "aikotoba_account_password_hashes", "aikotoba_accounts"
   add_foreign_key "aikotoba_account_recovery_tokens", "aikotoba_accounts"
   add_foreign_key "aikotoba_account_sessions", "aikotoba_accounts"
+  add_foreign_key "aikotoba_account_totp_credentials", "aikotoba_accounts"
   add_foreign_key "aikotoba_account_unlock_tokens", "aikotoba_accounts"
 end

@@ -10,8 +10,24 @@ module Aikotoba
         # NOTE: How a test gets a valid code for each strategy, kept here rather than as
         #       test-only methods on the strategies. A strategy added to
         #       Account::TwoFactor::STRATEGIES adds its entry here too.
+        #       TOTP: the code for now, or for the step after the last one accepted when that was
+        #       now (within the one step of drift allowed), so an account can sign in twice in a
+        #       test without waiting 30 seconds. When that step is beyond the drift allowed (a third
+        #       sign in in the same step, or a code from the next step accepted last), no code is
+        #       valid yet, so it raises asking for `travel` rather than entering one that fails.
         TWO_FACTOR_TEST_CODES = {
-          "email_otp" => ->(account) { account.email_otp_code&.code }
+          "email_otp" => ->(account) { account.email_otp_code&.code },
+          "totp" => lambda do |account|
+            credential = account.totp_credential
+            next unless credential
+
+            at = [Time.current, Time.at(credential.last_otp_at.to_i + 30)].max
+            if at > Time.current + Aikotoba::Account::TwoFactor::TotpCredential::DRIFT
+              raise "No TOTP code for #{account.email} is valid until #{at}: its codes up to then were used. " \
+                "travel 30.seconds before signing in again."
+            end
+            Aikotoba::Account::TwoFactor::TotpCredential::Algorithm.new(secret: credential.secret, issuer: nil).generate_code(at: at)
+          end
         }.freeze
 
         private

@@ -22,7 +22,7 @@ Aikotoba is a Rails engine that makes it easy to implement simple email and pass
 - Confirmable(optional) : After registration, send an email with a token to confirm account.
 - Lockable(optional) : Lock account if make a mistake with password more than a certain number of times.
 - Recoverable(optional) : Recover account by resetting password.
-- TwoFactorAuthenticatable(optional, per scope) : (experimental) After a correct password, require a one-time code sent by email before signing in.
+- TwoFactorAuthenticatable(optional, per scope) : (experimental) After a correct password, require a code from an authenticator app (TOTP) or one sent by email before signing in.
 
 [For more information](#features)
 
@@ -246,8 +246,9 @@ Aikotoba enables a route to recover an account by password reset.
 
 ### (Experimental) TwoFactorAuthenticatable
 
-Turn it on per scope by listing the second factors it offers in `two_factor_strategies`. An account signs in with the first one in the list it can use. The one strategy so far:
+Turn it on per scope by listing the second factors it offers in `two_factor_strategies`. An account signs in with the first one in the list it can use:
 
+- `:totp`: a code from an authenticator app (Google Authenticator, 1Password, ...), [RFC 6238](https://www.rfc-editor.org/rfc/rfc6238) TOTP. An account has to set it up first, so it is only used by accounts that did.
 - `:email_otp`: a 6-digit code sent by email. Every account can use it.
 
 ```ruby
@@ -255,33 +256,61 @@ Aikotoba.configure do |config|
   # Every account signing in to the default scope gets an emailed code
   config.default_scope[:two_factor_strategies] = [:email_otp]
 
-  # And every admin
+  # Admins use their authenticator app once they set it up, an emailed code until then
   config.add_scope(:admin, {
     root_path: "/admin",
     session_key: "aikotoba_admin_session_token",
     authenticate_for: "Admin",
-    two_factor_strategies: [:email_otp]
+    two_factor_strategies: [:totp, :email_otp]
   })
 end
 ```
 
-Uncomment the table of each strategy you list in the migration: `aikotoba_account_email_otp_codes` for `:email_otp`.
+Uncomment the table of each strategy you list in the migration: `aikotoba_account_email_otp_codes` for `:email_otp`, `aikotoba_account_totp_credentials` for `:totp`.
 
-A correct password then no longer signs in. Aikotoba challenges the account (emails a code) and sends the user to the scope's `two_factor_path`. The login session starts only once the code is entered there. Until then there is no `Aikotoba::Account::Session`, so `aikotoba_current_account` is `nil`.
+A correct password then no longer signs in. Aikotoba challenges the account (emails a code, or waits for its authenticator app) and sends the user to the scope's `two_factor_path`. The login session starts only once the code is entered there. Until then there is no `Aikotoba::Account::Session`, so `aikotoba_current_account` is `nil`.
 
 | HTTP Verb | Path        | Overview                                    |
 | --------- | ----------- | ------------------------------------------- |
 | GET       | /two_factor | Display page for entering the code.         |
 | POST      | /two_factor | Verify the code and sign in.                |
 
-- Every account of the scope passes a second factor; letting each account choose whether to use one isn't supported. So a list made only of strategies an account has to set up first is refused at boot: an account that hadn't couldn't sign in to set one up.
+- Every account of the scope passes a second factor; letting each account choose whether to use one isn't supported. So a list without a strategy accounts can use without setting it up (`[:totp]` alone) is refused at boot: an account without TOTP couldn't sign in to set it up.
 - **A wrong code is a failed sign in.** It counts towards the account's `failed_attempts` and, with [Lockable](#lockable), locks the account like a wrong password does. `failed_attempts` goes back to 0 only when the login session starts, not when the password matches, so someone who knows the password can't get a fresh set of guesses by signing in again, whichever controller checked the password.
-- Which account is signing in, with which strategy, is kept in the Rails session. What the strategy checks (an emailed code and the attempts made against it) is kept in the database, since a cookie session could be sent again to undo an attempt count or to reuse a code.
+- Which account is signing in, with which strategy, is kept in the Rails session. What the strategy checks (an emailed code and the attempts made against it, the last TOTP code used) is kept in the database, since a cookie session could be sent again to undo an attempt count or to reuse a code.
 
 #### Emailed code (`:email_otp`)
 
 - The code expires after `config.email_otp_code_expiry` (10 minutes) and can be tried `config.email_otp_max_failed_attempts` times (5). After that the user signs in with the password again, which sends a new code; signing in again also replaces a code that hasn't been used.
 - **An emailed code is a weaker second factor than an authenticator app or a passkey.** It protects an account whose password has leaked, but not one whose mailbox is taken over: with [Recoverable](#recoverable), whoever controls the mailbox can reset the password and receive the code. NIST SP 800-63B does not accept email for out-of-band authentication ([§5.1.3.1](https://pages.nist.gov/800-63-3/sp800-63b.html#-5131-out-of-band-authenticators)). Use it where the users' mailboxes are themselves protected with two-factor authentication.
+
+#### Authenticator app (`:totp`)
+
+Aikotoba doesn't depend on the TOTP gems, so a scope offering `:totp` needs them in your Gemfile (without them the set up page fails with a `LoadError`):
+
+```ruby
+gem "rotp"
+gem "rqrcode"
+```
+
+The secret an authenticator app shares with the account stays valid for as long as TOTP is set up, and anyone who reads it can compute the account's codes. So store it encrypted: turn on [`config.encrypted_token`](#using-encrypted-token). Without it Aikotoba logs a warning at boot. It can't be hashed like a password: checking a code needs the secret itself.
+
+A signed in account sets TOTP up, or turns it off, on the scope's `two_factor_totp_path`:
+
+| HTTP Verb | Path              | Overview                                                                 |
+| --------- | ----------------- | ------------------------------------------------------------------------ |
+| GET       | /two_factor/totp  | Show the QR code and key to set up, or the form to turn it off once set. |
+| POST      | /two_factor/totp  | Turn TOTP on with a code from the app.                                   |
+| DELETE    | /two_factor/totp  | Turn TOTP off, with a current code from the app.                         |
+
+Link to it from your account settings (`aikotoba.two_factor_totp_path`, or `aikotoba.admin_two_factor_totp_path` for an `admin` scope). It is only routed in scopes that list `:totp`.
+
+- The key is kept pending until the account enters a code from the app, so a QR code that was never scanned can't lock the account out. Showing the page again shows the same key.
+- A code is accepted once, and one 30 second step early or late, for clocks that drift.
+- There's no per-code limit on wrong codes, so set up [Lockable](#lockable) (or `two_factor_rate_limit_options`) to stop someone who knows the password from guessing.
+- Turning TOTP off needs a current code, and a wrong one counts as a failed sign in. **An account that lost its device can't turn it off by itself yet.** Turn it off for them with `Aikotoba::Account::TwoFactor::Totp.new(account:).force_disable!`, from your own admin page, after checking it is them.
+- The name the app shows next to the account is `config.totp_issuer`, or your app's name when unset. A sign in waits `config.totp_challenge_expiry` (10 minutes) for the code.
+- An app with its own set up page calls the same methods on `Aikotoba::Account::TwoFactor::Totp.new(account:)`: `enroll!` (the pending credential: `provisioning_qr_code_svg` is its QR code as an inline `<svg>`, `provisioning_uri` what the code holds), `enable!(code)`, `disable_with!(code)` and `force_disable!`. `provisioning_uri` and `provisioning_qr_code_svg` take `algorithm_class:` and `qr_code_class:` (by default `TotpCredential::Algorithm` and `TotpCredential::QrCode`, wrapping the gems) to use another library, for example to draw the QR code another way.
 
 #### Your own sign in controller
 
@@ -464,6 +493,8 @@ Aikotoba.configure do |config|
   # for (Experimental) TwoFactorAuthenticatable (turned on per scope with two_factor_strategies)
   config.email_otp_code_expiry = 10.minutes
   config.email_otp_max_failed_attempts = 5
+  config.totp_challenge_expiry = 10.minutes
+  config.totp_issuer = nil  # The name authenticator apps show; nil uses your app's name
 
   # ============================================
   # Rate Limiting
@@ -514,8 +545,9 @@ Aikotoba.configure do |config|
     confirm_path: "/confirm",
     unlock_path: "/unlock",
     recover_path: "/recover",
-    two_factor_strategies: [],  # Second factors offered, e.g. [:email_otp]; empty turns it off
+    two_factor_strategies: [],  # Second factors offered, e.g. [:totp, :email_otp]; empty turns it off
     two_factor_path: "/two_factor",
+    two_factor_totp_path: "/two_factor/totp",
     after_sign_in_path: "/sensitives",
     after_sign_out_path: "/sign_in"
   }
@@ -696,6 +728,8 @@ Rails.event.subscribe(AuthEventSubscriber.new) { |event| event[:name].start_with
 | `aikotoba.account_unlocked`                                                                   | an account is unlocked                                                           | `account_id`                                    |
 | `aikotoba.password_recovered`                                                                 | a password is reset through a recovery token                                     | `account_id`                                    |
 | `aikotoba.confirmation_token_issued`, `aikotoba.unlock_token_issued`, `aikotoba.recovery_token_issued`, `aikotoba.email_otp_code_issued` | a token or code is issued, whether or not its email is sent | `account_id`, `notified`                        |
+| `aikotoba.totp_sign_in_failed`                                                                | a TOTP code is wrong or already used (`account.two_factor.authenticate`)          | `account_id`, `target_type_name`                |
+| `aikotoba.totp_enabled`, `aikotoba.totp_disabled`                                             | an account sets up TOTP, or it is turned off                                      | `account_id`                                    |
 
 - Each event is also a constant, such as `Aikotoba::Event::SignInFailed`, whose `event_name` is `"aikotoba.sign_in_failed"`, so a subscriber can match on it instead of a string.
 - Payloads hold plain values, not records, so a subscriber can serialize them as is. `scope` is the scope's name (`"default"`, `"admin"`). `notified` is whether the token's email was queued: Aikotoba's own pages always send it, but your code may issue a token without (`notify: false`).
@@ -711,7 +745,7 @@ Rails.event.subscribe(AuthEventSubscriber.new) { |event| event[:name].start_with
   end
   ```
 - The events are reported from the models and the sign in helpers, not the controllers, so your own controllers built on them report the same events. That includes the console and rake tasks: unlocking an account from the console reports `account_unlocked`.
-- Every event except the failed sign ins (`sign_in_failed`, `email_otp_sign_in_failed`) is reported after the database transaction commits, the caller's own included, and not at all if it rolls back, so a subscriber never sees a change that didn't persist. The failed sign ins have nothing to commit, so they are reported right away.
+- Every event except the failed sign ins (`sign_in_failed`, `email_otp_sign_in_failed`, `totp_sign_in_failed`) is reported after the database transaction commits, the caller's own included, and not at all if it rolls back, so a subscriber never sees a change that didn't persist. The failed sign ins have nothing to commit, so they are reported right away.
 - Subscribers run synchronously, in the request (or job, or console) that reported the event, so keep them fast and enqueue a job for anything slow. `Rails.event` reports an exception raised by a subscriber to `Rails.error` instead of failing the request, except where `config.consider_all_requests_local` is set (development and test by default), where it raises.
 - In tests, use Rails' `assert_event_reported("aikotoba.sign_in")` and friends.
 
@@ -765,7 +799,7 @@ end
 You can use a helper to login/logout by Aikotoba.
 :warning: It only supports rack testing.
 
-Both helpers sign in to the default scope; pass `scope:` for another one (`aikotoba_sign_in(admin_account, password: "password", scope: :admin)`, `aikotoba_sign_out(scope: :admin)`). When that scope has `two_factor_strategies`, `aikotoba_sign_in` also enters a valid code for the strategy the account was challenged with (the emailed code), so the account ends up signed in either way.
+Both helpers sign in to the default scope; pass `scope:` for another one (`aikotoba_sign_in(admin_account, password: "password", scope: :admin)`, `aikotoba_sign_out(scope: :admin)`). When that scope has `two_factor_strategies`, `aikotoba_sign_in` also enters a valid code for the strategy the account was challenged with (the emailed code, or the account's TOTP code), so the account ends up signed in either way. A TOTP code is accepted once: the helper uses the next step's code for a second sign in within 30 seconds, but a third needs `travel 30.seconds` in between.
 
 ```ruby
 require "aikotoba/test/authentication_helper"

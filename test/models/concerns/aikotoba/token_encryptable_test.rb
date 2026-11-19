@@ -70,7 +70,7 @@ class Aikotoba::EmailOtpCodeEncryptionTest < ActiveSupport::TestCase
     assert_match(/\A\d{6}\z/, code.code)
     assert_not_equal code.code, code.code_before_type_cast
     assert_includes code.code_before_type_cast, "\"p\":"
-    assert_equal @account, @account.two_factor.authenticate(code.code, strategy: "email_otp")
+    assert_equal true, @account.two_factor.authenticate(code.code, strategy: "email_otp")
   end
 
   private
@@ -82,5 +82,40 @@ class Aikotoba::EmailOtpCodeEncryptionTest < ActiveSupport::TestCase
     Aikotoba::Account::TwoFactor.send(:remove_const, :EmailOtpCode)
     load "app/models/aikotoba/account/two_factor/email_otp_code.rb"
     Aikotoba::Account.reflect_on_association(:email_otp_code).instance_variable_set(:@klass, nil)
+  end
+end
+
+class Aikotoba::TotpCredentialEncryptionTest < ActiveSupport::TestCase
+  def setup
+    Aikotoba.config.encrypted_token = true
+    reload_totp_credential_class
+    @account = ::Aikotoba::Account.create_by!(attributes: {email: "totp_encrypted@example.com", password: "password"})
+  end
+
+  # NOTE: See Aikotoba::TokenEncryptableTest#teardown.
+  def teardown
+    Aikotoba.config.encrypted_token = false
+    reload_totp_credential_class
+  end
+
+  test "the TOTP secret is stored encrypted and codes still check against it" do
+    totp = Aikotoba::Account::TwoFactor::Totp.new(account: @account)
+    credential = totp.enroll!
+    assert_match(/\A[A-Z2-7]{32}\z/, credential.secret)
+    assert_not_equal credential.secret, credential.secret_before_type_cast
+    assert_includes credential.secret_before_type_cast, "\"p\":"
+    assert totp.enable!(ROTP::TOTP.new(credential.reload.secret).now)
+  end
+
+  private
+
+  # NOTE: See Aikotoba::EmailOtpCodeEncryptionTest#reload_email_otp_code_class.
+  def reload_totp_credential_class
+    Aikotoba::Account::TwoFactor.send(:remove_const, :TotpCredential)
+    load "app/models/aikotoba/account/two_factor/totp_credential.rb"
+    # NOTE: Removing the class took its nested adapters with it, outside the autoloader's view.
+    load "app/models/aikotoba/account/two_factor/totp_credential/algorithm.rb"
+    load "app/models/aikotoba/account/two_factor/totp_credential/qr_code.rb"
+    Aikotoba::Account.reflect_on_association(:totp_credential).instance_variable_set(:@klass, nil)
   end
 end

@@ -103,5 +103,20 @@ class CreateAikotobaAccounts < ActiveRecord::Migration[6.1]
     #
     #   t.timestamps
     # end
+
+    # two_factor_strategies including :totp (on any scope)
+    #
+    # create_table :aikotoba_account_totp_credentials do |t|
+    #   t.belongs_to(
+    #     :aikotoba_account,
+    #     null: false, foreign_key: true,
+    #     index: {unique: true, name: "index_account_totp_credentials_on_account_id"}
+    #   )
+    #   t.string :secret, null: false
+    #   t.datetime :enabled_at
+    #   t.bigint :last_otp_at
+    #
+    #   t.timestamps
+    # end
   end
 end

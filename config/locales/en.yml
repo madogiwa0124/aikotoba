@@ -28,6 +28,18 @@ en:
       email_otp:
         instruction: We sent a verification code to your email address. Enter it to finish signing in.
         label: Verification code
+      totp:
+        instruction: Enter the 6-digit code your authenticator app shows for this account.
+        label: Authentication code
+    totps:
+      show: Authenticator app
+      enabled: Your authenticator app is set up. You are asked for its code when you sign in.
+      scan: Scan this QR code with your authenticator app, then enter the 6-digit code it shows.
+      secret: If you can't scan it, enter this key in the app instead
+      code: Authentication code
+      enable: Turn on
+      disable_instruction: To turn it off, enter a current code from the app.
+      disable: Turn off
     mailers:
       confirm:
         subject: "Confirmation instructions"
@@ -62,3 +74,7 @@ en:
         required: One more step is needed to finish signing in.
         failed: Oops. Two-factor authentication failed.
         expired: Two-factor authentication has expired or too many attempts were made. Please sign in again.
+      totp:
+        enabled: Your authenticator app is now set up.
+        disabled: Your authenticator app has been turned off.
+        failed: Oops. That code didn't match. Check the time on your device and try again.
