@@ -53,22 +53,23 @@ module Aikotoba
     #       lock for Lockable's count. Whether the account may still sign in to the scope is
     #       Account::TwoFactor's check, made before this is called.
     def authenticate(code, target_type_name: nil)
-      result = ActiveRecord::Base.transaction do
+      matched = ActiveRecord::Base.transaction do
         locked = locked_credential
-        next :not_set_up unless locked&.enabled?
+        next false unless locked&.enabled?
 
         @account.reload
         # NOTE: Leaves failed_attempts alone on a match: Account::Session.start! resets it once
         #       the account is actually signed in (see there).
-        if (verified_at = locked.verify(code))
-          locked.update!(last_otp_at: verified_at)
-          :matched
-        else
+        verified_at = locked.verify(code)
+        unless verified_at
           authentication_failed!
-          :failed
+          next false
         end
+
+        locked.update!(last_otp_at: verified_at)
+        true
       end
-      return true if result == :matched
+      return true if matched
 
       Event::TotpSignInFailed.report(account_id: @account.id, target_type_name: target_type_name)
       false

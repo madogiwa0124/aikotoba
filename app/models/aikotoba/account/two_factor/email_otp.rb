@@ -54,25 +54,25 @@ module Aikotoba
     #       read the same attempt count and get past email_otp_max_failed_attempts together.
     #       The account is reloaded under that lock for the same reason (Lockable's count).
     def authenticate(code, target_type_name: nil)
-      result = ActiveRecord::Base.transaction do
+      matched = ActiveRecord::Base.transaction do
         issued = Account::TwoFactor::EmailOtpCode.lock.find_by(aikotoba_account_id: @account.id)
         # NOTE: No code left to guess against (expired, used up, or never issued): fails
         #       without counting an attempt, so a user who comes back late isn't pushed
         #       towards a lock.
-        next :no_code unless issued&.active?
+        next false unless issued&.active?
 
         @account.reload
         # NOTE: Leaves failed_attempts alone on a match: Account::Session.start! resets it once
         #       the account is actually signed in (see there).
-        if code.present? && issued.match?(code)
-          issued.destroy!
-          :matched
-        else
+        unless code.present? && issued.match?(code)
           failed!(issued)
-          :failed
+          next false
         end
+
+        issued.destroy!
+        true
       end
-      return true if result == :matched
+      return true if matched
 
       Event::EmailOtpSignInFailed.report(account_id: @account.id, target_type_name: target_type_name)
       false
