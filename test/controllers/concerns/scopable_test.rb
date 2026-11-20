@@ -155,6 +155,10 @@ end
 # A controller of another engine (e.g. a jobs dashboard mounted at /admin/jobs) built on the host
 # app's ApplicationController resolves its scope from the path the app sees, not from its own
 # engine-relative path_info ("/").
+# NOTE: The engine is defined here, not in test/dummy, so the dummy app stays as the README
+#       describes it; it is mounted only by the routes these tests draw and reset in teardown.
+#       Being a Rails::Engine subclass, it stays defined for the rest of the run: don't rely on
+#       Rails::Engine.subclasses being only the app's own engines.
 module ScopableOtherEngine
   class Engine < ::Rails::Engine
     isolate_namespace ScopableOtherEngine
@@ -231,5 +235,18 @@ class Aikotoba::ScopableOtherEngineTest < ActionDispatch::IntegrationTest
     post "/admin/sign_in", params: {account: {email: @admin_account.email, password: @password}}, headers: headers
     get "/admin/jobs", headers: headers
     assert_response :success
+  end
+
+  test "a page of another engine resolves its scope with relative_url_root set" do
+    draw_routes(aikotoba_at: "/auth", engine_at: "/auth/admin/jobs")
+    route_config = Rails.application.routes.instance_variable_get(:@config)
+    original = route_config.relative_url_root
+    route_config.relative_url_root = "/app"
+    headers = {"SCRIPT_NAME" => "/app"}
+    post "/auth/admin/sign_in", params: {account: {email: @admin_account.email, password: @password}}, headers: headers
+    get "/auth/admin/jobs", headers: headers
+    assert_response :success
+  ensure
+    route_config.relative_url_root = original
   end
 end
