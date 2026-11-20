@@ -25,14 +25,16 @@ module Aikotoba
     # NOTE: root_path is relative to the engine's mount point, so the path matched against it
     #       has the mount point removed (nil, the default scope, when outside it).
     #       Controllers in the engine's namespace (_routes is the engine's) get that as path_info.
-    #       Requests the host app routes, a subclass of an Aikotoba controller included, get
-    #       path_info relative to the app; original_script_name keeps relative_url_root out of
-    #       the mount point, as path_info leaves out the app's SCRIPT_NAME.
+    #       Any other request gets it from the path the app sees: request.path minus the app's
+    #       own SCRIPT_NAME (original_script_name). Not path_info, which inside another engine
+    #       (a jobs dashboard mounted at /admin/jobs) is relative to that engine's mount point,
+    #       "/" for /admin/jobs. original_script_name: true keeps relative_url_root out of the
+    #       mount point the same way.
     def aikotoba_scope_path
       return request.path_info if _routes.equal?(Aikotoba::Engine.routes)
 
       mount_path = Aikotoba::Engine.routes.find_script_name(original_script_name: true).chomp("/")
-      path = request.path_info
+      path = request.path.delete_prefix(request.original_script_name.to_s)
       if path == mount_path
         "/"
       elsif path.start_with?("#{mount_path}/")
