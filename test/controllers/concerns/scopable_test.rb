@@ -151,3 +151,102 @@ end
 
 class HostSessionsController < Aikotoba::SessionsController
 end
+
+# A controller of another engine (e.g. a jobs dashboard mounted at /admin/jobs) built on the host
+# app's ApplicationController resolves its scope from the path the app sees, not from its own
+# engine-relative path_info ("/").
+# NOTE: The engine is defined here, not in test/dummy, so the dummy app stays as the README
+#       describes it; it is mounted only by the routes these tests draw and reset in teardown.
+#       Being a Rails::Engine subclass, it stays defined for the rest of the run: don't rely on
+#       Rails::Engine.subclasses being only the app's own engines.
+module ScopableOtherEngine
+  class Engine < ::Rails::Engine
+    isolate_namespace ScopableOtherEngine
+  end
+
+  class DashboardsController < ::ApplicationController
+    before_action :authenticate_admin_account!
+
+    def index
+      render plain: "dashboard"
+    end
+  end
+end
+
+ScopableOtherEngine::Engine.routes.draw do
+  root to: "dashboards#index"
+  get "/:id", to: "dashboards#index"
+end
+
+class Aikotoba::ScopableOtherEngineTest < ActionDispatch::IntegrationTest
+  def setup
+    ActionController::Base.allow_forgery_protection = false
+    @password = "password"
+    @account = Aikotoba::Account.create_by!(attributes: {email: "other_engine@example.com", password: @password})
+    @admin_account = Aikotoba::Account.create_by!(attributes: {email: "other_engine_admin@example.com", password: @password, authenticate_target: Admin.create!(nickname: "other_engine")})
+  end
+
+  def teardown
+    Rails.application.reload_routes!
+  end
+
+  def draw_routes(aikotoba_at:, engine_at:)
+    Rails.application.routes.draw do
+      mount Aikotoba::Engine => aikotoba_at
+      mount ScopableOtherEngine::Engine => engine_at
+      get "/sensitives", to: "sensitives#index"
+      get "/admin/sensitives", to: "admin/sensitives#index"
+    end
+  end
+
+  test "a page of another engine under an added scope's root_path is in that scope" do
+    draw_routes(aikotoba_at: "/", engine_at: "/admin/jobs")
+    post "/admin/sign_in", params: {account: {email: @admin_account.email, password: @password}}
+    get "/admin/jobs"
+    assert_response :success
+    get "/admin/jobs/1"
+    assert_response :success
+  end
+
+  test "a page of another engine under an added scope's root_path asks for that scope's sign in" do
+    draw_routes(aikotoba_at: "/", engine_at: "/admin/jobs")
+    post "/sign_in", params: {account: {email: @account.email, password: @password}}
+    get "/admin/jobs"
+    assert_redirected_to "/admin/sign_in"
+  end
+
+  test "a page of another engine resolves its scope relative to Aikotoba's mount point" do
+    draw_routes(aikotoba_at: "/auth", engine_at: "/auth/admin/jobs")
+    post "/auth/admin/sign_in", params: {account: {email: @admin_account.email, password: @password}}
+    get "/auth/admin/jobs"
+    assert_response :success
+  end
+
+  test "a page of another engine outside Aikotoba's mount point is in the default scope" do
+    draw_routes(aikotoba_at: "/auth", engine_at: "/admin/jobs")
+    post "/auth/admin/sign_in", params: {account: {email: @admin_account.email, password: @password}}
+    get "/admin/jobs"
+    assert_redirected_to "/auth/sign_in"
+  end
+
+  test "a page of another engine resolves its scope when the app is served under a SCRIPT_NAME" do
+    draw_routes(aikotoba_at: "/", engine_at: "/admin/jobs")
+    headers = {"SCRIPT_NAME" => "/app"}
+    post "/admin/sign_in", params: {account: {email: @admin_account.email, password: @password}}, headers: headers
+    get "/admin/jobs", headers: headers
+    assert_response :success
+  end
+
+  test "a page of another engine resolves its scope with relative_url_root set" do
+    draw_routes(aikotoba_at: "/auth", engine_at: "/auth/admin/jobs")
+    route_config = Rails.application.routes.instance_variable_get(:@config)
+    original = route_config.relative_url_root
+    route_config.relative_url_root = "/app"
+    headers = {"SCRIPT_NAME" => "/app"}
+    post "/auth/admin/sign_in", params: {account: {email: @admin_account.email, password: @password}}, headers: headers
+    get "/auth/admin/jobs", headers: headers
+    assert_response :success
+  ensure
+    route_config.relative_url_root = original
+  end
+end

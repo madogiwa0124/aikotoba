@@ -17,7 +17,8 @@ class ApplicationController < ActionController::Base
   end
 
   def authenticate_admin_account!
-    return if current_account && current_account.admin.present?
+    # NOTE: Account defines #admin only for an account whose authenticate_target is an Admin.
+    return if current_account&.authenticate_target.is_a?(Admin)
     aikotoba_request_authentication flash: {alert: "Oops. You need to Signed in as Admin." }
   end
 
